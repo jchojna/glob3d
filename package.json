@@ -1,5 +1,16 @@
 {
+  "name": "world3d",
+  "version": "0.1.0",
+  "author": {
+    "name": "Jakub Chojna",
+    "url": "https://github.com/jchojna"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "yarn parcel src/index.html --open"
+  },
   "devDependencies": {
-    "parcel": "^2.2.1"
+    "parcel": "^2.2.1",
+    "three": "^0.136.0"
   }
 }
