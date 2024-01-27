@@ -1,3 +1,4 @@
+import './styles.scss';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
@@ -7,10 +8,10 @@ const canvas = document.querySelector('canvas.webglobe');
 
 // Sizes
 const sizes = {
-  width: 1200,
-  height: 800
+  width: window.innerWidth,
+  height: window.innerHeight
 }
-const aspectRatio = sizes.width / sizes.height;
+let aspectRatio = sizes.width / sizes.height;
 
 // Object
 const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -38,3 +39,12 @@ const tick = () => {
   window.requestAnimationFrame(tick);
 }
 tick();
+
+window.addEventListener('resize', () => {
+  sizes.width = window.innerWidth;
+  sizes.height = window.innerHeight;
+  aspectRatio = sizes.width / sizes.height;
+  camera.aspect = aspectRatio;
+  camera.updateProjectionMatrix();
+  renderer.setSize(sizes.width, sizes.height);
+});

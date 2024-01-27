@@ -10,7 +10,9 @@
     "start": "yarn parcel src/index.html --open"
   },
   "devDependencies": {
+    "@parcel/transformer-sass": "^2.2.1",
     "parcel": "^2.2.1",
+    "sass": "^1.49.0",
     "three": "^0.136.0"
   }
 }
