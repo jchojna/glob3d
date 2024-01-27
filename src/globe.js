@@ -13,11 +13,15 @@ const sizes = {
 }
 let aspectRatio = sizes.width / sizes.height;
 
-// Object
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: '#00f' });
-const mesh = new THREE.Mesh(geometry, material);
-scene.add(mesh);
+// Globe
+const globeGeometry = new THREE.SphereBufferGeometry(1, 24, 24);
+const defaultGlobeMaterial = new THREE.MeshBasicMaterial({
+  color: '#00f',
+  transparent: true,
+  wireframe: true
+});
+const globe = new THREE.Mesh(globeGeometry, defaultGlobeMaterial);
+scene.add(globe);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100);
