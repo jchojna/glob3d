@@ -14,5 +14,9 @@
     "parcel": "^2.2.1",
     "sass": "^1.49.0",
     "three": "^0.136.0"
+  },
+  "dependencies": {
+    "d3-geo": "^3.0.1",
+    "three-geojson-geometry": "^1.1.6"
   }
 }

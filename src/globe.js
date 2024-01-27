@@ -1,6 +1,8 @@
 import './styles.scss';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { GeoJsonGeometry } from 'three-geojson-geometry';
+import { geoGraticule10 } from 'd3-geo';
 
 // Scene
 const scene = new THREE.Scene();
