@@ -18,12 +18,19 @@ let aspectRatio = sizes.width / sizes.height;
 // Globe
 const globeGeometry = new THREE.SphereBufferGeometry(1, 24, 24);
 const defaultGlobeMaterial = new THREE.MeshBasicMaterial({
-  color: '#00f',
+  color: '#555',
   transparent: true,
   wireframe: true
 });
 const globe = new THREE.Mesh(globeGeometry, defaultGlobeMaterial);
 scene.add(globe);
+
+// Graticules
+const graticuleObj = new THREE.LineSegments(
+  new GeoJsonGeometry(geoGraticule10(), 1, 2),
+  new THREE.LineBasicMaterial({ color: 'white', transparent: true, opacity: 0.8 })
+);
+scene.add(graticuleObj);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100);
