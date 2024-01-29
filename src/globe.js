@@ -54,52 +54,34 @@ fetch(json).then(res => res.json()).then(countries => {
   renderer.setSize(sizes.width, sizes.height);
   renderer.render(scene, camera);
 
+
+new THREE.ImageLoader().load(worldMap, (image) => {
+  const worldMapCanvas = document.getElementById('worldMapCanvas');
+  const context = worldMapCanvas.getContext('2d');
+  context.drawImage(image, 0, 0);
+  // const worldMapData = [...context.getImageData(0, 0, 2000, 1000).data];
+  const worldMapData = context.getImageData(0, 0, 2000, 1000).data;
+  // console.log(worldMapData);
+
   // Dots
-  const DOT_COUNT = 20000;
   const dotsPositions = [];
   const dotsIds = [];
   const countryIds = [];
   const vector = new THREE.Vector3();
-
+  const dotMaterial = new THREE.MeshNormalMaterial();
+  
   for (let i = DOT_COUNT; i >= 0; i--) {
     const phi = Math.acos(-1 + 2 * i / DOT_COUNT);
     const theta = Math.sqrt(DOT_COUNT * Math.PI) * phi;
-
+    
     vector.setFromSphericalCoords(GLOBE_RADIUS, phi, theta);
 
-    const dotGeometry = new THREE.CircleGeometry(0.5, 5);
-    const dotMaterial = new THREE.MeshBasicMaterial( { color: '#fff' } );
+    const dotGeometry = new THREE.CircleGeometry(1, 6);
     const circle = new THREE.Mesh(dotGeometry, dotMaterial);
     scene.add( circle );
     dotGeometry.lookAt(vector);
     dotGeometry.translate(vector.x, vector.y, vector.z);
-  }
 
-  new THREE.ImageLoader().load(worldMap, (image) => {
-		const canv = document.createElement( 'canvas' );
-		const context = canv.getContext( '2d' );
-    context.drawImage(image, 0, 0, 2000, 1000, 0, 0, 2000, 1000);
-    console.log(context);
-    const imageData = context.getImageData(0, 0, 2000, 1000);
-    console.log(imageData);
-  });
-  
-  const tick = () => {
-    renderer.render(scene, camera);
-    controls.update();
-    window.requestAnimationFrame(tick);
+    // const uv = pointToUV(dotGeometry.boundingSphere.center, this.position);
   }
-  tick();
-  
-  window.addEventListener('resize', () => {
-    sizes.width = window.innerWidth;
-    sizes.height = window.innerHeight;
-    aspectRatio = sizes.width / sizes.height;
-    camera.aspect = aspectRatio;
-    camera.updateProjectionMatrix();
-    renderer.setSize(sizes.width, sizes.height);
-  });
-}).catch(err => {
-  // Do something for an error here
-  console.log("Error Reading data " + err);
 });
