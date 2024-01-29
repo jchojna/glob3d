@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GeoJsonGeometry } from 'three-geojson-geometry';
 import { geoGraticule10 } from 'd3-geo';
+import { polyfill, h3ToGeo, h3ToGeoBoundary } from 'h3-js';
+import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import json from 'url:./assets/data/world_low_geo.json';
 import worldMap from 'url:./assets/map/world_map.jpg';
 
