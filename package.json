@@ -17,8 +17,5 @@
     "three": "^0.136.0",
     "three-conic-polygon-geometry": "^1.5.0"
   },
-  "dependencies": {
-    "d3-geo": "^3.0.1",
-    "three-geojson-geometry": "^1.1.6"
-  }
+  "dependencies": {}
 }
