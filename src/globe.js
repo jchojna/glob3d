@@ -12,73 +12,86 @@ import json from 'url:./assets/data/world_low_geo.json';
 
 // Constants
 const GLOBE_RADIUS = 100;
-const h3Indexes = [];
+const HEX_RES = 3;
+const HEX_MARGIN = 0.2;
+const HEX_CURVATURE_RES = 5;
 
 // Scene
 const scene = new THREE.Scene();
 const canvas = document.querySelector('canvas.webglobe');
 
-fetch(json).then(res => res.json()).then(({ features }) => {
-  
-  const obj = new THREE.Mesh(
-    undefined,
-    new THREE.MeshNormalMaterial({ color: 'red' })
-  );
-  obj.__globeObjType = 'hexPolygon'; // Add object type
+// Hexagonal Globe
+const hexGlobeGeometry = undefined;
+const hexGlobeMaterial = new THREE.MeshNormalMaterial();
+const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
 
+// Get H3 indexes for all hexagons in Polygon or MultiPolygon
+const getH3Indexes = (features) => {
+  const indexes = [];
   features.forEach(({ geometry }) => {
     const { type, coordinates } = geometry;
-    // Get H3 indexes for all hexagons in Polygon or MultiPolygon
     if (type === 'Polygon') {
-      polyfill(coordinates, 3, true).forEach(idx => h3Indexes.push(idx));
+      polyfill(coordinates, HEX_RES, true).forEach(idx => indexes.push(idx));
     } else if (type === 'MultiPolygon') {
       coordinates.forEach(coords => {
-        polyfill(coords, 3, true).forEach(idx => h3Indexes.push(idx));
+        polyfill(coords, HEX_RES, true).forEach(idx => indexes.push(idx));
       });
     } else {
       console.warn(`Unsupported GeoJson geometry type (${type})`);
     }
   });
+  return indexes;
+}
 
-  const hexBins = h3Indexes.map(h3Index => {
-    hexCenter = h3ToGeo(h3Index);
-    hexGeoJson = h3ToGeoBoundary(h3Index, true).reverse();
+const getHexBins = (h3Indexes) => {
+  return h3Indexes.map(h3Index => {
+    // Get center of a given hexagon - point as a [lat, lng] pair.
+    center = h3ToGeo(h3Index);
+    // Get the vertices of a given hexagon as an array of [lat, lng] points.
+    vertices = h3ToGeoBoundary(h3Index, true).reverse();
     // Split geometries at the anti-meridian.
-    const centerLng = hexCenter[1];
-    hexGeoJson.forEach(d => {
+    const centerLng = center[1];
+    vertices.forEach(d => {
       const edgeLng = d[0];
       if (Math.abs(centerLng - edgeLng) > 170) {
         d[0] += (centerLng > edgeLng ? 360 : -360);
       }
     });    
-    return { h3Index, hexCenter, hexGeoJson };
+    return { h3Index, center, vertices };
   });
+}
 
-  const margin = 0.2;
-  
-  obj.geometry = !hexBins.length
+const updateHexGlobeGeometry = (hexBins) => {
+  return !hexBins.length
     ? new THREE.BufferGeometry()
     : BufferGeometryUtils.mergeBufferGeometries(hexBins.map(hex => {
       // compute new geojson with relative margin
       const relNum = (st, end, rat) => st - (st - end) * rat;
-      const [clat, clng] = hex.hexCenter;
-      const geoJson = margin === 0
-      ? hex.hexGeoJson
-      : hex.hexGeoJson
-      .map(([elng, elat]) => [[elng, clng], [elat, clat]]
-      .map(([st, end]) => relNum(st, end, margin)));
+      const [clat, clng] = hex.center;
+      const geoJson = HEX_MARGIN === 0
+        ? hex.vertices
+        : hex.vertices
+          .map(([elng, elat]) => [[elng, clng], [elat, clat]]
+          .map(([st, end]) => relNum(st, end, HEX_MARGIN)));
 
       return new ConicPolygonGeometry(
-        [geoJson],
-        GLOBE_RADIUS,
-        GLOBE_RADIUS + 1,
-        false,
-        true,
-        false,
-        5
+        polygonGeoJson = [geoJson],
+        bottomHeight = GLOBE_RADIUS,
+        topHeight = GLOBE_RADIUS,
+        closedBottom = false,
+        closedTop = true,
+        includeSides = false,
+        curvatureResolution = HEX_CURVATURE_RES
       );
     }));
-  scene.add(obj);
+}
+
+// Create hexGlobe object.
+fetch(json).then(res => res.json()).then(({ features }) => {
+  const h3Indexes = getH3Indexes(features);
+  const hexBins = getHexBins(h3Indexes);
+  hexGlobe.geometry = updateHexGlobeGeometry(hexBins);
+  scene.add(hexGlobe);
 }).catch(err => {
   console.log("Error Reading data " + err);
 });;
