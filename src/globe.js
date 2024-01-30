@@ -43,7 +43,14 @@ fetch(json).then(res => res.json()).then(({ features }) => {
   const hexBins = h3Indexes.map(h3Index => {
     hexCenter = h3ToGeo(h3Index);
     hexGeoJson = h3ToGeoBoundary(h3Index, true).reverse();
-    
+    // Split geometries at the anti-meridian.
+    const centerLng = hexCenter[1];
+    hexGeoJson.forEach(d => {
+      const edgeLng = d[0];
+      if (Math.abs(centerLng - edgeLng) > 170) {
+        d[0] += (centerLng > edgeLng ? 360 : -360);
+      }
+    });    
     return { h3Index, hexCenter, hexGeoJson };
   });
 
