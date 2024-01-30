@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { polyfill, h3ToGeo, h3ToGeoBoundary } from 'h3-js';
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
+import * as dat from 'lil-gui';
 
 import * as _bfg from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 const bfg = Object.assign({}, _bfg);
@@ -16,6 +17,9 @@ const HEX_RES = 3;
 const HEX_MARGIN = 0.2;
 const HEX_CURVATURE_RES = 5;
 
+// Debug
+const gui = new dat.GUI();
+
 // Scene
 const scene = new THREE.Scene();
 const canvas = document.querySelector('canvas.webglobe');
@@ -24,6 +28,43 @@ const canvas = document.querySelector('canvas.webglobe');
 const hexGlobeGeometry = undefined;
 const hexGlobeMaterial = new THREE.MeshNormalMaterial();
 const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
+
+// Sizes
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight
+}
+let aspectRatio = sizes.width / sizes.height;
+
+// Globe
+const globeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 24, 24);
+const defaultGlobeMaterial = new THREE.MeshBasicMaterial({
+  color: '#555',
+  transparent: true,
+  opacity: 0.1,
+  wireframe: false
+});
+gui.add(defaultGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
+const globe = new THREE.Mesh(globeGeometry, defaultGlobeMaterial);
+
+// Camera
+const camera = new THREE.PerspectiveCamera(55, aspectRatio, 1, 2000);
+camera.position.z = 300;
+
+// Controls
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true
+});
+
+scene.add(globe);
+scene.add(camera);
+renderer.setSize(sizes.width, sizes.height);
+renderer.render(scene, camera);
 
 // Get H3 indexes for all hexagons in Polygon or MultiPolygon
 const getH3Indexes = (features) => {
@@ -95,39 +136,6 @@ fetch(json).then(res => res.json()).then(({ features }) => {
 }).catch(err => {
   console.log("Error Reading data " + err);
 });;
-
-// Sizes
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight
-}
-let aspectRatio = sizes.width / sizes.height;
-
-// Globe
-const globeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 24, 24);
-const defaultGlobeMaterial = new THREE.MeshBasicMaterial({
-  color: '#555',
-  transparent: true,
-  opacity: 0.1,
-  wireframe: false
-});
-const globe = new THREE.Mesh(globeGeometry, defaultGlobeMaterial);
-scene.add(globe);
-
-// Camera
-const camera = new THREE.PerspectiveCamera(55, aspectRatio, 1, 2000);
-camera.position.z = 300;
-scene.add(camera);
-
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
-
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true
-});
-renderer.setSize(sizes.width, sizes.height);
-renderer.render(scene, camera);
 
 const tick = () => {
   renderer.render(scene, camera);

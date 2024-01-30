@@ -17,5 +17,7 @@
     "three": "^0.136.0",
     "three-conic-polygon-geometry": "^1.5.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lil-gui": "^0.16.0"
+  }
 }
