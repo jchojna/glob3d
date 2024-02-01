@@ -20,6 +20,7 @@ const HEX_CURVATURE_RES = 5;
 
 const textureLoader = new THREE.TextureLoader();
 const matcapTexture = textureLoader.load(matcapImage);
+const gbifJson = 'https://api.gbif.org/v1/occurrence/search';
 
 // Debug
 const gui = new dat.GUI();
@@ -133,6 +134,17 @@ const updateHexGlobeGeometry = (hexBins) => {
     }));
 }
 
+const polar2Cartesian = (lat, lng, relAltitude = 0) => {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (90 - lng) * Math.PI / 180;
+  const r = GLOBE_RADIUS * (1 + relAltitude);
+  return {
+    x: r * Math.sin(phi) * Math.cos(theta),
+    y: r * Math.cos(phi),
+    z: r * Math.sin(phi) * Math.sin(theta)
+  };
+}
+
 // Create hexGlobe object.
 fetch(json).then(res => res.json()).then(({ features }) => {
   const h3Indexes = getH3Indexes(features);
@@ -141,7 +153,28 @@ fetch(json).then(res => res.json()).then(({ features }) => {
   scene.add(hexGlobe);
 }).catch(err => {
   console.log("Error Reading data " + err);
-});;
+});
+
+fetch(gbifJson).then(res => res.json()).then(({ results }) => {
+  console.log('results', results);
+
+  const globeCenter = scene.localToWorld(new THREE.Vector3(0, 0, 0));
+  console.log('globeCenter', globeCenter);
+
+  const coordinates = results.map(result => {
+    return polar2Cartesian(result.decimalLatitude, result.decimalLongitude);
+  });
+
+  coordinates.forEach(coordinate => {
+    const point = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 12),
+      new THREE.MeshBasicMaterial({ color: '#fff', side: THREE.DoubleSide })
+      );
+    Object.assign(point.position, coordinate);
+    point.lookAt(globeCenter);
+    scene.add(point);
+  });
+});
 
 const tick = () => {
   renderer.render(scene, camera);
