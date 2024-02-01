@@ -94,9 +94,9 @@ const getH3Indexes = (features) => {
 const getHexBins = (h3Indexes) => {
   return h3Indexes.map(h3Index => {
     // Get center of a given hexagon - point as a [lat, lng] pair.
-    center = h3ToGeo(h3Index);
+    const center = h3ToGeo(h3Index);
     // Get the vertices of a given hexagon as an array of [lat, lng] points.
-    vertices = h3ToGeoBoundary(h3Index, true).reverse();
+    const vertices = h3ToGeoBoundary(h3Index, true).reverse();
     // Split geometries at the anti-meridian.
     const centerLng = center[1];
     vertices.forEach(d => {
@@ -123,13 +123,13 @@ const updateHexGlobeGeometry = (hexBins) => {
           .map(([st, end]) => relNum(st, end, HEX_MARGIN)));
 
       return new ConicPolygonGeometry(
-        polygonGeoJson = [geoJson],
-        bottomHeight = GLOBE_RADIUS,
-        topHeight = GLOBE_RADIUS + 0.1,
-        closedBottom = true,
-        closedTop = true,
-        includeSides = false,
-        curvatureResolution = HEX_CURVATURE_RES
+        [geoJson],
+        GLOBE_RADIUS,       // bottom height
+        GLOBE_RADIUS + 0.1, // top height
+        true,               // closed bottom
+        true,               // closed top
+        false,              // include sides
+        HEX_CURVATURE_RES   // curvatureResolution
       );
     }));
 }
@@ -156,11 +156,7 @@ fetch(json).then(res => res.json()).then(({ features }) => {
 });
 
 fetch(gbifJson).then(res => res.json()).then(({ results }) => {
-  console.log('results', results);
-
   const globeCenter = scene.localToWorld(new THREE.Vector3(0, 0, 0));
-  console.log('globeCenter', globeCenter);
-
   const coordinates = results.map(result => {
     return polar2Cartesian(result.decimalLatitude, result.decimalLongitude);
   });
