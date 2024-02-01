@@ -10,12 +10,16 @@ const bfg = Object.assign({}, _bfg);
 const BufferGeometryUtils = bfg.BufferGeometryUtils || bfg;
 
 import json from 'url:./assets/data/world_low_geo.json';
+import matcapImage from 'url:./assets/matcaps/matcap_1.png';
 
 // Constants
 const GLOBE_RADIUS = 100;
 const HEX_RES = 3;
 const HEX_MARGIN = 0.2;
 const HEX_CURVATURE_RES = 5;
+
+const textureLoader = new THREE.TextureLoader();
+const matcapTexture = textureLoader.load(matcapImage);
 
 // Debug
 const gui = new dat.GUI();
@@ -26,7 +30,8 @@ const canvas = document.querySelector('canvas.webglobe');
 
 // Hexagonal Globe
 const hexGlobeGeometry = undefined;
-const hexGlobeMaterial = new THREE.MeshNormalMaterial();
+const hexGlobeMaterial = new THREE.MeshMatcapMaterial();
+hexGlobeMaterial.matcap = matcapTexture;
 const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
 
 // Sizes
@@ -37,15 +42,16 @@ const sizes = {
 let aspectRatio = sizes.width / sizes.height;
 
 // Globe
-const globeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 24, 24);
-const defaultGlobeMaterial = new THREE.MeshBasicMaterial({
+const solidGlobeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 24, 24);
+const solidGlobeMaterial = new THREE.MeshBasicMaterial({
   color: '#555',
   transparent: true,
   opacity: 0.1,
   wireframe: false
 });
-gui.add(defaultGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
-const globe = new THREE.Mesh(globeGeometry, defaultGlobeMaterial);
+gui.addColor(solidGlobeMaterial, 'color');
+gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
+const globe = new THREE.Mesh(solidGlobeGeometry, solidGlobeMaterial);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(55, aspectRatio, 1, 2000);
@@ -118,8 +124,8 @@ const updateHexGlobeGeometry = (hexBins) => {
       return new ConicPolygonGeometry(
         polygonGeoJson = [geoJson],
         bottomHeight = GLOBE_RADIUS,
-        topHeight = GLOBE_RADIUS,
-        closedBottom = false,
+        topHeight = GLOBE_RADIUS + 0.1,
+        closedBottom = true,
         closedTop = true,
         includeSides = false,
         curvatureResolution = HEX_CURVATURE_RES
