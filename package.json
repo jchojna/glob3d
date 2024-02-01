@@ -7,7 +7,9 @@
   },
   "license": "MIT",
   "scripts": {
-    "start": "yarn parcel src/index.html --open"
+    "start": "parcel src/index.html --open",
+    "build": "parcel build src/index.html --public-url ./",
+    "deploy": "rm -rf dist && yarn build && cd dist && git init && git add . && git commit -m 'update' && git remote add origin git@github.com:Appsilon/world3d.git && git push --force origin master:gh-pages"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.2.1",
