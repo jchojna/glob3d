@@ -1,3 +1,5 @@
+// @ts-check
+
 import './styles.scss';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -20,7 +22,8 @@ const HEX_CURVATURE_RES = 5;
 
 const textureLoader = new THREE.TextureLoader();
 const matcapTexture = textureLoader.load(matcapImage);
-const gbifJson = 'https://api.gbif.org/v1/occurrence/search';
+const gbifJson = 'https://api.gbif.org/v1/occurrence/search?limit=1000';
+// const gbifJson = 'https://api.gbif.org/v1/species/search?rank=SPECIES&highertaxon_key=212&limit=1000&status=ACCEPTED';
 
 // Debug
 const gui = new dat.GUI();
@@ -137,7 +140,7 @@ const updateHexGlobeGeometry = (hexBins) => {
 const polar2Cartesian = (lat, lng, relAltitude = 0) => {
   const phi = (90 - lat) * Math.PI / 180;
   const theta = (90 - lng) * Math.PI / 180;
-  const r = GLOBE_RADIUS * (1 + relAltitude);
+  const r = GLOBE_RADIUS * (1 + relAltitude) + 0.1;
   return {
     x: r * Math.sin(phi) * Math.cos(theta),
     y: r * Math.cos(phi),
