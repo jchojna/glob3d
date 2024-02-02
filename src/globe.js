@@ -179,13 +179,14 @@ fetch(facets)
     return genusData[randomGenusIdx].name;
   })
   .then(genus => {
-    const gbifJson = `${baseApiQuery}?limit=300`;
-    const json = `${gbifJson}&genusKey=${genus}`;
+    const json = `${baseApiQuery}?limit=100&genusKey=${genus}`;
 
     fetch(json).then(res => res.json()).then(({ results }) => {
-      const resultsLocations = results.map(result => {
-        return [ result.decimalLatitude, result.decimalLongitude ];
-      });
+      const resultsLocations = results
+        .map(({ decimalLatitude, decimalLongitude }) => {
+          return [ decimalLatitude, decimalLongitude ];
+        })
+        .filter(([ coord1, coord2 ]) => coord1 && coord2);
 
       const h3Indexes = resultsLocations.map(location => {
         return geoToH3(location[0], location[1], 3);
@@ -197,7 +198,7 @@ fetch(facets)
 
 
 
-      console.log(h3Indexes);
+      console.log(resultsLocations.map( res => res[0]));
     });
   });
 
