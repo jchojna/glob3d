@@ -3,7 +3,7 @@
 import './styles.scss';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { polyfill, h3ToGeo, h3ToGeoBoundary } from 'h3-js';
+import { polyfill, geoToH3, h3ToGeo, h3ToGeoBoundary } from 'h3-js';
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import * as dat from 'lil-gui';
 
@@ -13,6 +13,7 @@ const BufferGeometryUtils = bfg.BufferGeometryUtils || bfg;
 
 import json from 'url:./assets/data/world_low_geo.json';
 import matcapImage from 'url:./assets/matcaps/matcap_1.png';
+import { Color } from 'three';
 
 // Constants
 const GLOBE_RADIUS = 100;
@@ -37,6 +38,11 @@ const hexGlobeGeometry = undefined;
 const hexGlobeMaterial = new THREE.MeshMatcapMaterial();
 hexGlobeMaterial.matcap = matcapTexture;
 const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
+
+// Hexagonal Results
+const hexResultsGeometry = undefined;
+const hexResultsMaterial = new THREE.MeshBasicMaterial({color: "red"});
+const hexResults = new THREE.Mesh(hexResultsGeometry, hexResultsMaterial);
 
 // Sizes
 const sizes = {
@@ -173,25 +179,25 @@ fetch(facets)
     return genusData[randomGenusIdx].name;
   })
   .then(genus => {
-    const gbifJson = `${baseApiQuery}?limit=100`;
+    const gbifJson = `${baseApiQuery}?limit=300`;
     const json = `${gbifJson}&genusKey=${genus}`;
 
     fetch(json).then(res => res.json()).then(({ results }) => {
-      // console.log(results);
-      const globeCenter = scene.localToWorld(new THREE.Vector3(0, 0, 0));
-      const coordinates = results.map(result => {
-        return polar2Cartesian(result.decimalLatitude, result.decimalLongitude);
+      const resultsLocations = results.map(result => {
+        return [ result.decimalLatitude, result.decimalLongitude ];
       });
-    
-      coordinates.forEach(coordinate => {
-        const point = new THREE.Mesh(
-          new THREE.CircleGeometry(1, 12),
-          new THREE.MeshBasicMaterial({ color: '#fff', side: THREE.DoubleSide })
-          );
-        Object.assign(point.position, coordinate);
-        point.lookAt(globeCenter);
-        scene.add(point);
+
+      const h3Indexes = resultsLocations.map(location => {
+        return geoToH3(location[0], location[1], 3);
       });
+      
+      const hexBins = getHexBins(h3Indexes);
+      hexResults.geometry = updateHexGlobeGeometry(hexBins);
+      scene.add(hexResults);
+
+
+
+      console.log(h3Indexes);
     });
   });
 
