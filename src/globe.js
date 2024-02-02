@@ -22,8 +22,8 @@ const HEX_CURVATURE_RES = 5;
 
 const textureLoader = new THREE.TextureLoader();
 const matcapTexture = textureLoader.load(matcapImage);
-const gbifJson = 'https://api.gbif.org/v1/occurrence/search?limit=1000';
-// const gbifJson = 'https://api.gbif.org/v1/species/search?rank=SPECIES&highertaxon_key=212&limit=1000&status=ACCEPTED';
+const baseApiQuery = 'https://api.gbif.org/v1/occurrence/search';
+const facets = `${baseApiQuery}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;
 
 // Debug
 const gui = new dat.GUI();
@@ -59,7 +59,8 @@ const globe = new THREE.Mesh(solidGlobeGeometry, solidGlobeMaterial);
 
 // Camera
 const camera = new THREE.PerspectiveCamera(55, aspectRatio, 1, 2000);
-camera.position.z = 300;
+camera.position.z = 150;
+camera.position.y = 150;
 
 // Controls
 const controls = new OrbitControls(camera, canvas);
@@ -158,22 +159,41 @@ fetch(json).then(res => res.json()).then(({ features }) => {
   console.log("Error Reading data " + err);
 });
 
-fetch(gbifJson).then(res => res.json()).then(({ results }) => {
-  const globeCenter = scene.localToWorld(new THREE.Vector3(0, 0, 0));
-  const coordinates = results.map(result => {
-    return polar2Cartesian(result.decimalLatitude, result.decimalLongitude);
-  });
+const getRandomInt = (min, max) => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 
-  coordinates.forEach(coordinate => {
-    const point = new THREE.Mesh(
-      new THREE.CircleGeometry(1, 12),
-      new THREE.MeshBasicMaterial({ color: '#fff', side: THREE.DoubleSide })
-      );
-    Object.assign(point.position, coordinate);
-    point.lookAt(globeCenter);
-    scene.add(point);
+fetch(facets)
+  .then(res => res.json())
+  .then(({ facets }) => {
+    const genusData = facets[0].counts;
+    const randomGenusIdx = getRandomInt(0, genusData.length);
+    return genusData[randomGenusIdx].name;
+  })
+  .then(genus => {
+    const gbifJson = `${baseApiQuery}?limit=100`;
+    const json = `${gbifJson}&genusKey=${genus}`;
+
+    fetch(json).then(res => res.json()).then(({ results }) => {
+      // console.log(results);
+      const globeCenter = scene.localToWorld(new THREE.Vector3(0, 0, 0));
+      const coordinates = results.map(result => {
+        return polar2Cartesian(result.decimalLatitude, result.decimalLongitude);
+      });
+    
+      coordinates.forEach(coordinate => {
+        const point = new THREE.Mesh(
+          new THREE.CircleGeometry(1, 12),
+          new THREE.MeshBasicMaterial({ color: '#fff', side: THREE.DoubleSide })
+          );
+        Object.assign(point.position, coordinate);
+        point.lookAt(globeCenter);
+        scene.add(point);
+      });
+    });
   });
-});
 
 const tick = () => {
   renderer.render(scene, camera);
