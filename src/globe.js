@@ -1,4 +1,4 @@
-// @ts-check
+//// @ts-check
 
 import './styles.scss';
 import * as THREE from 'three';
@@ -13,7 +13,7 @@ const BufferGeometryUtils = bfg.BufferGeometryUtils || bfg;
 
 import json from 'url:./assets/data/world_low_geo.json';
 import matcapImage from 'url:./assets/matcaps/matcap_1.png';
-import { Color } from 'three';
+import { Color, Vector3 } from 'three';
 
 // Constants
 const GLOBE_RADIUS = 100;
@@ -39,7 +39,7 @@ const hexGlobeMaterial = new THREE.MeshMatcapMaterial();
 hexGlobeMaterial.matcap = matcapTexture;
 const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
 let spotsMeshes = [];
-let hexBins = [];
+let resultsData = [];
 
 // Sizes
 const sizes = {
@@ -192,15 +192,17 @@ fetch(facets)
     const json = `${baseApiQuery}?limit=100&genusKey=${genus}`;
 
     fetch(json).then(res => res.json()).then(({ results }) => {
-      const resultsData = results
+      resultsData = results
         // Filter out results with undefined coordinates.
         .filter(({ decimalLatitude, decimalLongitude }) => decimalLatitude && decimalLongitude)
         .map(result => {
           const { country, decimalLatitude, decimalLongitude } = result;
+          const h3Index = geoToH3(decimalLatitude, decimalLongitude, HEX_RES);
+          const hexBin = getHexBin(h3Index);
           return {
             country,
             coordinates: [decimalLatitude, decimalLongitude],
-            h3Index: geoToH3(decimalLatitude, decimalLongitude, HEX_RES),
+            ...hexBin,
             occurrences: 1
           }
         })
@@ -214,31 +216,14 @@ fetch(facets)
           }
         }, []);
 
-      hexBins = resultsData.map(({ h3Index, occurrences }) => {
-        return {
-          ...getHexBin(h3Index),
-          occurrences
-        }
-      });
-
       // Hexagonal Results
-      spotsMeshes = hexBins.map(bin => {
+      spotsMeshes = resultsData.map(bin => {
         return new THREE.Mesh(
           updateHexResultsGeometry(bin),
           new THREE.MeshBasicMaterial({color: "red"})
         );
       });
       spotsMeshes.forEach(spot => scene.add(spot));
-
-      //////////////////////////////////
-
-
-
-
-
-
-
-
     });
   });
 
@@ -246,17 +231,33 @@ fetch(facets)
 
 // Handle mouse
 const mouse = new THREE.Vector2();
-let hoveredHexId = null;
+let hoveredHexIdx = null;
 
 window.addEventListener('mousemove', (e) => {
   mouse.x = e.clientX / sizes.width * 2 - 1;
   mouse.y = - (e.clientY / sizes.height * 2 - 1);
 });
 
-const clock = new THREE.Clock();
+const getPixelPositionFromPolarCoords = (polarCoordinates) => {
+  const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1]);
+  const point = new THREE.Vector3(x, y, z).project(camera);
+  return {
+    x: (point.x + 1) / 2 * sizes.width,
+    y: (point.y - 1) / 2 * sizes.height * -1
+  }   
+}
+
+window.addEventListener('click', function() {
+  if (hoveredHexIdx !== null) {
+    const polarCoordinates = resultsData[hoveredHexIdx].coordinates;
+    const pixelPosition = getPixelPositionFromPolarCoords(polarCoordinates);
+  }
+});
+
+// const clock = new THREE.Clock();
 
 const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
+  // const elapsedTime = clock.getElapsedTime();
 
   // Add Raycaster
   if (spotsMeshes.length > 0) {
@@ -264,17 +265,16 @@ const tick = () => {
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(spotsMeshes);
     const intersectsMeshes = intersects.map(intersect => intersect.object);
+    hoveredHexIdx = null;
 
     spotsMeshes.forEach((mesh, idx) => {
       if (intersectsMeshes.includes(mesh)) {
         mesh.material.color.set('blue');
-        console.log(hexBins[idx].occurrences);
+        hoveredHexIdx = idx;
       } else {
         mesh.material.color.set('red');
       }
     });
-
-    // console.log(intersects);
   }
 
   renderer.render(scene, camera);
