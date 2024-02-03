@@ -38,11 +38,8 @@ const hexGlobeGeometry = undefined;
 const hexGlobeMaterial = new THREE.MeshMatcapMaterial();
 hexGlobeMaterial.matcap = matcapTexture;
 const hexGlobe = new THREE.Mesh(hexGlobeGeometry, hexGlobeMaterial);
-
-// Hexagonal Results
-const hexResultsGeometry = undefined;
-const hexResultsMaterial = new THREE.MeshBasicMaterial({color: "red"});
-const hexResults = new THREE.Mesh(hexResultsGeometry, hexResultsMaterial);
+let spotsMeshes = [];
+let hexBins = [];
 
 // Sizes
 const sizes = {
@@ -101,37 +98,38 @@ const getH3Indexes = (features) => {
   return indexes;
 }
 
-const getHexBins = (h3Indexes) => {
-  return h3Indexes.map(h3Index => {
-    // Get center of a given hexagon - point as a [lat, lng] pair.
-    const center = h3ToGeo(h3Index);
-    // Get the vertices of a given hexagon as an array of [lat, lng] points.
-    const vertices = h3ToGeoBoundary(h3Index, true).reverse();
-    // Split geometries at the anti-meridian.
-    const centerLng = center[1];
-    vertices.forEach(d => {
-      const edgeLng = d[0];
-      if (Math.abs(centerLng - edgeLng) > 170) {
-        d[0] += (centerLng > edgeLng ? 360 : -360);
-      }
-    });    
-    return { h3Index, center, vertices };
-  });
+const getHexBin = (h3Index) => {
+  // Get center of a given hexagon - point as a [lat, lng] pair.
+  const center = h3ToGeo(h3Index);
+  // Get the vertices of a given hexagon as an array of [lat, lng] points.
+  const vertices = h3ToGeoBoundary(h3Index, true).reverse();
+  // Split geometries at the anti-meridian.
+  const centerLng = center[1];
+  vertices.forEach(d => {
+    const edgeLng = d[0];
+    if (Math.abs(centerLng - edgeLng) > 170) {
+      d[0] += (centerLng > edgeLng ? 360 : -360);
+    }
+  });    
+  return { h3Index, center, vertices };
+}
+
+// Compute new geojson with relative margin.
+const getNewGeoJson = (hex, margin) => {
+  const relNum = (st, end, rat) => st - (st - end) * rat;
+  const [clat, clng] = hex.center;
+  return margin === 0
+    ? hex.vertices
+    : hex.vertices
+      .map(([elng, elat]) => [[elng, clng], [elat, clat]]
+      .map(([st, end]) => relNum(st, end, HEX_MARGIN)));
 }
 
 const updateHexGlobeGeometry = (hexBins) => {
   return !hexBins.length
     ? new THREE.BufferGeometry()
     : BufferGeometryUtils.mergeBufferGeometries(hexBins.map(hex => {
-      // compute new geojson with relative margin
-      const relNum = (st, end, rat) => st - (st - end) * rat;
-      const [clat, clng] = hex.center;
-      const geoJson = HEX_MARGIN === 0
-        ? hex.vertices
-        : hex.vertices
-          .map(([elng, elat]) => [[elng, clng], [elat, clat]]
-          .map(([st, end]) => relNum(st, end, HEX_MARGIN)));
-
+      const geoJson = getNewGeoJson(hex, HEX_MARGIN);
       return new ConicPolygonGeometry(
         [geoJson],
         GLOBE_RADIUS,       // bottom height
@@ -142,6 +140,18 @@ const updateHexGlobeGeometry = (hexBins) => {
         HEX_CURVATURE_RES   // curvatureResolution
       );
     }));
+}
+
+const updateHexResultsGeometry = (bin) => {
+  return new ConicPolygonGeometry(
+    [getNewGeoJson(bin, HEX_MARGIN)],
+    GLOBE_RADIUS,                       // bottom height
+    GLOBE_RADIUS + bin.occurrences / 3, // top height
+    true,                               // closed bottom
+    true,                               // closed top
+    true,                               // include sides
+    HEX_CURVATURE_RES                   // curvatureResolution
+  );
 }
 
 const polar2Cartesian = (lat, lng, relAltitude = 0) => {
@@ -158,7 +168,7 @@ const polar2Cartesian = (lat, lng, relAltitude = 0) => {
 // Create hexGlobe object.
 fetch(json).then(res => res.json()).then(({ features }) => {
   const h3Indexes = getH3Indexes(features);
-  const hexBins = getHexBins(h3Indexes);
+  const hexBins = h3Indexes.map(index => getHexBin(index));
   hexGlobe.geometry = updateHexGlobeGeometry(hexBins);
   scene.add(hexGlobe);
 }).catch(err => {
@@ -204,16 +214,69 @@ fetch(facets)
           }
         }, []);
 
-      const h3Indexes = resultsData.map(result => result.h3Index);
-      const hexBins = getHexBins(h3Indexes);
-      hexResults.geometry = updateHexGlobeGeometry(hexBins);
-      scene.add(hexResults);
+      hexBins = resultsData.map(({ h3Index, occurrences }) => {
+        return {
+          ...getHexBin(h3Index),
+          occurrences
+        }
+      });
 
-      console.log(hexResults);
+      // Hexagonal Results
+      spotsMeshes = hexBins.map(bin => {
+        return new THREE.Mesh(
+          updateHexResultsGeometry(bin),
+          new THREE.MeshBasicMaterial({color: "red"})
+        );
+      });
+      spotsMeshes.forEach(spot => scene.add(spot));
+
+      //////////////////////////////////
+
+
+
+
+
+
+
+
     });
   });
 
+// fetch end
+
+// Handle mouse
+const mouse = new THREE.Vector2();
+let hoveredHexId = null;
+
+window.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX / sizes.width * 2 - 1;
+  mouse.y = - (e.clientY / sizes.height * 2 - 1);
+});
+
+const clock = new THREE.Clock();
+
 const tick = () => {
+  const elapsedTime = clock.getElapsedTime();
+
+  // Add Raycaster
+  if (spotsMeshes.length > 0) {
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(spotsMeshes);
+    const intersectsMeshes = intersects.map(intersect => intersect.object);
+
+    spotsMeshes.forEach((mesh, idx) => {
+      if (intersectsMeshes.includes(mesh)) {
+        mesh.material.color.set('blue');
+        console.log(hexBins[idx].occurrences);
+      } else {
+        mesh.material.color.set('red');
+      }
+    });
+
+    // console.log(intersects);
+  }
+
   renderer.render(scene, camera);
   controls.update();
   window.requestAnimationFrame(tick);
