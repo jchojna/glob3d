@@ -17,7 +17,7 @@ import { Color } from 'three';
 
 // Constants
 const GLOBE_RADIUS = 100;
-const HEX_RES = 3;
+const HEX_RES = 3; 
 const HEX_MARGIN = 0.2;
 const HEX_CURVATURE_RES = 5;
 
@@ -182,23 +182,34 @@ fetch(facets)
     const json = `${baseApiQuery}?limit=100&genusKey=${genus}`;
 
     fetch(json).then(res => res.json()).then(({ results }) => {
-      const resultsLocations = results
-        .map(({ decimalLatitude, decimalLongitude }) => {
-          return [ decimalLatitude, decimalLongitude ];
+      const resultsData = results
+        // Filter out results with undefined coordinates.
+        .filter(({ decimalLatitude, decimalLongitude }) => decimalLatitude && decimalLongitude)
+        .map(result => {
+          const { country, decimalLatitude, decimalLongitude } = result;
+          return {
+            country,
+            coordinates: [decimalLatitude, decimalLongitude],
+            h3Index: geoToH3(decimalLatitude, decimalLongitude, HEX_RES),
+            occurrences: 1
+          }
         })
-        .filter(([ coord1, coord2 ]) => coord1 && coord2);
+        .reduce((a, b) => {
+          const idx = a.findIndex(elem => elem.h3Index === b.h3Index)
+          if (idx >= 0) {
+            a[idx].occurrences++
+            return a
+          } else {
+            return [ ...a, b ]
+          }
+        }, []);
 
-      const h3Indexes = resultsLocations.map(location => {
-        return geoToH3(location[0], location[1], 3);
-      });
-      
+      const h3Indexes = resultsData.map(result => result.h3Index);
       const hexBins = getHexBins(h3Indexes);
       hexResults.geometry = updateHexGlobeGeometry(hexBins);
       scene.add(hexResults);
 
-
-
-      console.log(resultsLocations.map( res => res[0]));
+      console.log(hexResults);
     });
   });
 
