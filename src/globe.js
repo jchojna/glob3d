@@ -32,6 +32,9 @@ const gui = new dat.GUI();
 // Scene
 const scene = new THREE.Scene();
 const canvas = document.querySelector('canvas.webglobe');
+const tooltip = document.querySelector('.tooltip');
+const tooltipCountry = document.querySelector('.tooltip > .country');
+const tooltipOccurrences = document.querySelector('.tooltip > .occurrences');
 
 // Hexagonal Globe
 const hexGlobeGeometry = undefined;
@@ -232,6 +235,7 @@ fetch(facets)
 // Handle mouse
 const mouse = new THREE.Vector2();
 let hoveredHexIdx = null;
+let clickedHexIdx = null;
 
 window.addEventListener('mousemove', (e) => {
   mouse.x = e.clientX / sizes.width * 2 - 1;
@@ -249,8 +253,10 @@ const getPixelPositionFromPolarCoords = (polarCoordinates) => {
 
 window.addEventListener('click', function() {
   if (hoveredHexIdx !== null) {
-    const polarCoordinates = resultsData[hoveredHexIdx].coordinates;
-    const pixelPosition = getPixelPositionFromPolarCoords(polarCoordinates);
+    clickedHexIdx = hoveredHexIdx;
+    const clickedHexData = resultsData[clickedHexIdx]
+    tooltipCountry.textContent = clickedHexData.country;
+    tooltipOccurrences.textContent = clickedHexData.occurrences;
   }
 });
 
@@ -275,6 +281,12 @@ const tick = () => {
         mesh.material.color.set('red');
       }
     });
+  }
+  if (clickedHexIdx !== null) {
+    const clickedHexData = resultsData[clickedHexIdx]
+    const polarCoordinates = clickedHexData.coordinates;
+    const pxPosition = getPixelPositionFromPolarCoords(polarCoordinates);
+    tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
   }
 
   renderer.render(scene, camera);
