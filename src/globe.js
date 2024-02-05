@@ -26,6 +26,10 @@ const matcapTexture = textureLoader.load(matcapImage);
 const baseApiQuery = 'https://api.gbif.org/v1/occurrence/search';
 const facets = `${baseApiQuery}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;
 
+const getWikiUrl = (title, size = 300) => {
+  return `https://en.wikipedia.org/w/api.php?action=query&titles=${title}&prop=pageimages&format=json&pithumbsize=${size}&origin=*`;
+}
+
 // Debug
 const gui = new dat.GUI();
 
@@ -184,6 +188,10 @@ const getRandomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// asynchronous code ///////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 fetch(facets)
   .then(res => res.json())
   .then(({ facets }) => {
@@ -192,7 +200,23 @@ fetch(facets)
     return genusData[randomGenusIdx].name;
   })
   .then(genus => {
-    const json = `${baseApiQuery}?limit=100&genusKey=${genus}`;
+    fetch(`${baseApiQuery}?kingdomKey=1&phylumKey=44&classKey=212&genusKey=${genus}&limit=1`)
+      .then(res => res.json())
+      .then(({ results }) => {
+        fetch(getWikiUrl(results[0].genus))
+          .then(res => res.json())
+          .then(({ query }) => {
+            const { pages } = query;
+            Object.values(pages).forEach(value => {
+              const { source } = value.thumbnail;
+              source ? console.log(source) : false;
+            });
+          })
+          .catch((error) => console.log(error));
+      })
+      .catch((error) => console.log(error));
+
+    const json = `${baseApiQuery}?limit=1000&genusKey=${genus}`;
 
     fetch(json).then(res => res.json()).then(({ results }) => {
       resultsData = results
@@ -228,9 +252,12 @@ fetch(facets)
       });
       spotsMeshes.forEach(spot => scene.add(spot));
     });
+    return genus;
   });
 
-// fetch end
+////////////////////////////////////////////////////////////////////////////////
+// asynchronous code end ///////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 // Handle mouse
 const mouse = new THREE.Vector2();
