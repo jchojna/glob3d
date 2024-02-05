@@ -52,7 +52,7 @@ const sizes = {
 let aspectRatio = sizes.width / sizes.height;
 
 // Globe
-const solidGlobeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 24, 24);
+const solidGlobeGeometry = new THREE.SphereBufferGeometry(GLOBE_RADIUS, 32, 32);
 const solidGlobeMaterial = new THREE.MeshBasicMaterial({
   color: '#555',
   transparent: true,
@@ -148,12 +148,12 @@ const updateHexGlobeGeometry = (hexBins) => {
 const updateHexResultsGeometry = (bin) => {
   return new ConicPolygonGeometry(
     [getNewGeoJson(bin, HEX_MARGIN)],
-    GLOBE_RADIUS + 0.1,                       // bottom height
-    GLOBE_RADIUS + bin.occurrences / 3, // top height
-    true,                               // closed bottom
-    true,                               // closed top
-    true,                               // include sides
-    HEX_CURVATURE_RES                   // curvatureResolution
+    GLOBE_RADIUS + 0.1,
+    GLOBE_RADIUS + 0.1 + bin.occurrences / 3,
+    true,
+    true,
+    true,
+    HEX_CURVATURE_RES
   );
 }
 
@@ -223,7 +223,7 @@ fetch(facets)
       spotsMeshes = resultsData.map(bin => {
         return new THREE.Mesh(
           updateHexResultsGeometry(bin),
-          new THREE.MeshBasicMaterial({color: "red"})
+          new THREE.MeshBasicMaterial({color: "red", side: THREE.DoubleSide})
         );
       });
       spotsMeshes.forEach(spot => scene.add(spot));
@@ -291,27 +291,22 @@ const tick = () => {
   // Handle tooltip visibility of the clicked hex.
   if (clickedHexIdx !== null) {
     const clickedHexData = resultsData[clickedHexIdx]
-    const polarCoordinates = clickedHexData.coordinates;
+    const polarCoordinates = clickedHexData.center;
     const pxPosition = getPixelPositionFromPolarCoords(polarCoordinates);
     tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
 
+    // check collisions
     const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1]);
     const point = new THREE.Vector3(x, y, z).project(camera);
     raycaster2.setFromCamera(point, camera);
     const intersects = raycaster2.intersectObjects([globe, spotsMeshes[clickedHexIdx]]);
-    console.log('intersects', intersects);
-
     const closestIntersect = intersects.length > 0
-      ? intersects.sort((a, b) => a.distance - b.distance)[0].object
-      : null;
+    ? intersects.sort((a, b) => a.distance - b.distance)[0].object
+    : null;
 
-    if (closestIntersect === globe) {
-      // console.log('hide');
-    } else {
-      // console.log('show');
-    }
-
-
+    closestIntersect === globe
+    ? tooltip.classList.remove('tooltip--visible')
+    : tooltip.classList.add('tooltip--visible');
   }
 
   renderer.render(scene, camera);
