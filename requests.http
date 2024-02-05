@@ -1,0 +1,36 @@
+### Simple Occurrence API call
+GET https://api.gbif.org/v1/occurrence/search
+    ?kingdomKey=1
+    &phylumKey=44
+    &classKey=212
+    &limit=0
+    &offset=0
+
+### Get all species
+GET https://api.gbif.org/v1/species/search
+    ?rank=SPECIES
+    &highertaxon_key=212
+    # &limit=100
+    # &status=ACCEPTED
+    &facet=SPECIES
+    &speciesKey.facetLimit=50000
+    &speciesKey.facetOffset=0
+    &limit=0
+
+### Facets
+GET https://api.gbif.org/v1/occurrence/search
+    ?facet=scientificName
+    &scientificName.facetLimit=5000
+    &scientificName.facetOffset=0
+    # &facet=basisOfRecord
+    &limit=0
+
+### Facets
+GET https://api.gbif.org/v1/occurrence/search
+    ?kingdomKey=1
+    &phylumKey=44
+    &classKey=212
+    &facet=genusKey
+    &genusKey.facetLimit=1200000
+    &genusKey.facetOffset=0
+    &limit=0

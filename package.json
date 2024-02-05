@@ -8,18 +8,18 @@
   },
   "license": "MIT",
   "scripts": {
-    "start": "parcel src/index.html --open",
+    "start": "parcel src/index.html --open --port 8080",
     "build": "parcel build src/index.html --public-url ./",
     "deploy": "rm -rf dist && yarn build && cd dist && git init && git add . && git commit -m 'update' && git remote add origin git@github.com:Appsilon/world3d.git && git push --force origin master:gh-pages"
   },
   "devDependencies": {
-    "@parcel/transformer-sass": "^2.2.1",
-    "parcel": "^2.2.1",
-    "sass": "^1.49.0",
-    "three": "^0.136.0",
-    "three-conic-polygon-geometry": "^1.5.0",
-    "lil-gui": "^0.16.0",
-    "h3-js": "^3.7.2"
+    "@parcel/transformer-sass": "2.4.1",
+    "parcel": "2.4.1",
+    "sass": "1.49.7",
+    "three": "0.139.2",
+    "three-conic-polygon-geometry": "1.5.1",
+    "lil-gui": "0.16.1",
+    "h3-js": "3.7.2"
   },
   "dependencies": {}
 }

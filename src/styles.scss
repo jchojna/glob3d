@@ -1,13 +1,45 @@
+$time-tooltip: 0.2s;
+
 html,
 body {
   overflow: hidden;
 }
 
 body {
+  font-family: 'Open Sans', sans-serif;
   margin: 0;
   padding: 0;
 }
 
 canvas.webglobe {
   outline: none;
+}
+
+.tooltip {
+  background-color: rgba($color: rgb(26, 94, 219), $alpha: 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba($color: rgb(158, 185, 236), $alpha: 0.7);
+  box-shadow: 0 0 25px rgba($color: rgb(104, 145, 221), $alpha: 0.3);
+  color: #fff;
+  left: 10px;
+  opacity: 0;
+  padding: 20px;
+  position: absolute;
+  top: 10px;
+  transition: opacity $time-tooltip, visibility 0s $time-tooltip;
+  visibility: hidden;
+
+  &--visible {
+    opacity: 1;
+    transition: opacity $time-tooltip, visibility 0s;
+    visibility: visible;
+  }
+
+  .country {
+    margin: 0;
+  }
+
+  .occurrences {
+    margin: 0;
+  }
 }
