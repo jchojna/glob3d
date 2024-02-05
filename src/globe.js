@@ -148,7 +148,7 @@ const updateHexGlobeGeometry = (hexBins) => {
 const updateHexResultsGeometry = (bin) => {
   return new ConicPolygonGeometry(
     [getNewGeoJson(bin, HEX_MARGIN)],
-    GLOBE_RADIUS,                       // bottom height
+    GLOBE_RADIUS + 0.1,                       // bottom height
     GLOBE_RADIUS + bin.occurrences / 3, // top height
     true,                               // closed bottom
     true,                               // closed top
@@ -256,37 +256,62 @@ window.addEventListener('click', function() {
     clickedHexIdx = hoveredHexIdx;
     const clickedHexData = resultsData[clickedHexIdx]
     tooltipCountry.textContent = clickedHexData.country;
-    tooltipOccurrences.textContent = clickedHexData.occurrences;
+    tooltipOccurrences.textContent = `${clickedHexData.occurrences} occurrences`;
   }
 });
 
 // const clock = new THREE.Clock();
+const raycaster = new THREE.Raycaster();
+const raycaster2 = new THREE.Raycaster();
 
 const tick = () => {
   // const elapsedTime = clock.getElapsedTime();
 
   // Add Raycaster
   if (spotsMeshes.length > 0) {
-    const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(spotsMeshes);
+    const intersects = raycaster.intersectObjects([globe, ...spotsMeshes]);
     const intersectsMeshes = intersects.map(intersect => intersect.object);
     hoveredHexIdx = null;
 
     spotsMeshes.forEach((mesh, idx) => {
       if (intersectsMeshes.includes(mesh)) {
-        mesh.material.color.set('blue');
-        hoveredHexIdx = idx;
+        const closestIntersect = intersects
+          .sort((a, b) => a.distance - b.distance)[0]
+          .object;
+        if (closestIntersect === mesh) {
+          mesh.material.color.set('blue');
+          hoveredHexIdx = idx;
+        }
       } else {
-        mesh.material.color.set('red');
+        if (idx !== clickedHexIdx) mesh.material.color.set('red');
       }
     });
   }
+  // Handle tooltip visibility of the clicked hex.
   if (clickedHexIdx !== null) {
     const clickedHexData = resultsData[clickedHexIdx]
     const polarCoordinates = clickedHexData.coordinates;
     const pxPosition = getPixelPositionFromPolarCoords(polarCoordinates);
     tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+
+    const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1]);
+    const point = new THREE.Vector3(x, y, z).project(camera);
+    raycaster2.setFromCamera(point, camera);
+    const intersects = raycaster2.intersectObjects([globe, spotsMeshes[clickedHexIdx]]);
+    console.log('intersects', intersects);
+
+    const closestIntersect = intersects.length > 0
+      ? intersects.sort((a, b) => a.distance - b.distance)[0].object
+      : null;
+
+    if (closestIntersect === globe) {
+      // console.log('hide');
+    } else {
+      // console.log('show');
+    }
+
+
   }
 
   renderer.render(scene, camera);
