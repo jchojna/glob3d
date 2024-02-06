@@ -67,8 +67,8 @@ class World {
     this.globe = new THREE.Mesh(this.solidGlobeGeometry, this.solidGlobeMaterial);
     // camera
     this.camera = new THREE.PerspectiveCamera(55, this.aspectRatio, 1, 2000);
-    this.camera.position.z = 150;
-    this.camera.position.y = 150;
+    this.camera.position.z = 200;
+    this.camera.position.y = 200;
     // controls
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
@@ -128,15 +128,14 @@ class World {
 
   aggregateData(results) {
     return results
-      // Filter out results with undefined coordinates.
-      .filter(({ decimalLatitude, decimalLongitude }) => decimalLatitude && decimalLongitude)
-      .map(result => {
-        const { country, decimalLatitude, decimalLongitude } = result;
-        const h3Index = geoToH3(decimalLatitude, decimalLongitude, /* HEX_RES */ 3);
+      .map(({ name, coordinates, date, country }) => {
+        const h3Index = geoToH3(coordinates[0], coordinates[1], this.hexRes);
         const hexBin = getHexBin(h3Index);
         return {
+          name,
+          date,
           country,
-          coordinates: [decimalLatitude, decimalLongitude],
+          coordinates,
           ...hexBin,
           occurrences: 1
         }
@@ -166,15 +165,13 @@ class World {
     this.controls.update();
     return window.requestAnimationFrame(() => this.tick());
   }
+
+  initialize(data) {
+    this.tick();
+    this.createHexGlobe();
+    this.visualizeResult(this.aggregateData(data));
+  }
 }
-
-
-
-
-
-
-
-// return false;
 
 // #endregion //////////////////////////////////////////////////////////////////
 // #region // Debug ////////////////////////////////////////////////////////////
@@ -182,8 +179,6 @@ class World {
 // const gui = new dat.GUI();
 // gui.addColor(solidGlobeMaterial, 'color');
 // gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // #region // outside script ///////////////////////////////////////////////////
@@ -228,11 +223,9 @@ fetch(facetsUrl)
       .then(({ results }) => {
         const inputData = getInputData(results);
         console.log(inputData)
+        // refactor - one call?
         const worldInstance = new World(120);
-        worldInstance.tick();
-        worldInstance.createHexGlobe();
-        const aggr = worldInstance.aggregateData(inputData);
-        worldInstance.visualizeResult(aggr);
+        worldInstance.initialize(inputData);
       });
       return genus;
   });
@@ -249,17 +242,19 @@ const getInputData = (dataArr) => {
     kingdom,
     species,
     eventDate
-  }) => ({
-    name: species,
-    decimalLatitude,
-    decimalLongitude,
-    date: new Date(eventDate),
-    country,
-    // continent,
-    // countryCode,
-    // genus,
-    // kingdom
-  }))
+  }) => {
+
+    return decimalLatitude && decimalLatitude ? {
+      name: species,
+      coordinates: [decimalLatitude, decimalLongitude],
+      date: new Date(eventDate),
+      country,
+      // continent,
+      // countryCode,
+      // genus,
+      // kingdom
+    } : null;
+  }).filter(e => e);
 }
 
 // #endregion //////////////////////////////////////////////////////////////////
