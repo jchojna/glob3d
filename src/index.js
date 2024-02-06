@@ -1,1 +1,1 @@
-export { default } from './globe';
+export { default } from './js/globe';

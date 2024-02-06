@@ -1,6 +1,5 @@
 //// @ts-check
 
-////////////////////////////////////////////////////////////////////////////////
 // #region // Imports //////////////////////////////////////////////////////////
 
 import {
@@ -11,7 +10,7 @@ import {
   polar2Cartesian
 } from './globeHelpers';
 
-import './styles.scss';
+import '../styles.scss';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { geoToH3 } from 'h3-js';
@@ -22,8 +21,8 @@ import * as _bfg from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 const bfg = Object.assign({}, _bfg);
 const BufferGeometryUtils = bfg.BufferGeometryUtils || bfg;
 
-import json from 'url:./assets/data/world_low_geo.json';
-import matcapImage from 'url:./assets/matcaps/matcap_1.png';
+import json from 'url:../assets/data/world_low_geo.json';
+import matcapImage from 'url:../assets/matcaps/matcap_1.png';
 
 // #endregion //////////////////////////////////////////////////////////////////
 // #region // Constants ////////////////////////////////////////////////////////
@@ -35,20 +34,6 @@ const HEX_CURVATURE_RES = 5;
 
 const textureLoader = new THREE.TextureLoader();
 const matcapTexture = textureLoader.load(matcapImage);
-
-// #endregion //////////////////////////////////////////////////////////////////
-// #region // URLs /////////////////////////////////////////////////////////////
-
-const baseGbifUrl = 'https://api.gbif.org/v1/occurrence/search';
-const facetsUrl = `${baseGbifUrl}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;
-
-const getGenusDataUrl = (baseUrl, genus, limit) => {
-  return `${baseUrl}?genusKey=${genus}&limit=${limit}`;
-}
-
-const getWikiUrl = (title, size = 300) => {
-  return `https://en.wikipedia.org/w/api.php?action=query&titles=${title}&prop=pageimages&format=json&pithumbsize=${size}&origin=*`;
-}
 
 // #endregion //////////////////////////////////////////////////////////////////
 // #region // Debug ////////////////////////////////////////////////////////////
@@ -140,6 +125,17 @@ const updateHexResultsGeometry = (bin) => {
 
 ////////////////////////////////////////////////////////////////////////////////
 // #region // asynchronous code ////////////////////////////////////////////////
+
+const baseGbifUrl = 'https://api.gbif.org/v1/occurrence/search';
+const facetsUrl = `${baseGbifUrl}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;
+
+const getGenusDataUrl = (baseUrl, genus, limit) => {
+  return `${baseUrl}?genusKey=${genus}&limit=${limit}`;
+}
+
+const getWikiUrl = (title, size = 300) => {
+  return `https://en.wikipedia.org/w/api.php?action=query&titles=${title}&prop=pageimages&format=json&pithumbsize=${size}&origin=*`;
+}
 
 // Create hexGlobe object.
 fetch(json).then(res => res.json()).then(({ features }) => {
