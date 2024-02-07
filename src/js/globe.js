@@ -210,7 +210,7 @@ class World {
       this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
   
       // check collisions
-      const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.hexGlobe);
+      const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.globeRadius);
       const point = new THREE.Vector3(x, y, z).project(this.camera);
       this.raycaster2.setFromCamera(point, this.camera);
       const intersects = this.raycaster2.intersectObjects([this.globe, this.hexResults[this.clickedHexIdx]]);
