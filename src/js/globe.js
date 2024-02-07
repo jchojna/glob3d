@@ -187,34 +187,30 @@ export default class WebGLobe {
             .object;
           if (closestIntersect === mesh) {
             mesh.material.color.set('blue');
-            this.hoveredHexIdx = idx;
+            const hoveredHexData = this.aggregatedData[idx];
+            const polarCoordinates = hoveredHexData.center;
+            const pxPosition = this.getPixelPositionFromPolarCoords(polarCoordinates);
+            this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+            this.tooltipCountry.textContent = hoveredHexData.country;
+            this.tooltipOccurrences.textContent = `${hoveredHexData.occurrences} occurrences`;
+            // check collisions
+            const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.globeRadius);
+            const point = new THREE.Vector3(x, y, z).project(this.camera);
+            this.raycaster2.setFromCamera(point, this.camera);
+            const intersects = this.raycaster2.intersectObjects([this.globe, this.hexResults[idx]]);
+            const closestIntersect = intersects.length > 0
+            ? intersects.sort((a, b) => a.distance - b.distance)[0].object
+            : null;
+        
+            closestIntersect === this.globe
+            ? this.tooltip.classList.remove('tooltip--visible')
+            : this.tooltip.classList.add('tooltip--visible');
           }
         } else {
           if (idx !== this.clickedHexIdx) mesh.material.color.set('red');
         }
       });
     }
-    // Handle tooltip visibility of the clicked hex.
-    if (this.clickedHexIdx !== null) {
-      const clickedHexData = this.aggregatedData[this.clickedHexIdx]
-      const polarCoordinates = clickedHexData.center;
-      const pxPosition = this.getPixelPositionFromPolarCoords(polarCoordinates);
-      this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
-  
-      // check collisions
-      const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.globeRadius);
-      const point = new THREE.Vector3(x, y, z).project(this.camera);
-      this.raycaster2.setFromCamera(point, this.camera);
-      const intersects = this.raycaster2.intersectObjects([this.globe, this.hexResults[this.clickedHexIdx]]);
-      const closestIntersect = intersects.length > 0
-      ? intersects.sort((a, b) => a.distance - b.distance)[0].object
-      : null;
-  
-      closestIntersect === this.globe
-      ? this.tooltip.classList.remove('tooltip--visible')
-      : this.tooltip.classList.add('tooltip--visible');
-    }
-
     this.renderer.render(this.scene, this.camera);
     this.controls.update();
     return window.requestAnimationFrame(() => this.tick());
@@ -228,14 +224,6 @@ export default class WebGLobe {
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = e.clientX / this.sizes.width * 2 - 1;
       this.mouse.y = - (e.clientY / this.sizes.height * 2 - 1);
-    });
-    window.addEventListener('click', () => {
-      if (this.hoveredHexIdx !== null) {
-        this.clickedHexIdx = this.hoveredHexIdx;
-        const clickedHexData = this.aggregatedData[this.clickedHexIdx];
-        this.tooltipCountry.textContent = clickedHexData.country;
-        this.tooltipOccurrences.textContent = `${clickedHexData.occurrences} occurrences`;
-      }
     });
     window.addEventListener('resize', () => {
       this.sizes.width = window.innerWidth;
