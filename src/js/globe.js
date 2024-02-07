@@ -48,7 +48,7 @@ class World {
     this.hexGlobeMaterial = new THREE.MeshMatcapMaterial();
     this.hexGlobeMaterial.matcap = this.matcapTexture;
     this.hexGlobe = new THREE.Mesh(this.hexGlobeGeometry, this.hexGlobeMaterial);
-    this.spotsMeshes = [];
+    this.hexResults = [];
     this.aggregatedData = [];
     // sizes
     this.sizes = {
@@ -65,6 +65,10 @@ class World {
       wireframe: false
     });
     this.globe = new THREE.Mesh(this.solidGlobeGeometry, this.solidGlobeMaterial);
+    // mouse
+    this.mouse = new THREE.Vector2();
+    this.hoveredHexIdx = null;
+    this.clickedHexIdx = null;
     // camera
     this.camera = new THREE.PerspectiveCamera(55, this.aspectRatio, 1, 2000);
     this.camera.position.z = 200;
@@ -72,6 +76,9 @@ class World {
     // controls
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
+    // raycaster
+    this.raycaster = new THREE.Raycaster();
+    this.raycaster2 = new THREE.Raycaster();
     // renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -152,15 +159,70 @@ class World {
   }
 
   visualizeResult(aggregatedData) {
-    return aggregatedData.map(bin => {
+    const hexResults = aggregatedData.map(bin => {
       return new THREE.Mesh(
         this.updateHexResultsGeometry(bin),
         new THREE.MeshBasicMaterial({color: "red", side: THREE.DoubleSide})
       );
-    }).forEach(spot => this.scene.add(spot));
+    });
+    hexResults.forEach(hex => this.scene.add(hex));
+    return hexResults;
+  }
+
+  getPixelPositionFromPolarCoords(polarCoordinates) {
+    const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.globeRadius);
+    const point = new THREE.Vector3(x, y, z).project(this.camera);
+    return {
+      x: (point.x + 1) / 2 * this.sizes.width,
+      y: (point.y - 1) / 2 * this.sizes.height * -1
+    }   
   }
 
   tick() {
+    // const elapsedTime = clock.getElapsedTime();
+  
+    // Add Raycaster
+    if (this.hexResults.length > 0) {
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      const intersects = this.raycaster.intersectObjects([this.globe, ...this.hexResults]);
+      const intersectsMeshes = intersects.map(intersect => intersect.object);
+      this.hoveredHexIdx = null;
+  
+      this.hexResults.forEach((mesh, idx) => {
+        if (intersectsMeshes.includes(mesh)) {
+          const closestIntersect = intersects
+            .sort((a, b) => a.distance - b.distance)[0]
+            .object;
+          if (closestIntersect === mesh) {
+            mesh.material.color.set('blue');
+            this.hoveredHexIdx = idx;
+          }
+        } else {
+          if (idx !== this.clickedHexIdx) mesh.material.color.set('red');
+        }
+      });
+    }
+    // Handle tooltip visibility of the clicked hex.
+    if (this.clickedHexIdx !== null) {
+      const clickedHexData = this.aggregatedData[this.clickedHexIdx]
+      const polarCoordinates = clickedHexData.center;
+      const pxPosition = this.getPixelPositionFromPolarCoords(polarCoordinates);
+      this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+  
+      // check collisions
+      const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], this.hexGlobe);
+      const point = new THREE.Vector3(x, y, z).project(this.camera);
+      this.raycaster2.setFromCamera(point, this.camera);
+      const intersects = this.raycaster2.intersectObjects([this.globe, this.hexResults[this.clickedHexIdx]]);
+      const closestIntersect = intersects.length > 0
+      ? intersects.sort((a, b) => a.distance - b.distance)[0].object
+      : null;
+  
+      closestIntersect === this.globe
+      ? this.tooltip.classList.remove('tooltip--visible')
+      : this.tooltip.classList.add('tooltip--visible');
+    }
+
     this.renderer.render(this.scene, this.camera);
     this.controls.update();
     return window.requestAnimationFrame(() => this.tick());
@@ -169,7 +231,28 @@ class World {
   initialize(data) {
     this.tick();
     this.createHexGlobe();
-    this.visualizeResult(this.aggregateData(data));
+    this.aggregatedData = this.aggregateData(data);
+    this.hexResults = this.visualizeResult(this.aggregatedData);
+    window.addEventListener('mousemove', (e) => {
+      this.mouse.x = e.clientX / this.sizes.width * 2 - 1;
+      this.mouse.y = - (e.clientY / this.sizes.height * 2 - 1);
+    });
+    window.addEventListener('click', () => {
+      if (this.hoveredHexIdx !== null) {
+        this.clickedHexIdx = this.hoveredHexIdx;
+        const clickedHexData = this.aggregatedData[this.clickedHexIdx];
+        this.tooltipCountry.textContent = clickedHexData.country;
+        this.tooltipOccurrences.textContent = `${clickedHexData.occurrences} occurrences`;
+      }
+    });
+    window.addEventListener('resize', () => {
+      this.sizes.width = window.innerWidth;
+      this.sizes.height = window.innerHeight;
+      this.aspectRatio = this.sizes.width / this.sizes.height;
+      this.camera.aspect = this.aspectRatio;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(this.sizes.width, this.sizes.height);
+    });
   }
 }
 
@@ -180,8 +263,8 @@ class World {
 // gui.addColor(solidGlobeMaterial, 'color');
 // gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
 
-////////////////////////////////////////////////////////////////////////////////
-// #region // outside script ///////////////////////////////////////////////////
+// #endregion //////////////////////////////////////////////////////////////////
+// #region // Outside script ///////////////////////////////////////////////////
 
 const baseGbifUrl = 'https://api.gbif.org/v1/occurrence/search';
 const facetsUrl = `${baseGbifUrl}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;
@@ -222,7 +305,8 @@ fetch(facetsUrl)
       .then(res => res.json())
       .then(({ results }) => {
         const inputData = getInputData(results);
-        console.log(inputData)
+        // console.log(inputData);
+        
         // refactor - one call?
         const worldInstance = new World(120);
         worldInstance.initialize(inputData);
@@ -258,98 +342,3 @@ const getInputData = (dataArr) => {
 }
 
 // #endregion //////////////////////////////////////////////////////////////////
-return false;
-// Handle mouse
-const mouse = new THREE.Vector2();
-let hoveredHexIdx = null;
-let clickedHexIdx = null;
-
-window.addEventListener('mousemove', (e) => {
-  mouse.x = e.clientX / sizes.width * 2 - 1;
-  mouse.y = - (e.clientY / sizes.height * 2 - 1);
-});
-
-const getPixelPositionFromPolarCoords = (polarCoordinates) => {
-  const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], GLOBE_RADIUS);
-  const point = new THREE.Vector3(x, y, z).project(camera);
-  return {
-    x: (point.x + 1) / 2 * sizes.width,
-    y: (point.y - 1) / 2 * sizes.height * -1
-  }   
-}
-
-window.addEventListener('click', function() {
-  if (hoveredHexIdx !== null) {
-    clickedHexIdx = hoveredHexIdx;
-    const clickedHexData = resultsData[clickedHexIdx]
-    tooltipCountry.textContent = clickedHexData.country;
-    tooltipOccurrences.textContent = `${clickedHexData.occurrences} occurrences`;
-  }
-});
-
-// const clock = new THREE.Clock();
-const raycaster = new THREE.Raycaster();
-const raycaster2 = new THREE.Raycaster();
-
-////////////////////////////////////////////////////////////////////////////////
-// #region // tick function ////////////////////////////////////////////////////
-const tick = () => {
-  // const elapsedTime = clock.getElapsedTime();
-
-  // Add Raycaster
-  // if (spotsMeshes.length > 0) {
-  //   raycaster.setFromCamera(mouse, camera);
-  //   const intersects = raycaster.intersectObjects([globe, ...spotsMeshes]);
-  //   const intersectsMeshes = intersects.map(intersect => intersect.object);
-  //   hoveredHexIdx = null;
-
-  //   spotsMeshes.forEach((mesh, idx) => {
-  //     if (intersectsMeshes.includes(mesh)) {
-  //       const closestIntersect = intersects
-  //         .sort((a, b) => a.distance - b.distance)[0]
-  //         .object;
-  //       if (closestIntersect === mesh) {
-  //         mesh.material.color.set('blue');
-  //         hoveredHexIdx = idx;
-  //       }
-  //     } else {
-  //       if (idx !== clickedHexIdx) mesh.material.color.set('red');
-  //     }
-  //   });
-  // }
-  // Handle tooltip visibility of the clicked hex.
-  if (clickedHexIdx !== null) {
-    const clickedHexData = resultsData[clickedHexIdx]
-    const polarCoordinates = clickedHexData.center;
-    const pxPosition = getPixelPositionFromPolarCoords(polarCoordinates);
-    tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
-
-    // check collisions
-    const { x, y, z } = polar2Cartesian(polarCoordinates[0], polarCoordinates[1], GLOBE_RADIUS);
-    const point = new THREE.Vector3(x, y, z).project(camera);
-    raycaster2.setFromCamera(point, camera);
-    const intersects = raycaster2.intersectObjects([globe, spotsMeshes[clickedHexIdx]]);
-    const closestIntersect = intersects.length > 0
-    ? intersects.sort((a, b) => a.distance - b.distance)[0].object
-    : null;
-
-    closestIntersect === globe
-    ? tooltip.classList.remove('tooltip--visible')
-    : tooltip.classList.add('tooltip--visible');
-  }
-
-  renderer.render(scene, camera);
-  controls.update();
-  window.requestAnimationFrame(tick);
-}
-// #endregion //////////////////////////////////////////////////////////////////
-tick();
-
-window.addEventListener('resize', () => {
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-  aspectRatio = sizes.width / sizes.height;
-  camera.aspect = aspectRatio;
-  camera.updateProjectionMatrix();
-  renderer.setSize(sizes.width, sizes.height);
-});
