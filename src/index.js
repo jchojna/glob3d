@@ -43,7 +43,7 @@ fetch(facetsUrl)
         // console.log(inputData);
         
         // refactor - one call?
-        const worldInstance = new WebGLobe(120);
+        const worldInstance = new WebGLobe(100, 3, 0.2, 5, true);
         worldInstance.initialize(inputData);
       });
       return genus;

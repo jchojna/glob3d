@@ -19,7 +19,8 @@ export default class WebGLobe {
     globeRadius = 100,
     hexRes = 3,
     hexMargin = 0.2,
-    hexCurvatureRes = 5
+    hexCurvatureRes = 5,
+    debugMode = false,
   ) {
     this.bfg = Object.assign({}, _bfg);
     this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
@@ -29,6 +30,7 @@ export default class WebGLobe {
     this.hexCurvatureRes = hexCurvatureRes;
     this.textureLoader = new THREE.TextureLoader();
     this.matcapTexture = this.textureLoader.load(matcapImage);
+    this.debugMode = debugMode;
     // scene
     this.scene = new THREE.Scene();
     this.canvas = document.querySelector('canvas.webglobe');
@@ -170,6 +172,12 @@ export default class WebGLobe {
     }   
   }
 
+  enableDebugMode() {
+    const gui = new dat.GUI();
+    gui.addColor(this.solidGlobeMaterial, 'color');
+    gui.add(this.solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
+  }
+
   tick() {
     if (this.hexResults.length > 0) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
@@ -219,6 +227,7 @@ export default class WebGLobe {
     this.createHexGlobe();
     this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);
+    if (this.debugMode) this.enableDebugMode();
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = e.clientX / this.sizes.width * 2 - 1;
       this.mouse.y = - (e.clientY / this.sizes.height * 2 - 1);
@@ -233,7 +242,3 @@ export default class WebGLobe {
     });
   }
 }
-
-// const gui = new dat.GUI();
-// gui.addColor(solidGlobeMaterial, 'color');
-// gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
