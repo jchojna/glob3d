@@ -159,7 +159,9 @@ export default class WebGLobe {
         new THREE.MeshBasicMaterial({color: "red", side: THREE.DoubleSide})
       );
     });
-    hexResults.forEach(hex => this.scene.add(hex));
+    this.hexResultsGroup = new THREE.Group();
+    hexResults.forEach(hex => this.hexResultsGroup.add(hex));
+    this.scene.add(this.hexResultsGroup);
     return hexResults;
   }
 
@@ -220,6 +222,19 @@ export default class WebGLobe {
     this.renderer.render(this.scene, this.camera);
     this.controls.update();
     return window.requestAnimationFrame(() => this.tick());
+  }
+
+  clean() {
+    this.aggregatedData = [];
+    this.hexResults = [];
+    this.hoveredHexIdx = null;
+    this.hexResultsGroup.clear();
+    this.tooltip.classList.remove('tooltip--visible')
+  }
+
+  update(data) {
+    this.aggregatedData = this.aggregateData(data);
+    this.hexResults = this.visualizeResult(this.aggregatedData);
   }
 
   initialize(data) {
