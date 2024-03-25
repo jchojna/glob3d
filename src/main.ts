@@ -1,5 +1,6 @@
 import WebGLobe from './js/globe';
 import { getRandomInt } from './js/globeHelpers';
+import './style.css';
 
 let worldInstance = null;
 const updateButton = document.querySelector('.update-button');
