@@ -1,18 +1,17 @@
+import { latLngToCell } from 'h3-js';
+import * as dat from 'lil-gui';
+import * as THREE from 'three';
+import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
+import * as _bfg from 'three/addons/utils/BufferGeometryUtils.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import json from '../assets/data/world_low_geo.json';
+import '../styles.scss';
 import {
   getH3Indexes,
   getHexBin,
   getNewGeoJson,
   polar2Cartesian,
 } from './globeHelpers';
-import '../styles.scss';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { geoToH3 } from 'h3-js';
-import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
-import * as dat from 'lil-gui';
-import * as _bfg from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import json from 'url:../assets/data/world_low_geo.json';
-import matcapImage from 'url:../assets/matcaps/matcap_1.png';
 
 interface WebGLobeI {
   bfg: '';
@@ -23,9 +22,9 @@ type TestI = {
   someVal: string;
 };
 
-export class WebGLobe implements WebGLobeI {
+export default class WebGLobe implements WebGLobeI {
   bfg;
-  BufferGeometryUtils: { mergeBufferGeometries: (arg0: any) => any };
+  BufferGeometryUtils: { mergeGeometries: (arg0: any) => any };
   globeRadius: number;
   hexRes: number;
   hexMargin: number;
@@ -71,7 +70,7 @@ export class WebGLobe implements WebGLobeI {
     this.hexMargin = hexMargin;
     this.hexCurvatureRes = hexCurvatureRes;
     this.textureLoader = new THREE.TextureLoader();
-    this.matcapTexture = this.textureLoader.load(matcapImage);
+    this.matcapTexture = this.textureLoader.load('/textures/matcap_1.png');
     this.debugMode = debugMode;
     // scene
     this.scene = new THREE.Scene();
@@ -96,7 +95,7 @@ export class WebGLobe implements WebGLobeI {
     };
     this.aspectRatio = this.sizes.width / this.sizes.height;
     // globe
-    this.solidGlobeGeometry = new THREE.SphereBufferGeometry(
+    this.solidGlobeGeometry = new THREE.SphereGeometry(
       this.globeRadius,
       32,
       32
@@ -137,23 +136,17 @@ export class WebGLobe implements WebGLobeI {
   }
 
   createHexGlobe() {
-    fetch(json)
-      .then((res) => res.json())
-      .then(({ features }) => {
-        const h3Indexes = getH3Indexes(features, this.hexRes);
-        const hexBins = h3Indexes.map((index) => getHexBin(index));
-        this.hexGlobe.geometry = this.updateHexGlobeGeometry(hexBins);
-        this.scene.add(this.hexGlobe);
-      })
-      .catch((err) => {
-        console.log('Error Reading data ' + err);
-      });
+    const { features } = json;
+    const h3Indexes = getH3Indexes(features, this.hexRes);
+    const hexBins = h3Indexes.map((index) => getHexBin(index));
+    this.hexGlobe.geometry = this.updateHexGlobeGeometry(hexBins);
+    this.scene.add(this.hexGlobe);
   }
 
   updateHexGlobeGeometry(hexBins: any[]) {
     return !hexBins.length
       ? new THREE.BufferGeometry()
-      : this.BufferGeometryUtils.mergeBufferGeometries(
+      : this.BufferGeometryUtils.mergeGeometries(
           hexBins.map((hex: any) => {
             const geoJson = getNewGeoJson(hex, this.hexMargin);
             return new ConicPolygonGeometry(
@@ -186,7 +179,11 @@ export class WebGLobe implements WebGLobeI {
   ) {
     return results
       .map(({ name, coordinates, date, country }) => {
-        const h3Index = geoToH3(coordinates[0], coordinates[1], this.hexRes);
+        const h3Index = latLngToCell(
+          coordinates[0],
+          coordinates[1],
+          this.hexRes
+        );
         const hexBin = getHexBin(h3Index);
         return {
           name,
