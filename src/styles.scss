@@ -26,12 +26,12 @@ canvas.webglobe {
   padding: 20px;
   position: absolute;
   top: 10px;
-  transition: opacity $time-tooltip, visibility 0s $time-tooltip;
+  transition: opacity $time-tooltip, transform 0.1s, visibility 0s $time-tooltip;
   visibility: hidden;
 
   &--visible {
     opacity: 1;
-    transition: opacity $time-tooltip, visibility 0s;
+    transition: opacity $time-tooltip, transform 0.1s, visibility 0s;
     visibility: visible;
   }
 
@@ -42,4 +42,10 @@ canvas.webglobe {
   .occurrences {
     margin: 0;
   }
+}
+
+.update-button {
+  left: 50px;
+  position: absolute;
+  top: 50px;
 }
