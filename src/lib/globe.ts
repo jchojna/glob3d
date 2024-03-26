@@ -2,9 +2,9 @@ import { latLngToCell } from 'h3-js';
 import * as dat from 'lil-gui';
 import * as THREE from 'three';
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as _bfg from 'three/addons/utils/BufferGeometryUtils.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import json from '../assets/data/world_low_geo.json';
+import json from '../data/world_low_geo.json';
 import '../styles.scss';
 import {
   getH3Indexes,
@@ -18,8 +18,14 @@ interface WebGLobeI {
   globeRadius: number;
 }
 
-type TestI = {
-  someVal: string;
+type GlobeData = {
+  country: string;
+  city: string;
+  coordinates: {
+    lon: number;
+    lat: number;
+  };
+  value: number;
 };
 
 export default class WebGLobe implements WebGLobeI {
@@ -42,7 +48,9 @@ export default class WebGLobe implements WebGLobeI {
   hexGlobeMaterial: THREE.MeshMatcapMaterial;
   hexGlobe: THREE.Mesh<any, any>;
   hexResults: any[];
-  aggregatedData: any[];
+  hexResultsGroup: any[];
+  preProcessedData: GlobeData[];
+  aggregatedData: GlobeData[];
   sizes: { width: any; height: any };
   aspectRatio: number;
   solidGlobeGeometry: any;
@@ -58,7 +66,7 @@ export default class WebGLobe implements WebGLobeI {
   renderer: THREE.WebGLRenderer;
 
   constructor(
-    root: Element,
+    root: HTMLElement,
     globeRadius: number = 100,
     hexRes: number = 3,
     hexMargin: number = 0.2,
@@ -72,6 +80,7 @@ export default class WebGLobe implements WebGLobeI {
     this.tooltipOccurrences = document.querySelector('.tooltip > .occurrences');
     this.bfg = Object.assign({}, _bfg);
     this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
+    this.BufferGeometryUtils = _bfg;
     this.globeRadius = globeRadius;
     this.hexRes = hexRes;
     this.hexMargin = hexMargin;
@@ -89,7 +98,9 @@ export default class WebGLobe implements WebGLobeI {
       this.hexGlobeGeometry,
       this.hexGlobeMaterial
     );
+    this.hexResultsGroup = new THREE.Group();
     this.hexResults = [];
+    this.preProcessedData = [];
     this.aggregatedData = [];
     // sizes
     this.sizes = {
@@ -185,11 +196,12 @@ export default class WebGLobe implements WebGLobeI {
         );
   }
 
-  updateHexResultsGeometry(bin: { occurrences: number }) {
+  updateHexResultsGeometry(bin: { value: number }) {
+    console.log(bin);
     return new ConicPolygonGeometry(
       [getNewGeoJson(bin, this.hexMargin)],
       this.globeRadius + 0.1,
-      this.globeRadius + 0.1 + bin.occurrences / 3,
+      this.globeRadius + 0.1 + bin.value / 500000,
       true,
       true,
       true,
@@ -197,47 +209,45 @@ export default class WebGLobe implements WebGLobeI {
     );
   }
 
-  aggregateData(
-    results: { name: any; coordinates: any; date: any; country: any }[]
-  ) {
-    return results
-      .map(({ name, coordinates, date, country }) => {
-        const h3Index = latLngToCell(
-          coordinates[0],
-          coordinates[1],
-          this.hexRes
-        );
-        const hexBin = getHexBin(h3Index);
-        return {
-          name,
-          date,
-          country,
-          coordinates,
-          ...hexBin,
-          occurrences: 1,
-        };
-      })
-      .reduce((a: any[], b: { h3Index: any }) => {
-        const idx = a.findIndex(
-          (elem: { h3Index: any }) => elem.h3Index === b.h3Index
-        );
-        if (idx >= 0) {
-          a[idx].occurrences++;
-          return a;
-        } else {
-          return [...a, b];
-        }
-      }, []);
+  preProcessData(data: GlobeData[]) {
+    return data.map(({ city, country, coordinates, value }) => {
+      const h3Index = latLngToCell(
+        coordinates.lat,
+        coordinates.lon,
+        this.hexRes
+      );
+      const hexBin = getHexBin(h3Index);
+      return {
+        city,
+        country,
+        coordinates: [coordinates.lat, coordinates.lon],
+        ...hexBin,
+        value,
+      };
+    });
+  }
+
+  aggregateData(data: GlobeData[]) {
+    return data.reduce((a: any[], b: { h3Index: any; value: number }) => {
+      const idx = a.findIndex(
+        (elem: { h3Index: any }) => elem.h3Index === b.h3Index
+      );
+      if (idx >= 0) {
+        a[idx].value += b.value;
+        return a;
+      } else {
+        return [...a, b];
+      }
+    }, []);
   }
 
   visualizeResult(aggregatedData: any[]) {
     const hexResults = aggregatedData.map((bin: any) => {
       return new THREE.Mesh(
         this.updateHexResultsGeometry(bin),
-        new THREE.MeshBasicMaterial({ color: 'red', side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ color: 'blue', side: THREE.DoubleSide })
       );
     });
-    this.hexResultsGroup = new THREE.Group();
     hexResults.forEach((hex: any) => this.hexResultsGroup.add(hex));
     this.scene.add(this.hexResultsGroup);
     return hexResults;
@@ -287,7 +297,7 @@ export default class WebGLobe implements WebGLobeI {
               this.hoveredHexIdx = idx;
             }
           } else {
-            mesh.material.color.set('red');
+            mesh.material.color.set('green');
           }
         }
       );
@@ -330,6 +340,7 @@ export default class WebGLobe implements WebGLobeI {
   }
 
   clean() {
+    this.preProcessedData = [];
     this.aggregatedData = [];
     this.hexResults = [];
     this.hoveredHexIdx = null;
@@ -338,14 +349,16 @@ export default class WebGLobe implements WebGLobeI {
   }
 
   update(data: any) {
-    this.aggregatedData = this.aggregateData(data);
+    this.preProcessedData = this.preProcessData(data);
+    this.aggregatedData = this.aggregateData(this.preProcessedData);
     this.hexResults = this.visualizeResult(this.aggregatedData);
   }
 
   initialize(data: any) {
     this.tick();
     this.createHexGlobe();
-    this.aggregatedData = this.aggregateData(data);
+    this.preProcessedData = this.preProcessData(data);
+    this.aggregatedData = this.aggregateData(this.preProcessedData);
     this.hexResults = this.visualizeResult(this.aggregatedData);
     if (this.debugMode) this.enableDebugMode();
     window.addEventListener('mousemove', (e) => {

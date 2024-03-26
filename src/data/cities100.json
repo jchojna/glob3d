@@ -94,8 +94,7 @@
       "geoname_id": "1816670",
       "name": "Beijing",
       "ascii_name": "Beijing",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "39.9075",
       "longitude": "116.39723",
       "feature_class": "P",
@@ -218,8 +217,7 @@
       "geoname_id": "1809858",
       "name": "Guangzhou",
       "ascii_name": "Guangzhou",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "23.11667",
       "longitude": "113.25",
       "feature_class": "P",
@@ -2263,8 +2261,7 @@
       "geoname_id": "2643743",
       "name": "London",
       "ascii_name": "London",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "51.50853",
       "longitude": "-0.12574",
       "feature_class": "P",
@@ -4481,8 +4478,7 @@
       "geoname_id": "361058",
       "name": "Alexandria",
       "ascii_name": "Alexandria",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "31.20176",
       "longitude": "29.91582",
       "feature_class": "P",
@@ -5212,8 +5208,7 @@
       "geoname_id": "3369157",
       "name": "Cape Town",
       "ascii_name": "Cape Town",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "-33.92584",
       "longitude": "18.42322",
       "feature_class": "P",
@@ -6727,8 +6722,7 @@
       "geoname_id": "5368361",
       "name": "Los Angeles",
       "ascii_name": "Los Angeles",
-      "alternate_names": [(too many elements to preview)
-      ],
+      "alternate_names": ["too many elements to preview"],
       "latitude": "34.05223",
       "longitude": "-118.24368",
       "feature_class": "P",
