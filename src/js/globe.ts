@@ -33,6 +33,7 @@ export default class WebGLobe implements WebGLobeI {
   matcapTexture: THREE.Texture | null;
   debugMode: boolean;
   scene: THREE.Scene;
+  root: HTMLElement;
   canvas: HTMLElement | null;
   tooltip: HTMLElement | null;
   tooltipCountry: HTMLElement | null;
@@ -57,12 +58,18 @@ export default class WebGLobe implements WebGLobeI {
   renderer: THREE.WebGLRenderer;
 
   constructor(
+    root: Element,
     globeRadius: number = 100,
     hexRes: number = 3,
     hexMargin: number = 0.2,
     hexCurvatureRes: number = 5,
     debugMode: boolean = false
   ) {
+    this.root = root;
+    this.canvas = this.createCanvas();
+    this.tooltip = this.createTooltip();
+    this.tooltipCountry = document.querySelector('.tooltip > .country');
+    this.tooltipOccurrences = document.querySelector('.tooltip > .occurrences');
     this.bfg = Object.assign({}, _bfg);
     this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
     this.globeRadius = globeRadius;
@@ -74,10 +81,6 @@ export default class WebGLobe implements WebGLobeI {
     this.debugMode = debugMode;
     // scene
     this.scene = new THREE.Scene();
-    this.canvas = document.querySelector('canvas.webglobe');
-    this.tooltip = document.querySelector('.tooltip');
-    this.tooltipCountry = document.querySelector('.tooltip > .country');
-    this.tooltipOccurrences = document.querySelector('.tooltip > .occurrences');
     // hexagonal globe
     this.hexGlobeGeometry = undefined;
     this.hexGlobeMaterial = new THREE.MeshMatcapMaterial();
@@ -133,6 +136,26 @@ export default class WebGLobe implements WebGLobeI {
     this.scene.add(this.camera);
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.render(this.scene, this.camera);
+  }
+
+  createCanvas() {
+    const canvas = document.createElement('canvas');
+    canvas.classList.add('webglobe');
+    this.root.appendChild(canvas);
+    return canvas;
+  }
+
+  createTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.classList.add('tooltip');
+    this.tooltipCountry = document.createElement('p');
+    this.tooltipCountry.classList.add('country');
+    this.tooltipOccurrences = document.createElement('p');
+    this.tooltipOccurrences.classList.add('occurrences');
+    tooltip.appendChild(this.tooltipCountry);
+    tooltip.appendChild(this.tooltipOccurrences);
+    this.root.appendChild(tooltip);
+    return tooltip;
   }
 
   createHexGlobe() {
