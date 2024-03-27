@@ -1,13 +1,11 @@
-import {
-  cellToBoundary,
-  cellToLatLng,
-  latLngToCell,
-  polygonToCells,
-} from 'h3-js';
+import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
 
 // Get H3 indexes for all hexagons in Polygon or MultiPolygon
-export const getH3Indexes = (features, resolution) => {
-  const indexes = [];
+export const getH3Indexes = (
+  features: GeojsonFeature[],
+  resolution: number
+) => {
+  const indexes: string[] = [];
   features.forEach(({ geometry }) => {
     const { type, coordinates } = geometry;
     if (type === 'Polygon') {
@@ -27,7 +25,7 @@ export const getH3Indexes = (features, resolution) => {
   return indexes;
 };
 
-export const getHexBin = (h3Index) => {
+export const getHexBin = (h3Index: string) => {
   // Get center of a given hexagon - point as a [lat, lng] pair.
   const center = cellToLatLng(h3Index);
   // Get the vertices of a given hexagon as an array of [lat, lng] points.
@@ -43,15 +41,16 @@ export const getHexBin = (h3Index) => {
   return { h3Index, center, vertices };
 };
 
-export const getRandomInt = (min, max) => {
+export const getRandomInt = (min: number, max: number): number => {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min)) + min;
 };
 
 // Compute new geojson with relative margin.
-export const getNewGeoJson = (hex, margin) => {
-  const relNum = (st, end, rat) => st - (st - end) * rat;
+export const getNewGeoJson = (hex: HexData, margin: number) => {
+  const relNum = (st: number, end: number, rat: number) =>
+    st - (st - end) * rat;
   const [clat, clng] = hex.center;
   return margin === 0
     ? hex.vertices
@@ -63,7 +62,12 @@ export const getNewGeoJson = (hex, margin) => {
       );
 };
 
-export const polar2Cartesian = (lat, lng, globeRadius, relAltitude = 0) => {
+export const polar2Cartesian = (
+  lat: number,
+  lng: number,
+  globeRadius: number,
+  relAltitude = 0
+) => {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((90 - lng) * Math.PI) / 180;
   const r = globeRadius * (1 + relAltitude) + 0.1;

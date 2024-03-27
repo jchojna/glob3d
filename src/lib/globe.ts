@@ -13,11 +13,6 @@ import {
   polar2Cartesian,
 } from './globeHelpers';
 
-interface WebGLobeI {
-  bfg: '';
-  globeRadius: number;
-}
-
 type GlobeData = {
   country: string;
   city: string;
@@ -28,7 +23,7 @@ type GlobeData = {
   value: number;
 };
 
-export default class WebGLobe implements WebGLobeI {
+export default class WebGLobe {
   bfg;
   BufferGeometryUtils: { mergeGeometries: (arg0: any) => any };
   globeRadius: number;
@@ -40,26 +35,26 @@ export default class WebGLobe implements WebGLobeI {
   debugMode: boolean;
   scene: THREE.Scene;
   root: HTMLElement;
-  canvas: HTMLElement | null;
-  tooltip: HTMLElement | null;
-  tooltipCountry: HTMLElement | null;
-  tooltipOccurrences: HTMLElement | null;
+  canvas: HTMLElement;
+  tooltip: HTMLElement;
+  tooltipCountry: HTMLElement;
+  tooltipCity: HTMLElement;
+  tooltipValue: HTMLElement;
   hexGlobeGeometry: undefined;
   hexGlobeMaterial: THREE.MeshMatcapMaterial;
   hexGlobe: THREE.Mesh<any, any>;
   hexResults: any[];
-  hexResultsGroup: any[];
-  preProcessedData: GlobeData[];
-  aggregatedData: GlobeData[];
+  hexResultsGroup: THREE.Object3D | THREE.Group;
+  aggregatedData: HexData[];
   sizes: { width: any; height: any };
   aspectRatio: number;
   solidGlobeGeometry: any;
-  solidGlobeMaterial: object;
+  solidGlobeMaterial: THREE.MeshBasicMaterial;
   globe: THREE.Mesh<any, any>;
   mouse: THREE.Vector2;
   hoveredHexIdx: number | null;
   clickedHexIdx: number | null;
-  camera: THREE.PerspectiveCamera | THREE.Camera;
+  camera: THREE.PerspectiveCamera;
   controls: OrbitControls;
   raycaster: THREE.Raycaster;
   raycaster2: THREE.Raycaster;
@@ -76,8 +71,9 @@ export default class WebGLobe implements WebGLobeI {
     this.root = root;
     this.canvas = this.createCanvas();
     this.tooltip = this.createTooltip();
-    this.tooltipCountry = document.querySelector('.tooltip > .country');
-    this.tooltipOccurrences = document.querySelector('.tooltip > .occurrences');
+    this.tooltipCountry = document.querySelector('.tooltip > .country')!;
+    this.tooltipCity = document.querySelector('.tooltip > .city')!;
+    this.tooltipValue = document.querySelector('.tooltip > .value')!;
     this.bfg = Object.assign({}, _bfg);
     this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
     this.BufferGeometryUtils = _bfg;
@@ -100,7 +96,6 @@ export default class WebGLobe implements WebGLobeI {
     );
     this.hexResultsGroup = new THREE.Group();
     this.hexResults = [];
-    this.preProcessedData = [];
     this.aggregatedData = [];
     // sizes
     this.sizes = {
@@ -140,6 +135,7 @@ export default class WebGLobe implements WebGLobeI {
     this.raycaster2 = new THREE.Raycaster();
     // renderer
     this.renderer = new THREE.WebGLRenderer({
+      alpha: true,
       canvas: this.canvas,
       antialias: true,
     });
@@ -161,10 +157,13 @@ export default class WebGLobe implements WebGLobeI {
     tooltip.classList.add('tooltip');
     this.tooltipCountry = document.createElement('p');
     this.tooltipCountry.classList.add('country');
-    this.tooltipOccurrences = document.createElement('p');
-    this.tooltipOccurrences.classList.add('occurrences');
+    this.tooltipCity = document.createElement('p');
+    this.tooltipCity.classList.add('city');
+    this.tooltipValue = document.createElement('p');
+    this.tooltipValue.classList.add('value');
     tooltip.appendChild(this.tooltipCountry);
-    tooltip.appendChild(this.tooltipOccurrences);
+    tooltip.appendChild(this.tooltipCity);
+    tooltip.appendChild(this.tooltipValue);
     this.root.appendChild(tooltip);
     return tooltip;
   }
@@ -196,8 +195,7 @@ export default class WebGLobe implements WebGLobeI {
         );
   }
 
-  updateHexResultsGeometry(bin: { value: number }) {
-    console.log(bin);
+  updateHexResultsGeometry(bin: HexData) {
     return new ConicPolygonGeometry(
       [getNewGeoJson(bin, this.hexMargin)],
       this.globeRadius + 0.1,
@@ -228,17 +226,22 @@ export default class WebGLobe implements WebGLobeI {
   }
 
   aggregateData(data: GlobeData[]) {
-    return data.reduce((a: any[], b: { h3Index: any; value: number }) => {
-      const idx = a.findIndex(
-        (elem: { h3Index: any }) => elem.h3Index === b.h3Index
-      );
-      if (idx >= 0) {
-        a[idx].value += b.value;
-        return a;
-      } else {
-        return [...a, b];
-      }
-    }, []);
+    const processedData = this.preProcessData(data);
+    return processedData.reduce(
+      (a: any[], b: { city: string; h3Index: any; value: number }) => {
+        const idx = a.findIndex(
+          (elem: { h3Index: any }) => elem.h3Index === b.h3Index
+        );
+        if (idx >= 0) {
+          a[idx].city += `, ${b.city}`;
+          a[idx].value += b.value;
+          return a;
+        } else {
+          return [...a, b];
+        }
+      },
+      []
+    );
   }
 
   visualizeResult(aggregatedData: any[]) {
@@ -282,25 +285,21 @@ export default class WebGLobe implements WebGLobeI {
       const intersectsMeshes = intersects.map(
         (intersect: { object: any }) => intersect.object
       );
-      this.hexResults.forEach(
-        (
-          mesh: { material: { color: { set: (arg0: string) => void } } },
-          idx: number | null
-        ) => {
-          if (intersectsMeshes.includes(mesh)) {
-            const closestIntersect = intersects.sort(
-              (a: { distance: number }, b: { distance: number }) =>
-                a.distance - b.distance
-            )[0].object;
-            if (closestIntersect === mesh) {
-              mesh.material.color.set('blue');
-              this.hoveredHexIdx = idx;
-            }
-          } else {
-            mesh.material.color.set('green');
+      this.hexResults.forEach((mesh, idx: number | null) => {
+        if (intersectsMeshes.includes(mesh)) {
+          const closestIntersect = intersects.sort(
+            (a: { distance: number }, b: { distance: number }) =>
+              a.distance - b.distance
+          )[0].object;
+          mesh.material.color.set('green');
+          if (closestIntersect === mesh) {
+            mesh.material.color.set('blue');
+            this.hoveredHexIdx = idx;
           }
+        } else {
+          mesh.material.color.set('green');
         }
-      );
+      });
       if (this.hoveredHexIdx !== null) {
         const hoveredHexData = this.aggregatedData[this.hoveredHexIdx];
         const polarCoordinates = hoveredHexData.center;
@@ -308,7 +307,8 @@ export default class WebGLobe implements WebGLobeI {
           this.getPixelPositionFromPolarCoords(polarCoordinates);
         this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
         this.tooltipCountry.textContent = hoveredHexData.country;
-        this.tooltipOccurrences.textContent = `${hoveredHexData.occurrences} occurrences`;
+        this.tooltipCity.textContent = hoveredHexData.city;
+        this.tooltipValue.textContent = `${hoveredHexData.value} people`;
         // check collisions
         const { x, y, z } = polar2Cartesian(
           polarCoordinates[0],
@@ -340,7 +340,6 @@ export default class WebGLobe implements WebGLobeI {
   }
 
   clean() {
-    this.preProcessedData = [];
     this.aggregatedData = [];
     this.hexResults = [];
     this.hoveredHexIdx = null;
@@ -349,22 +348,23 @@ export default class WebGLobe implements WebGLobeI {
   }
 
   update(data: any) {
-    this.preProcessedData = this.preProcessData(data);
-    this.aggregatedData = this.aggregateData(this.preProcessedData);
+    console.log('UPDATE');
+    this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);
   }
 
   initialize(data: any) {
     this.tick();
     this.createHexGlobe();
-    this.preProcessedData = this.preProcessData(data);
-    this.aggregatedData = this.aggregateData(this.preProcessedData);
+    this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);
     if (this.debugMode) this.enableDebugMode();
+
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
       this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
     });
+
     window.addEventListener('resize', () => {
       this.sizes.width = window.innerWidth;
       this.sizes.height = window.innerHeight;
