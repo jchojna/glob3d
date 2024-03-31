@@ -33,6 +33,7 @@ export default class WebGLobe {
   textureLoader: THREE.TextureLoader;
   matcapTexture: THREE.Texture | null;
   debugMode: boolean;
+  highestBar: number;
   scene: THREE.Scene;
   root: HTMLElement;
   canvas: HTMLElement;
@@ -44,6 +45,7 @@ export default class WebGLobe {
   hexGlobeMaterial: THREE.MeshMatcapMaterial;
   hexGlobe: THREE.Mesh<any, any>;
   hexResults: any[];
+  hexMaxValue: number;
   hexResultsGroup: THREE.Object3D | THREE.Group;
   aggregatedData: HexData[];
   sizes: { width: any; height: any };
@@ -52,21 +54,23 @@ export default class WebGLobe {
   solidGlobeMaterial: THREE.MeshBasicMaterial;
   globe: THREE.Mesh<any, any>;
   mouse: THREE.Vector2;
-  hoveredHexIdx: number | null;
+  hoveredHexObject: THREE.Mesh<any, any> | null;
+  hoveredHexId: string | null;
+  hoveredHexIndex: number;
   clickedHexIdx: number | null;
   camera: THREE.PerspectiveCamera;
   controls: OrbitControls;
   raycaster: THREE.Raycaster;
-  raycaster2: THREE.Raycaster;
   renderer: THREE.WebGLRenderer;
 
   constructor(
     root: HTMLElement,
     globeRadius: number = 100,
-    hexRes: number = 3,
+    hexRes: number = 2,
     hexMargin: number = 0.2,
     hexCurvatureRes: number = 5,
-    debugMode: boolean = false
+    debugMode: boolean = false,
+    highestBar: number = 0.5
   ) {
     this.root = root;
     this.canvas = this.createCanvas();
@@ -79,11 +83,13 @@ export default class WebGLobe {
     this.BufferGeometryUtils = _bfg;
     this.globeRadius = globeRadius;
     this.hexRes = hexRes;
+    this.hexMaxValue = NaN;
     this.hexMargin = hexMargin;
     this.hexCurvatureRes = hexCurvatureRes;
     this.textureLoader = new THREE.TextureLoader();
     this.matcapTexture = this.textureLoader.load('/textures/matcap_1.png');
     this.debugMode = debugMode;
+    this.highestBar = highestBar;
     // scene
     this.scene = new THREE.Scene();
     // hexagonal globe
@@ -121,19 +127,17 @@ export default class WebGLobe {
     );
     // mouse
     this.mouse = new THREE.Vector2();
-    this.hoveredHexIdx = null;
+    this.hoveredHexObject = null;
+    this.hoveredHexId = null;
+    this.hoveredHexIndex = NaN;
     this.clickedHexIdx = null;
-    // camera
+
     this.camera = new THREE.PerspectiveCamera(55, this.aspectRatio, 1, 2000);
     this.camera.position.z = 200;
     this.camera.position.y = 200;
-    // controls
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;
-    // raycaster
     this.raycaster = new THREE.Raycaster();
-    this.raycaster2 = new THREE.Raycaster();
-    // renderer
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
       canvas: this.canvas,
@@ -199,7 +203,9 @@ export default class WebGLobe {
     return new ConicPolygonGeometry(
       [getNewGeoJson(bin, this.hexMargin)],
       this.globeRadius + 0.1,
-      this.globeRadius + 0.1 + bin.value / 500000,
+      this.globeRadius +
+        0.1 +
+        (bin.value / this.hexMaxValue) * this.globeRadius * 2 * this.highestBar,
       true,
       true,
       true,
@@ -275,65 +281,62 @@ export default class WebGLobe {
     gui.add(this.solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
   }
 
+  handleTooltip() {
+    const hoveredHexData = this.aggregatedData[this.hoveredHexIndex];
+    const polarCoordinates = hoveredHexData.center;
+    const pxPosition = this.getPixelPositionFromPolarCoords(polarCoordinates);
+    this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+    this.tooltipCountry.textContent = hoveredHexData.country;
+    this.tooltipCity.textContent = hoveredHexData.city;
+    this.tooltipValue.textContent = `${hoveredHexData.value} people`;
+  }
+
   tick() {
+    // handle raycasting
     if (this.hexResults.length > 0) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
+
       const intersects = this.raycaster.intersectObjects([
         this.globe,
         ...this.hexResults,
       ]);
-      const intersectsMeshes = intersects.map(
-        (intersect: { object: any }) => intersect.object
-      );
-      this.hexResults.forEach((mesh, idx: number | null) => {
-        if (intersectsMeshes.includes(mesh)) {
-          const closestIntersect = intersects.sort(
-            (a: { distance: number }, b: { distance: number }) =>
-              a.distance - b.distance
-          )[0].object;
-          mesh.material.color.set('green');
-          if (closestIntersect === mesh) {
-            mesh.material.color.set('blue');
-            this.hoveredHexIdx = idx;
-          }
-        } else {
-          mesh.material.color.set('green');
-        }
-      });
-      if (this.hoveredHexIdx !== null) {
-        const hoveredHexData = this.aggregatedData[this.hoveredHexIdx];
-        const polarCoordinates = hoveredHexData.center;
-        const pxPosition =
-          this.getPixelPositionFromPolarCoords(polarCoordinates);
-        this.tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
-        this.tooltipCountry.textContent = hoveredHexData.country;
-        this.tooltipCity.textContent = hoveredHexData.city;
-        this.tooltipValue.textContent = `${hoveredHexData.value} people`;
-        // check collisions
-        const { x, y, z } = polar2Cartesian(
-          polarCoordinates[0],
-          polarCoordinates[1],
-          this.globeRadius
-        );
-        const point = new THREE.Vector3(x, y, z).project(this.camera);
-        this.raycaster2.setFromCamera(point, this.camera);
-        const intersects2 = this.raycaster2.intersectObjects([
-          this.globe,
-          this.hexResults[this.hoveredHexIdx],
-        ]);
-        const closestIntersect =
-          intersects.length > 0
-            ? intersects2.sort(
-                (a: { distance: number }, b: { distance: number }) =>
-                  a.distance - b.distance
-              )[0].object
-            : null;
+      const hoveredHexObject =
+        intersects.length > 0 &&
+        (intersects.sort(
+          (a: { distance: number }, b: { distance: number }) =>
+            a.distance - b.distance
+        )[0].object as THREE.Mesh<any, any>);
 
-        closestIntersect === this.globe
-          ? this.tooltip.classList.remove('tooltip--visible')
-          : this.tooltip.classList.add('tooltip--visible');
+      if (hoveredHexObject && hoveredHexObject.uuid !== this.globe.uuid) {
+        const hoveredHexId = hoveredHexObject.uuid;
+
+        if (this.hoveredHexId !== hoveredHexId) {
+          const hoveredHexIndex = this.hexResults.findIndex(
+            (hex: any) => hex.uuid === hoveredHexId
+          );
+          this.hoveredHexObject &&
+            this.hoveredHexObject.material.color.set('blue');
+          hoveredHexObject.material.color.set('green');
+
+          this.hoveredHexObject = hoveredHexObject;
+          this.hoveredHexId = hoveredHexId;
+          this.hoveredHexIndex = hoveredHexIndex;
+          this.tooltip.classList.add('tooltip--visible');
+
+          if (!Number.isNaN(this.hoveredHexIndex)) {
+            this.handleTooltip();
+          }
+        }
+      } else {
+        this.hoveredHexObject &&
+          this.hoveredHexObject.material.color.set('blue');
+        this.hoveredHexObject = null;
+        this.hoveredHexId = null;
+        this.hoveredHexIndex = NaN;
+        this.tooltip.classList.remove('tooltip--visible');
       }
     }
+
     this.renderer.render(this.scene, this.camera);
     this.controls.update();
     return window.requestAnimationFrame(() => this.tick());
@@ -342,7 +345,7 @@ export default class WebGLobe {
   clean() {
     this.aggregatedData = [];
     this.hexResults = [];
-    this.hoveredHexIdx = null;
+    this.hoveredHexIndex = NaN;
     this.hexResultsGroup.clear();
     this.tooltip.classList.remove('tooltip--visible');
   }
@@ -357,6 +360,7 @@ export default class WebGLobe {
     this.tick();
     this.createHexGlobe();
     this.aggregatedData = this.aggregateData(data);
+    this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
     this.hexResults = this.visualizeResult(this.aggregatedData);
     if (this.debugMode) this.enableDebugMode();
 
