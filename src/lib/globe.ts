@@ -1,9 +1,11 @@
 import { latLngToCell } from 'h3-js';
 import * as dat from 'lil-gui';
 import * as THREE from 'three';
+// @ts-ignore
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as _bfg from 'three/addons/utils/BufferGeometryUtils.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
 import json from '../data/world_low_geo.json';
 import '../styles.scss';
 import {
@@ -26,7 +28,6 @@ type GlobeData = {
 export default class WebGLobe {
   aggregatedData: HexData[];
   aspectRatio: number;
-  bfg;
   BufferGeometryUtils: { mergeGeometries: (arg0: any) => any };
   camera: THREE.PerspectiveCamera;
   canvas: HTMLElement;
@@ -72,8 +73,7 @@ export default class WebGLobe {
     debugMode: boolean = false,
     highestBar: number = 0.5
   ) {
-    this.bfg = Object.assign({}, _bfg);
-    this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
+    this.BufferGeometryUtils = BufferGeometryUtils;
     this.canvas = this.createCanvas(root);
     this.debugMode = debugMode;
     this.globeRadius = globeRadius;
@@ -291,7 +291,7 @@ export default class WebGLobe {
     this.tooltipValue.textContent = `${hoveredHexData.value} people`;
   }
 
-  tick() {
+  tick(): number {
     // handle raycasting
     if (this.hexResults.length > 0) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
