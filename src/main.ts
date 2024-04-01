@@ -1,5 +1,5 @@
 import { getCitiesData } from './js/citiesData';
-import WebGLobe from './lib/globe';
+import BarGlob3d from './lib/barGlobe';
 import './styles.scss';
 
 const root = document.querySelector('#root');
@@ -8,7 +8,7 @@ if (!root || !(root instanceof HTMLElement)) {
   throw new Error('Root element not found');
 }
 const data = await getCitiesData();
-const globeInstance = new WebGLobe(root, 100, 3, 0.2, 5, true);
+const globeInstance = new BarGlob3d(root, 100, 3, 0.2, true);
 globeInstance.initialize(data);
 
 updateButton &&

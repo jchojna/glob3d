@@ -11,8 +11,22 @@ type HexData = {
 };
 
 type GeojsonFeature = {
+  type: string;
+  properties: {
+    [key: string]: string | number | null;
+  };
   geometry: {
     type: string;
     coordinates: [number, number][][];
   };
+};
+
+type GlobeData = {
+  country: string;
+  city: string;
+  coordinates: {
+    lon: number;
+    lat: number;
+  };
+  value: number;
 };
