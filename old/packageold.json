@@ -1,0 +1,28 @@
+{
+  "name": "world3d",
+  "version": "0.1.0",
+  "source": "src/index.js",
+  "author": {
+    "name": "Jakub Chojna",
+    "url": "https://github.com/jchojna"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel src/index.html --open --port 8080",
+    "build": "parcel build src/index.html --public-url ./",
+    "deploy": "rm -rf dist && yarn build && cd dist && git init && git add . && git commit -m 'update' && git remote add origin git@github.com:Appsilon/world3d.git && git push --force origin master:gh-pages"
+  },
+  "devDependencies": {
+    "@parcel/transformer-sass": "2.6.2",
+    "h3-js": "3.7.2",
+    "lil-gui": "0.17.0",
+    "parcel": "2.6.2",
+    "prettier": "^2.7.1",
+    "sass": "1.53.0",
+    "three": "0.142.0",
+    "three-conic-polygon-geometry": "1.5.1"
+  },
+  "dependencies": {
+    "@types/three": "^0.144.0"
+  }
+}
