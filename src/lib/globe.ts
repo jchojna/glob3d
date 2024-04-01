@@ -11,7 +11,7 @@ import {
   getHexBin,
   getNewGeoJson,
   polar2Cartesian,
-} from './globeHelpers';
+} from './helpers';
 
 type GlobeData = {
   country: string;
@@ -24,44 +24,44 @@ type GlobeData = {
 };
 
 export default class WebGLobe {
+  aggregatedData: HexData[];
+  aspectRatio: number;
   bfg;
   BufferGeometryUtils: { mergeGeometries: (arg0: any) => any };
-  globeRadius: number;
-  hexRes: number;
-  hexMargin: number;
-  hexCurvatureRes: number;
-  textureLoader: THREE.TextureLoader;
-  matcapTexture: THREE.Texture | null;
-  debugMode: boolean;
-  highestBar: number;
-  scene: THREE.Scene;
-  root: HTMLElement;
+  camera: THREE.PerspectiveCamera;
   canvas: HTMLElement;
-  tooltip: HTMLElement;
-  tooltipCountry: HTMLElement;
-  tooltipCity: HTMLElement;
-  tooltipValue: HTMLElement;
+  clickedHexIdx: number | null;
+  controls: OrbitControls;
+  debugMode: boolean;
+  globe: THREE.Mesh<any, any>;
+  globeRadius: number;
+  hexCurvatureRes: number;
+  hexGlobe: THREE.Mesh<any, any>;
   hexGlobeGeometry: undefined;
   hexGlobeMaterial: THREE.MeshMatcapMaterial;
-  hexGlobe: THREE.Mesh<any, any>;
-  hexResults: any[];
+  hexMargin: number;
   hexMaxValue: number;
+  hexRes: number;
+  hexResults: any[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
-  aggregatedData: HexData[];
-  sizes: { width: any; height: any };
-  aspectRatio: number;
-  solidGlobeGeometry: any;
-  solidGlobeMaterial: THREE.MeshBasicMaterial;
-  globe: THREE.Mesh<any, any>;
-  mouse: THREE.Vector2;
-  hoveredHexObject: THREE.Mesh<any, any> | null;
+  highestBar: number;
   hoveredHexId: string | null;
   hoveredHexIndex: number;
-  clickedHexIdx: number | null;
-  camera: THREE.PerspectiveCamera;
-  controls: OrbitControls;
+  hoveredHexObject: THREE.Mesh<any, any> | null;
+  matcapTexture: THREE.Texture | null;
+  mouse: THREE.Vector2;
   raycaster: THREE.Raycaster;
   renderer: THREE.WebGLRenderer;
+  root: HTMLElement;
+  scene: THREE.Scene;
+  sizes: { width: any; height: any };
+  solidGlobeGeometry: any;
+  solidGlobeMaterial: THREE.MeshBasicMaterial;
+  textureLoader: THREE.TextureLoader;
+  tooltip: HTMLElement;
+  tooltipCity: HTMLElement;
+  tooltipCountry: HTMLElement;
+  tooltipValue: HTMLElement;
 
   constructor(
     root: HTMLElement,
@@ -72,30 +72,24 @@ export default class WebGLobe {
     debugMode: boolean = false,
     highestBar: number = 0.5
   ) {
+    this.bfg = Object.assign({}, _bfg);
+    this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
+    this.canvas = this.createCanvas(root);
+    this.debugMode = debugMode;
+    this.globeRadius = globeRadius;
+    this.hexCurvatureRes = hexCurvatureRes;
+    this.hexGlobeGeometry = undefined;
+    this.hexGlobeMaterial = new THREE.MeshMatcapMaterial();
+    this.hexMargin = hexMargin;
+    this.hexMaxValue = NaN;
+    this.hexRes = hexRes;
+    this.highestBar = highestBar;
+    this.scene = new THREE.Scene();
     this.root = root;
-    this.canvas = this.createCanvas();
-    this.tooltip = this.createTooltip();
+    this.tooltip = this.createTooltip(root);
     this.tooltipCountry = document.querySelector('.tooltip > .country')!;
     this.tooltipCity = document.querySelector('.tooltip > .city')!;
     this.tooltipValue = document.querySelector('.tooltip > .value')!;
-    this.bfg = Object.assign({}, _bfg);
-    this.BufferGeometryUtils = this.bfg.BufferGeometryUtils || this.bfg;
-    this.BufferGeometryUtils = _bfg;
-    this.globeRadius = globeRadius;
-    this.hexRes = hexRes;
-    this.hexMaxValue = NaN;
-    this.hexMargin = hexMargin;
-    this.hexCurvatureRes = hexCurvatureRes;
-    this.textureLoader = new THREE.TextureLoader();
-    this.matcapTexture = this.textureLoader.load('/textures/matcap_1.png');
-    this.debugMode = debugMode;
-    this.highestBar = highestBar;
-    // scene
-    this.scene = new THREE.Scene();
-    // hexagonal globe
-    this.hexGlobeGeometry = undefined;
-    this.hexGlobeMaterial = new THREE.MeshMatcapMaterial();
-    this.hexGlobeMaterial.matcap = this.matcapTexture;
     this.hexGlobe = new THREE.Mesh(
       this.hexGlobeGeometry,
       this.hexGlobeMaterial
@@ -132,10 +126,16 @@ export default class WebGLobe {
     this.hoveredHexIndex = NaN;
     this.clickedHexIdx = null;
 
-    this.camera = new THREE.PerspectiveCamera(55, this.aspectRatio, 1, 2000);
+    this.textureLoader = new THREE.TextureLoader();
+    this.matcapTexture = this.textureLoader.load('/textures/matcap_1.png');
+    this.hexGlobeMaterial.matcap = this.matcapTexture;
+
+    this.camera = new THREE.PerspectiveCamera(55, this.aspectRatio, 1, 1000);
     this.camera.position.z = 200;
     this.camera.position.y = 200;
     this.controls = new OrbitControls(this.camera, this.canvas);
+    this.controls.autoRotate = true;
+    this.controls.autoRotateSpeed = 0.1;
     this.controls.enableDamping = true;
     this.raycaster = new THREE.Raycaster();
     this.renderer = new THREE.WebGLRenderer({
@@ -149,14 +149,14 @@ export default class WebGLobe {
     this.renderer.render(this.scene, this.camera);
   }
 
-  createCanvas() {
+  createCanvas(root: HTMLElement) {
     const canvas = document.createElement('canvas');
     canvas.classList.add('webglobe');
-    this.root.appendChild(canvas);
+    root.appendChild(canvas);
     return canvas;
   }
 
-  createTooltip() {
+  createTooltip(root: HTMLElement) {
     const tooltip = document.createElement('div');
     tooltip.classList.add('tooltip');
     this.tooltipCountry = document.createElement('p');
@@ -168,7 +168,7 @@ export default class WebGLobe {
     tooltip.appendChild(this.tooltipCountry);
     tooltip.appendChild(this.tooltipCity);
     tooltip.appendChild(this.tooltipValue);
-    this.root.appendChild(tooltip);
+    root.appendChild(tooltip);
     return tooltip;
   }
 
