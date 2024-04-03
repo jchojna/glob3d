@@ -10,6 +10,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --time-tooltip: 0.2s;
 }
 
 @media (prefers-color-scheme: light) {
@@ -18,8 +20,6 @@
     background-color: #ffffff;
   }
 }
-
-$time-tooltip: 0.2s;
 
 html,
 body {
@@ -37,7 +37,7 @@ canvas.webglobe {
 }
 
 .tooltip {
-  background-color: rgba(#000, 0.85);
+  background-color: #00000085;
   border-radius: 10px;
   border: 1px solid #ddd;
   color: #fff;
@@ -46,12 +46,13 @@ canvas.webglobe {
   padding: 20px;
   position: absolute;
   top: 10px;
-  transition: opacity $time-tooltip, transform 0.1s, visibility 0s $time-tooltip;
+  transition: opacity var(--time-tooltip), transform 0.1s,
+    visibility 0s var(--time-tooltip);
   visibility: hidden;
 
-  &--visible {
+  &.tooltip--visible {
     opacity: 1;
-    transition: opacity $time-tooltip, transform 0.1s, visibility 0s;
+    transition: opacity var(--time-tooltip), transform 0.1s, visibility 0s;
     visibility: visible;
   }
 

@@ -24,7 +24,7 @@ export default class BarGlob3d extends Glob3d {
   constructor(
     root: HTMLElement,
     globeRadius: number = 100,
-    hexRes: number = 2,
+    hexRes: number = 3,
     hexMargin: number = 0.2,
     debugMode: boolean = false,
     highestBar: number = 0.5

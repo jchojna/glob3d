@@ -1,6 +1,6 @@
 import { getCitiesData } from './js/citiesData';
 import BarGlob3d from './lib/barGlobe';
-import './styles.scss';
+import './styles.css';
 
 const root = document.querySelector('#root');
 const updateButton = document.querySelector('.update-button');

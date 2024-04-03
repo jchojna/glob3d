@@ -6,23 +6,23 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 import json from '../data/world_low_geo.json';
-import '../styles.scss';
+import '../styles.css';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
 export default class Glob3d {
   // private fields
   #aspectRatio: number;
-  #bufferGeometryUtils: { mergeGeometries: (arg0: any) => any };
+  #bufferGeometryUtils;
   #canvas: HTMLElement;
   #debugMode: boolean;
   #controls: OrbitControls;
   #hexGlobe: THREE.Mesh<any, any>;
-  #hexGlobeGeometry: undefined;
+  #hexGlobeGeometry: THREE.BufferGeometry | undefined;
   #hexGlobeMaterial: THREE.MeshMatcapMaterial;
   #matcapTexture: THREE.Texture | null;
   #renderer: THREE.WebGLRenderer;
   #root: HTMLElement;
-  #solidGlobeGeometry: any;
+  #solidGlobeGeometry: THREE.SphereGeometry;
   #solidGlobeMaterial: THREE.MeshBasicMaterial;
   #textureLoader: THREE.TextureLoader;
 
@@ -80,10 +80,9 @@ export default class Glob3d {
       32
     );
     this.#solidGlobeMaterial = new THREE.MeshBasicMaterial({
-      color: '#555',
+      color: '#000105',
       transparent: true,
-      opacity: 0.2,
-      wireframe: false,
+      opacity: 0.85,
     });
     this.globe = new THREE.Mesh(
       this.#solidGlobeGeometry,
@@ -118,6 +117,7 @@ export default class Glob3d {
 
   createHexGlobe() {
     const { features } = json;
+    // @ts-ignore
     const h3Indexes = getH3Indexes(features, this.hexRes);
     const hexBins = h3Indexes.map((index) => getHexBin(index));
     this.#hexGlobe.geometry = this.updateHexGlobeGeometry(hexBins);
@@ -128,10 +128,10 @@ export default class Glob3d {
     return !hexBins.length
       ? new THREE.BufferGeometry()
       : this.#bufferGeometryUtils.mergeGeometries(
-          hexBins.map((hex: any) => {
+          hexBins.map((hex: HexData) => {
             const geoJson = getNewGeoJson(hex, this.hexMargin);
             return new ConicPolygonGeometry(
-              [geoJson],
+              [geoJson], // GeoJson polygon coordinates
               this.globeRadius, // bottom height
               this.globeRadius + 0.1, // top height
               true, // closed bottom
