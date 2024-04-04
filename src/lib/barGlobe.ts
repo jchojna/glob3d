@@ -6,6 +6,16 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import { getHexBin, getNewGeoJson, polar2Cartesian } from './helpers';
 
+interface Opts {
+  globeRadius: number;
+  hexRes: number;
+  hexMargin: number;
+  debugMode: boolean;
+  highestBar: number;
+  barColor?: string;
+  barColorHover?: string;
+}
+
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
   hexMaxValue: number;
@@ -16,20 +26,23 @@ export default class BarGlob3d extends Glob3d {
   hoveredHexIndex: number;
   hoveredHexObject: THREE.Mesh<any, any> | null;
   raycaster: THREE.Raycaster;
+  barColor: string;
+  barColorHover: string;
   tooltip: HTMLElement;
   tooltipCity: HTMLElement;
   tooltipCountry: HTMLElement;
   tooltipValue: HTMLElement;
 
-  constructor(
-    root: HTMLElement,
-    globeRadius: number = 100,
-    hexRes: number = 3,
-    hexMargin: number = 0.2,
-    debugMode: boolean = false,
-    highestBar: number = 0.5
-  ) {
-    super(root, globeRadius, hexRes, hexMargin, debugMode);
+  constructor(root: HTMLElement, opts: Opts) {
+    const {
+      globeRadius,
+      hexRes,
+      hexMargin,
+      highestBar,
+      barColor = '#b6c4fb',
+      barColorHover = 'purple',
+    } = opts;
+    super(root, globeRadius, hexRes, hexMargin);
 
     this.aggregatedData = [];
     this.hexMaxValue = NaN;
@@ -40,6 +53,8 @@ export default class BarGlob3d extends Glob3d {
     this.hoveredHexId = null;
     this.hoveredHexIndex = NaN;
     this.raycaster = new THREE.Raycaster();
+    this.barColor = barColor;
+    this.barColorHover = barColorHover;
     this.tooltip = this.createTooltip(root);
     this.tooltipCountry = document.querySelector('.tooltip > .country')!;
     this.tooltipCity = document.querySelector('.tooltip > .city')!;
@@ -102,8 +117,10 @@ export default class BarGlob3d extends Glob3d {
       return new THREE.Mesh(
         this.updateHexResultsGeometry(bin),
         new THREE.MeshBasicMaterial({
-          color: 'blue',
+          color: this.barColor,
+          opacity: 0.6,
           side: THREE.DoubleSide,
+          transparent: true,
         })
       );
     });
@@ -175,8 +192,9 @@ export default class BarGlob3d extends Glob3d {
             (hex: any) => hex.uuid === hoveredHexId
           );
           this.hoveredHexObject &&
-            this.hoveredHexObject.material.color.set('blue');
-          hoveredHexObject.material.color.set('green');
+            this.hoveredHexObject.material.color.set(this.barColor);
+          hoveredHexObject.material.color.set(this.barColorHover);
+          hoveredHexObject.material.opacity = 0.9;
 
           this.hoveredHexObject = hoveredHexObject;
           this.hoveredHexId = hoveredHexId;
@@ -189,7 +207,7 @@ export default class BarGlob3d extends Glob3d {
         }
       } else {
         this.hoveredHexObject &&
-          this.hoveredHexObject.material.color.set('blue');
+          this.hoveredHexObject.material.color.set(this.barColor);
         this.hoveredHexObject = null;
         this.hoveredHexId = null;
         this.hoveredHexIndex = NaN;

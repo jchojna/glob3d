@@ -14,7 +14,7 @@ export default class Glob3d {
   #aspectRatio: number;
   #bufferGeometryUtils;
   #canvas: HTMLElement;
-  #debugMode: boolean;
+  // #debugMode: boolean;
   #controls: OrbitControls;
   #hexGlobe: THREE.Mesh<any, any>;
   #hexGlobeGeometry: THREE.BufferGeometry | undefined;
@@ -22,14 +22,13 @@ export default class Glob3d {
   #matcapTexture: THREE.Texture | null;
   #renderer: THREE.WebGLRenderer;
   #root: HTMLElement;
-  #solidGlobeGeometry: THREE.SphereGeometry;
-  #solidGlobeMaterial: THREE.MeshBasicMaterial;
   #textureLoader: THREE.TextureLoader;
 
   // public fields
   camera: THREE.PerspectiveCamera;
   globe: THREE.Mesh<any, any>;
   globeRadius: number;
+  gui: dat.GUI;
   hexMargin: number;
   hexRes: number;
   mouse: THREE.Vector2;
@@ -40,14 +39,14 @@ export default class Glob3d {
     root: HTMLElement,
     globeRadius: number,
     hexRes: number,
-    hexMargin: number,
-    debugMode: boolean
+    hexMargin: number
+    // debugMode: boolean
   ) {
     this.#root = root;
     this.#aspectRatio = window.innerWidth / window.innerHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.createCanvas(this.#root);
-    this.#debugMode = debugMode;
+    // this.#debugMode = debugMode;
     this.#textureLoader = new THREE.TextureLoader();
     this.#matcapTexture = this.#textureLoader.load('/textures/matcap_1.png');
     this.#renderer = new THREE.WebGLRenderer({
@@ -57,6 +56,7 @@ export default class Glob3d {
     });
 
     this.scene = new THREE.Scene();
+    this.gui = new dat.GUI();
 
     // camera
     this.camera = new THREE.PerspectiveCamera(55, this.#aspectRatio, 1, 1000);
@@ -74,20 +74,17 @@ export default class Glob3d {
     };
 
     // solid globe
-    this.#solidGlobeGeometry = new THREE.SphereGeometry(
-      this.globeRadius,
-      32,
-      32
-    );
-    this.#solidGlobeMaterial = new THREE.MeshBasicMaterial({
+    const solidGlobeMaterial = new THREE.MeshBasicMaterial({
       color: '#000105',
       transparent: true,
       opacity: 0.85,
     });
     this.globe = new THREE.Mesh(
-      this.#solidGlobeGeometry,
-      this.#solidGlobeMaterial
+      new THREE.SphereGeometry(this.globeRadius, 32, 32),
+      solidGlobeMaterial
     );
+    this.gui.addColor(solidGlobeMaterial, 'color');
+    this.gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
     this.scene.add(this.globe);
 
     // globe made of hexagons
@@ -142,12 +139,6 @@ export default class Glob3d {
         );
   }
 
-  enableDebugMode() {
-    const gui = new dat.GUI();
-    gui.addColor(this.#solidGlobeMaterial, 'color');
-    gui.add(this.#solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
-  }
-
   tick(): number {
     this.#renderer.render(this.scene, this.camera);
     this.#controls.update();
@@ -157,7 +148,6 @@ export default class Glob3d {
   init() {
     this.tick();
     this.createHexGlobe();
-    if (this.#debugMode) this.enableDebugMode();
 
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;

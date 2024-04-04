@@ -8,7 +8,13 @@ if (!root || !(root instanceof HTMLElement)) {
   throw new Error('Root element not found');
 }
 const data = await getCitiesData();
-const globeInstance = new BarGlob3d(root, 100, 3, 0.2, true);
+const globeInstance = new BarGlob3d(root, {
+  globeRadius: 100,
+  hexRes: 3,
+  hexMargin: 0.2,
+  debugMode: true,
+  highestBar: 0.5,
+});
 globeInstance.initialize(data);
 
 updateButton &&

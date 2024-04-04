@@ -37,7 +37,7 @@ canvas.webglobe {
 }
 
 .tooltip {
-  background-color: #00000085;
+  background: rgba(0, 0, 0, 0.85);
   border-radius: 10px;
   border: 1px solid #ddd;
   color: #fff;
