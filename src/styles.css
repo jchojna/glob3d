@@ -34,6 +34,7 @@ body {
 
 canvas.webglobe {
   outline: none;
+  user-select: none;
 }
 
 .tooltip {

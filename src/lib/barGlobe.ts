@@ -18,12 +18,13 @@ interface Opts {
 
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
-  hexMaxValue: number;
+  clickedHexObject: THREE.Mesh<any, any> | null;
+  hexMaxValue: number | null;
   hexResults: any[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
   highestBar: number;
   hoveredHexId: string | null;
-  hoveredHexIndex: number;
+  hoveredHexIndex: number | null;
   hoveredHexObject: THREE.Mesh<any, any> | null;
   raycaster: THREE.Raycaster;
   barColor: string;
@@ -45,13 +46,14 @@ export default class BarGlob3d extends Glob3d {
     super(root, globeRadius, hexRes, hexMargin);
 
     this.aggregatedData = [];
-    this.hexMaxValue = NaN;
+    this.clickedHexObject = null;
+    this.hexMaxValue = null;
     this.hexResultsGroup = new THREE.Group();
     this.hexResults = [];
     this.highestBar = highestBar;
     this.hoveredHexObject = null;
     this.hoveredHexId = null;
-    this.hoveredHexIndex = NaN;
+    this.hoveredHexIndex = null;
     this.raycaster = new THREE.Raycaster();
     this.barColor = barColor;
     this.barColorHover = barColorHover;
@@ -99,6 +101,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   updateHexResultsGeometry(bin: HexData) {
+    if (!this.hexMaxValue) return;
     return new ConicPolygonGeometry(
       [getNewGeoJson(bin, this.hexMargin)],
       this.globeRadius + 0.1,
@@ -159,6 +162,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   handleTooltip() {
+    if (!this.hoveredHexIndex) return;
     const hoveredHexData = this.aggregatedData[this.hoveredHexIndex];
     const polarCoordinates = hoveredHexData.center;
     const pxPosition = this.getPixelPositionFromPolarCoords(polarCoordinates);
@@ -166,6 +170,18 @@ export default class BarGlob3d extends Glob3d {
     this.tooltipCountry.textContent = hoveredHexData.country;
     this.tooltipCity.textContent = hoveredHexData.city;
     this.tooltipValue.textContent = `${hoveredHexData.value} people`;
+  }
+
+  highlightHex(object: THREE.Mesh<any, any> | null) {
+    if (!object) return;
+    object.material.color.set(this.barColorHover);
+    object.material.opacity = 0.9;
+  }
+
+  unhighlightHex(object: THREE.Mesh<any, any> | null) {
+    if (!object) return;
+    object.material.color.set(this.barColor);
+    object.material.opacity = 0.6;
   }
 
   barTick(): number {
@@ -192,26 +208,26 @@ export default class BarGlob3d extends Glob3d {
             (hex: any) => hex.uuid === hoveredHexId
           );
           this.hoveredHexObject &&
-            this.hoveredHexObject.material.color.set(this.barColor);
-          hoveredHexObject.material.color.set(this.barColorHover);
-          hoveredHexObject.material.opacity = 0.9;
+            this.hoveredHexObject !== this.clickedHexObject &&
+            this.unhighlightHex(this.hoveredHexObject);
+          this.highlightHex(hoveredHexObject);
 
           this.hoveredHexObject = hoveredHexObject;
           this.hoveredHexId = hoveredHexId;
           this.hoveredHexIndex = hoveredHexIndex;
           this.tooltip.classList.add('tooltip--visible');
 
-          if (!Number.isNaN(this.hoveredHexIndex)) {
-            this.handleTooltip();
-          }
+          this.handleTooltip();
         }
       } else {
         this.hoveredHexObject &&
-          this.hoveredHexObject.material.color.set(this.barColor);
+          this.hoveredHexObject !== this.clickedHexObject &&
+          this.unhighlightHex(this.hoveredHexObject);
         this.hoveredHexObject = null;
         this.hoveredHexId = null;
         this.hoveredHexIndex = NaN;
-        this.tooltip.classList.remove('tooltip--visible');
+        !this.clickedHexObject &&
+          this.tooltip.classList.remove('tooltip--visible');
       }
     }
 
@@ -238,5 +254,16 @@ export default class BarGlob3d extends Glob3d {
     this.aggregatedData = this.aggregateData(data);
     this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
     this.hexResults = this.visualizeResult(this.aggregatedData);
+
+    window.addEventListener('click', () => {
+      if (this.hoveredHexId) {
+        this.clickedHexObject && this.unhighlightHex(this.clickedHexObject);
+        this.clickedHexObject = this.hoveredHexObject;
+        this.highlightHex(this.clickedHexObject);
+      } else {
+        this.unhighlightHex(this.clickedHexObject);
+        this.clickedHexObject = null;
+      }
+    });
   }
 }
