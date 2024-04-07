@@ -21,7 +21,7 @@ export default class Glob3d {
   #hexGlobeMaterial: THREE.MeshMatcapMaterial;
   #matcapTexture: THREE.Texture | null;
   #renderer: THREE.WebGLRenderer;
-  #root: HTMLElement;
+  root: HTMLElement;
   #textureLoader: THREE.TextureLoader;
 
   // public fields
@@ -42,10 +42,10 @@ export default class Glob3d {
     hexMargin: number
     // debugMode: boolean
   ) {
-    this.#root = root;
+    this.root = root;
     this.#aspectRatio = window.innerWidth / window.innerHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
-    this.#canvas = this.createCanvas(this.#root);
+    this.#canvas = this.createCanvas(this.root);
     // this.#debugMode = debugMode;
     this.#textureLoader = new THREE.TextureLoader();
     this.#matcapTexture = this.#textureLoader.load('/textures/matcap_1.png');

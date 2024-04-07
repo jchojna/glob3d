@@ -62,7 +62,7 @@ export const getNewGeoJson = (hex: HexData, margin: number) => {
       );
 };
 
-export const polar2Cartesian = (
+export const getXYZCoordinates = (
   lat: number,
   lng: number,
   globeRadius: number,
@@ -70,7 +70,7 @@ export const polar2Cartesian = (
 ) => {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((90 - lng) * Math.PI) / 180;
-  const r = globeRadius * (1 + relAltitude) + 0.1;
+  const r = globeRadius * (1 + relAltitude);
   return {
     x: r * Math.sin(phi) * Math.cos(theta),
     y: r * Math.cos(phi),

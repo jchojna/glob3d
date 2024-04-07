@@ -30,6 +30,7 @@ body {
   font-family: 'Open Sans', sans-serif;
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
 canvas.webglobe {
@@ -42,22 +43,29 @@ canvas.webglobe {
   border-radius: 10px;
   border: 1px solid #ddd;
   color: #fff;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   left: 10px;
-  opacity: 0;
-  padding: 20px;
+  opacity: 0.2;
+  /* padding: 20px; */
+  pointer-events: none;
   position: absolute;
   top: 10px;
-  transition: opacity var(--time-tooltip), transform 0.1s,
-    visibility 0s var(--time-tooltip);
-  visibility: hidden;
+  transition: opacity var(--time-tooltip), visibility 0s var(--time-tooltip);
+  user-select: none;
+  /* visibility: hidden; */
 
-  &.tooltip--visible {
+  /* &.tooltip--visible {
     opacity: 1;
     transition: opacity var(--time-tooltip), transform 0.1s, visibility 0s;
     visibility: visible;
-  }
+  } */
 
   .country {
+    margin: 0;
+  }
+
+  .city {
     margin: 0;
   }
 
