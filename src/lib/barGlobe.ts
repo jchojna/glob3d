@@ -222,11 +222,10 @@ export default class BarGlob3d extends Glob3d {
           minDistance,
           maxDistance
         );
-        tooltip.style.opacity = '1';
+        tooltip.classList.add('visible');
         tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
-        console.log(tooltipScale);
       } else {
-        tooltip.style.opacity = '0';
+        tooltip.classList.remove('visible');
         tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
       }
       tooltip.style.zIndex = String(zIndex);
@@ -269,17 +268,13 @@ export default class BarGlob3d extends Glob3d {
         intersectObjects[0].distance <
           new THREE.Vector3(x, y, z).distanceTo(this.camera.position);
 
-      if (isBehindGlobe) {
-        this.tooltips.find(
-          (tooltip) => tooltip.id === `tooltip-${hexData.h3Index}`
-        )!.style.display = 'none';
-      } else {
-        this.tooltips.find(
-          (tooltip) => tooltip.id === `tooltip-${hexData.h3Index}`
-        )!.style.display = 'grid';
-      }
       const pxPosition = this.getPixelPosition(point);
       tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+      if (isBehindGlobe) {
+        tooltip.classList.remove('visible');
+      } else {
+        tooltip.classList.add('visible');
+      }
     });
   }
 

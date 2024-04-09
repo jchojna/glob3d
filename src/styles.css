@@ -47,21 +47,22 @@ canvas.webglobe {
   font-size: 0.8rem;
   grid-template-columns: repeat(2, auto);
   left: 10px;
-  opacity: 0.2;
+  opacity: 0;
   padding: 10px;
   pointer-events: none;
   position: absolute;
   top: 10px;
+  transform-origin: top left;
   transition: opacity var(--time-tooltip), transform 0.1s,
     visibility 0s var(--time-tooltip);
   user-select: none;
-  /* visibility: hidden; */
+  visibility: hidden;
 
-  /* &.tooltip--visible {
+  &.visible {
     opacity: 1;
     transition: opacity var(--time-tooltip), transform 0.1s, visibility 0s;
     visibility: visible;
-  } */
+  }
 
   .country {
     margin: 0;

@@ -14,6 +14,7 @@ const globeInstance = new BarGlob3d(root, {
   hexMargin: 0.2,
   debugMode: true,
   highestBar: 0.5,
+  // tooltipsLimit: 5,
 });
 globeInstance.initialize(data);
 
