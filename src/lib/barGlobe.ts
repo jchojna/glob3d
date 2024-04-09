@@ -3,7 +3,12 @@ import * as THREE from 'three';
 import Glob3d from './globe';
 // @ts-ignore
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
-import { getHexBin, getNewGeoJson, getXYZCoordinates } from './helpers';
+import {
+  getHexBin,
+  getNewGeoJson,
+  getTooltip,
+  getXYZCoordinates,
+} from './helpers';
 
 interface Opts {
   globeRadius: number;
@@ -13,12 +18,20 @@ interface Opts {
   highestBar: number;
   barColor?: string;
   barColorHover?: string;
+  tooltipsLimit?: number;
 }
+
+type TooltipRefPoint = {
+  distance: number;
+  id: string;
+  vector: THREE.Vector3;
+};
 
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
   clickedHexObject: THREE.Mesh<any, any> | null;
-  hexMaxValue: number | null;
+  hexMaxValue: number;
+  tooltipsRefPoints: TooltipRefPoint[];
   hexResults: any[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
   highestBar: number;
@@ -30,6 +43,7 @@ export default class BarGlob3d extends Glob3d {
   barColor: string;
   barColorHover: string;
   tooltips: HTMLElement[];
+  tooltipsLimit: number | null;
   // tooltipCity: HTMLElement;
   // tooltipCountry: HTMLElement;
   // tooltipValue: HTMLElement;
@@ -40,6 +54,7 @@ export default class BarGlob3d extends Glob3d {
       hexRes,
       hexMargin,
       highestBar,
+      tooltipsLimit = null,
       barColor = '#b6c4fb',
       barColorHover = 'purple',
     } = opts;
@@ -47,7 +62,7 @@ export default class BarGlob3d extends Glob3d {
 
     this.aggregatedData = [];
     this.clickedHexObject = null;
-    this.hexMaxValue = null;
+    this.hexMaxValue = 1; // neutral value in the implementation
     this.hexResultsGroup = new THREE.Group();
     this.hexResults = [];
     this.highestBar = highestBar;
@@ -59,6 +74,8 @@ export default class BarGlob3d extends Glob3d {
     this.barColor = barColor;
     this.barColorHover = barColorHover;
     this.tooltips = [];
+    this.tooltipsLimit = tooltipsLimit;
+    this.tooltipsRefPoints = [];
     // this.tooltipCountry = document.querySelector('.tooltip > .country')!;
     // this.tooltipCity = document.querySelector('.tooltip > .city')!;
     // this.tooltipValue = document.querySelector('.tooltip > .value')!;
@@ -117,9 +134,9 @@ export default class BarGlob3d extends Glob3d {
   }
 
   visualizeResult(aggregatedData: any[]) {
-    const hexResults = aggregatedData.map((bin: any) => {
+    const hexResults = aggregatedData.map((hexData: HexData) => {
       return new THREE.Mesh(
-        this.updateHexResultsGeometry(bin),
+        this.updateHexResultsGeometry(hexData),
         new THREE.MeshBasicMaterial({
           color: this.barColor,
           opacity: 0.6,
@@ -134,7 +151,6 @@ export default class BarGlob3d extends Glob3d {
   }
 
   getOffsetFromCenter(value: number) {
-    if (this.hexMaxValue === null) return;
     return (
       this.globeRadius +
       0.1 +
@@ -142,30 +158,87 @@ export default class BarGlob3d extends Glob3d {
     );
   }
 
-  getPixelPosition(point) {
+  getPixelPosition(point: { x: number; y: number }) {
     return {
       x: ((point.x + 1) / 2) * this.sizes.width,
       y: ((point.y - 1) / 2) * this.sizes.height * -1,
     };
   }
 
+  // update z order of tooltips
+  updateTooltipsDistances() {
+    this.tooltipsRefPoints = this.tooltipsRefPoints.map((hex) => ({
+      ...hex,
+      distance: hex.vector.distanceTo(this.camera.position),
+    }));
+  }
+
+  setTooltipsAnchors(data: HexData[]) {
+    if (!data) return;
+    this.tooltipsRefPoints = data.map((hexData: HexData) => {
+      const polarCoordinates = hexData.center;
+      const offset = this.getOffsetFromCenter(hexData.value);
+      const { x, y, z } = getXYZCoordinates(
+        polarCoordinates[0],
+        polarCoordinates[1],
+        offset
+      );
+      const vector = new THREE.Vector3(x, y, z);
+      return {
+        id: hexData.h3Index,
+        vector,
+        distance: vector.distanceTo(this.camera.position),
+      };
+    });
+  }
+
+  getTooltipScale = (
+    distance: number,
+    minDistance: number,
+    maxDistance: number
+  ) => {
+    return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
+  };
+
+  updateTooltipVisibility() {
+    const totalTooltips = Math.min(10, this.tooltipsRefPoints.length);
+    const sortedVectors = this.tooltipsRefPoints.sort(
+      (a, b) => a.distance - b.distance
+    );
+    if (sortedVectors.length === 0) return;
+
+    const minDistance = sortedVectors[0].distance;
+    const maxDistance = sortedVectors[totalTooltips - 1].distance;
+
+    this.tooltipsRefPoints.forEach((hex, i) => {
+      const zIndex = this.tooltipsRefPoints.length - i;
+      const tooltip = this.tooltips.find(
+        (tooltip) => tooltip.id === `tooltip-${hex.id}`
+      );
+      if (!tooltip) return;
+      if (i < totalTooltips) {
+        const tooltipScale = this.getTooltipScale(
+          hex.distance,
+          minDistance,
+          maxDistance
+        );
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
+        console.log(tooltipScale);
+      } else {
+        tooltip.style.opacity = '0';
+        tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
+      }
+      tooltip.style.zIndex = String(zIndex);
+    });
+  }
+
   createTooltips() {
-    this.tooltips = this.aggregatedData.map((hexData: HexData, index) => {
-      const tooltip = document.createElement('div');
-      tooltip.classList.add('tooltip');
-      tooltip.id = `tooltip-${hexData.h3Index}`;
-      const tooltipCountry = document.createElement('p');
-      tooltipCountry.classList.add('country');
-      tooltipCountry.textContent = hexData.country;
-      const tooltipCity = document.createElement('p');
-      tooltipCity.classList.add('city');
-      tooltipCity.textContent = hexData.city;
-      const tooltipValue = document.createElement('p');
-      tooltipValue.classList.add('value');
-      tooltipValue.textContent = `${hexData.value} people`;
-      tooltip.appendChild(tooltipCountry);
-      tooltip.appendChild(tooltipCity);
-      tooltip.appendChild(tooltipValue);
+    let data = this.aggregatedData.sort((a, b) => b.value - a.value);
+    if (this.tooltipsLimit !== null) data = data.slice(0, this.tooltipsLimit);
+    this.setTooltipsAnchors(data);
+    this.tooltips = data.map(({ h3Index, country, city, value }: HexData) => {
+      const tooltip = getTooltip(h3Index, country, city, value);
       this.root.appendChild(tooltip);
       return tooltip;
     });
@@ -267,6 +340,8 @@ export default class BarGlob3d extends Glob3d {
         //   this.tooltip.classList.remove('tooltip--visible');
       }
     }
+    this.updateTooltipsDistances();
+    this.updateTooltipVisibility();
 
     return window.requestAnimationFrame(() => this.barTick());
   }

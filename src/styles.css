@@ -39,19 +39,21 @@ canvas.webglobe {
 }
 
 .tooltip {
-  background: rgba(0, 0, 0, 0.85);
+  background: #fff;
   border-radius: 10px;
-  border: 1px solid #ddd;
-  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  color: #000;
   display: grid;
+  font-size: 0.8rem;
   grid-template-columns: repeat(2, auto);
   left: 10px;
   opacity: 0.2;
-  /* padding: 20px; */
+  padding: 10px;
   pointer-events: none;
   position: absolute;
   top: 10px;
-  transition: opacity var(--time-tooltip), visibility 0s var(--time-tooltip);
+  transition: opacity var(--time-tooltip), transform 0.1s,
+    visibility 0s var(--time-tooltip);
   user-select: none;
   /* visibility: hidden; */
 

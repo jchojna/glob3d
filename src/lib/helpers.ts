@@ -77,3 +77,38 @@ export const getXYZCoordinates = (
     z: r * Math.sin(phi) * Math.sin(theta),
   };
 };
+
+export const getTooltip = (
+  id: string,
+  country: string,
+  city: string,
+  value: number
+) => {
+  const tooltip = document.createElement('div');
+  tooltip.classList.add('tooltip');
+
+  if (id) tooltip.id = `tooltip-${id}`;
+
+  if (country) {
+    const tooltipCountry = document.createElement('p');
+    tooltipCountry.classList.add('country');
+    tooltipCountry.textContent = country;
+    tooltip.appendChild(tooltipCountry);
+  }
+
+  if (city) {
+    const tooltipCity = document.createElement('p');
+    tooltipCity.classList.add('city');
+    tooltipCity.textContent = city;
+    tooltip.appendChild(tooltipCity);
+  }
+
+  if (value) {
+    const tooltipValue = document.createElement('p');
+    tooltipValue.classList.add('value');
+    tooltipValue.textContent = `${value} people`;
+    tooltip.appendChild(tooltipValue);
+  }
+
+  return tooltip;
+};
