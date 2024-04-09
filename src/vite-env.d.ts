@@ -6,6 +6,7 @@ type HexData = {
   coordinates: [number, number];
   country: string;
   h3Index: string;
+  id: string;
   value: number;
   vertices: [number, number][];
 };

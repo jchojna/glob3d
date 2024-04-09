@@ -133,7 +133,7 @@ export default class BarGlob3d extends Glob3d {
     );
   }
 
-  visualizeResult(aggregatedData: any[]) {
+  visualizeResult(aggregatedData: HexData[]) {
     const hexResults = aggregatedData.map((hexData: HexData) => {
       return new THREE.Mesh(
         this.updateHexResultsGeometry(hexData),
@@ -145,6 +145,10 @@ export default class BarGlob3d extends Glob3d {
         })
       );
     });
+    this.aggregatedData = this.aggregatedData.map((hexData: HexData, i) => ({
+      ...hexData,
+      id: hexResults[i].uuid,
+    }));
     hexResults.forEach((hex: any) => this.hexResultsGroup.add(hex));
     this.scene.add(this.hexResultsGroup);
     return hexResults;
@@ -185,7 +189,7 @@ export default class BarGlob3d extends Glob3d {
       );
       const vector = new THREE.Vector3(x, y, z);
       return {
-        id: hexData.h3Index,
+        id: hexData.id,
         vector,
         distance: vector.distanceTo(this.camera.position),
       };
@@ -223,10 +227,21 @@ export default class BarGlob3d extends Glob3d {
           maxDistance
         );
         tooltip.classList.add('visible');
-        tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
+        if (hex.id !== this.hoveredHexId) {
+          tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
+          // update z-index
+        } else {
+          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
+        }
       } else {
         tooltip.classList.remove('visible');
-        tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
+        if (hex.id !== this.hoveredHexId) {
+          tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
+          // update z-index
+        } else {
+          tooltip.classList.add('visible');
+          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
+        }
       }
       tooltip.style.zIndex = String(zIndex);
     });
@@ -236,8 +251,8 @@ export default class BarGlob3d extends Glob3d {
     let data = this.aggregatedData.sort((a, b) => b.value - a.value);
     if (this.tooltipsLimit !== null) data = data.slice(0, this.tooltipsLimit);
     this.setTooltipsAnchors(data);
-    this.tooltips = data.map(({ h3Index, country, city, value }: HexData) => {
-      const tooltip = getTooltip(h3Index, country, city, value);
+    this.tooltips = data.map(({ id, country, city, value }: HexData) => {
+      const tooltip = getTooltip(id, country, city, value);
       this.root.appendChild(tooltip);
       return tooltip;
     });
@@ -310,6 +325,7 @@ export default class BarGlob3d extends Glob3d {
       if (hoveredHexObject && hoveredHexObject.uuid !== this.globe.uuid) {
         const hoveredHexId = hoveredHexObject.uuid;
 
+        // on mouse over
         if (this.hoveredHexId !== hoveredHexId) {
           const hoveredHexIndex = this.hexResults.findIndex(
             (hex: any) => hex.uuid === hoveredHexId
@@ -322,7 +338,9 @@ export default class BarGlob3d extends Glob3d {
           this.hoveredHexObject = hoveredHexObject;
           this.hoveredHexId = hoveredHexId;
           this.hoveredHexIndex = hoveredHexIndex;
-          // this.tooltip.classList.add('tooltip--visible');
+          this.tooltips
+            .find((tooltip) => tooltip.id === `tooltip-${hoveredHexId}`)!
+            .classList.add('visible');
         }
       } else {
         this.hoveredHexObject &&
