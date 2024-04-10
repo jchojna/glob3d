@@ -37,3 +37,19 @@ type GlobeData = {
   };
   value: number;
 };
+
+type GlobeOptions = {
+  globeColor?: string;
+  globeOpacity?: number;
+  globeRadius?: number;
+  hexRes?: number;
+  hexMargin?: number;
+  debugMode?: boolean;
+};
+
+type BarGlobeOptions = {
+  barColor?: string;
+  barColorHover?: string;
+  highestBar?: number;
+  tooltipsLimit?: number;
+} & GlobeOptions;

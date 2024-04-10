@@ -12,44 +12,33 @@ import {
   getXYZCoordinates,
 } from './helpers';
 
-interface Opts {
-  barColor?: string;
-  barColorHover?: string;
-  debugMode?: boolean;
-  globeColor?: string;
-  globeOpacity?: number;
-  globeRadius?: number;
-  hexMargin?: number;
-  hexRes?: number;
-  highestBar?: number;
-  tooltipsLimit?: number;
-}
-
 type TooltipRefPoint = {
   distance: number;
   id: string;
   vector: THREE.Vector3;
 };
 
+type HexResult = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
   barColor: string;
   barColorHover: string;
-  clickedHexObject: THREE.Mesh<any, any> | null;
+  clickedHexObject: HexResult | null;
   hexMaxValue: number;
-  hexResults: any[];
+  hexResults: HexResult[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
   highestBar: number;
   hoveredHexId: string | null;
   hoveredHexIndex: number | null;
-  hoveredHexObject: THREE.Mesh<any, any> | null;
+  hoveredHexObject: HexResult | null;
   raycaster: THREE.Raycaster;
   tooltips: HTMLElement[];
   tooltipsLimit: number | null;
   tooltipsRaycaster: THREE.Raycaster;
   tooltipsRefPoints: TooltipRefPoint[];
 
-  constructor(root: HTMLElement, opts: Opts) {
+  constructor(root: HTMLElement, options: BarGlobeOptions) {
     const {
       barColor = defaultOpts.barColor,
       barColorHover = defaultOpts.barColorHover,
@@ -61,7 +50,8 @@ export default class BarGlob3d extends Glob3d {
       hexRes = defaultOpts.hexRes,
       highestBar = defaultOpts.highestBar,
       tooltipsLimit = defaultOpts.tooltipsLimit,
-    } = opts;
+    } = options;
+
     super(root, {
       globeColor,
       globeOpacity,
@@ -90,7 +80,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   preProcessData(data: GlobeData[]) {
-    return data.map(({ city, country, coordinates, value }) => {
+    return data.map(({ city, country, coordinates, value }): HexData => {
       const h3Index = latLngToCell(
         coordinates.lat,
         coordinates.lon,
@@ -102,6 +92,7 @@ export default class BarGlob3d extends Glob3d {
         country,
         coordinates: [coordinates.lat, coordinates.lon],
         ...hexBin,
+        id: '',
         value,
       };
     });
@@ -109,21 +100,18 @@ export default class BarGlob3d extends Glob3d {
 
   aggregateData(data: GlobeData[]) {
     const processedData = this.preProcessData(data);
-    return processedData.reduce(
-      (a: any[], b: { city: string; h3Index: any; value: number }) => {
-        const idx = a.findIndex(
-          (elem: { h3Index: any }) => elem.h3Index === b.h3Index
-        );
-        if (idx >= 0) {
-          a[idx].city += `, ${b.city}`;
-          a[idx].value += b.value;
-          return a;
-        } else {
-          return [...a, b];
-        }
-      },
-      []
-    );
+    return processedData.reduce((a: HexData[], b: HexData) => {
+      const idx = a.findIndex(
+        (elem: { h3Index: string }) => elem.h3Index === b.h3Index
+      );
+      if (idx >= 0) {
+        a[idx].city += `, ${b.city}`;
+        a[idx].value += b.value;
+        return a;
+      } else {
+        return [...a, b];
+      }
+    }, []);
   }
 
   updateHexResultsGeometry(bin: HexData) {
@@ -157,7 +145,7 @@ export default class BarGlob3d extends Glob3d {
       ...hexData,
       id: hexResults[i].uuid,
     }));
-    hexResults.forEach((hex: any) => this.hexResultsGroup.add(hex));
+    hexResults.forEach((hex: HexResult) => this.hexResultsGroup.add(hex));
     this.scene.add(this.hexResultsGroup);
     return hexResults;
   }
@@ -301,13 +289,13 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  highlightHex(object: THREE.Mesh<any, any> | null) {
+  highlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.barColorHover);
     object.material.opacity = 0.9;
   }
 
-  unhighlightHex(object: THREE.Mesh<any, any> | null) {
+  unhighlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.barColor);
     object.material.opacity = 0.6;
@@ -328,7 +316,7 @@ export default class BarGlob3d extends Glob3d {
         (intersects.sort(
           (a: { distance: number }, b: { distance: number }) =>
             a.distance - b.distance
-        )[0].object as THREE.Mesh<any, any>);
+        )[0].object as HexResult);
 
       if (hoveredHexObject && hoveredHexObject.uuid !== this.globe.uuid) {
         const hoveredHexId = hoveredHexObject.uuid;
@@ -336,7 +324,7 @@ export default class BarGlob3d extends Glob3d {
         // on mouse over
         if (this.hoveredHexId !== hoveredHexId) {
           const hoveredHexIndex = this.hexResults.findIndex(
-            (hex: any) => hex.uuid === hoveredHexId
+            (hex: HexResult) => hex.uuid === hoveredHexId
           );
           this.hoveredHexObject &&
             this.hoveredHexObject !== this.clickedHexObject &&
@@ -375,7 +363,7 @@ export default class BarGlob3d extends Glob3d {
     // this.tooltip.classList.remove('tooltip--visible');
   }
 
-  update(data: any) {
+  update(data: GlobeData[]) {
     console.log('UPDATE');
     this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);

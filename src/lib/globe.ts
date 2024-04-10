@@ -10,15 +10,6 @@ import '../styles.css';
 import defaultOpts from './defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
-interface Opts {
-  globeColor?: string;
-  globeOpacity?: number;
-  globeRadius?: number;
-  hexRes?: number;
-  hexMargin?: number;
-  debugMode?: boolean;
-}
-
 export default class Glob3d {
   // private fields
   #aspectRatio: number;
@@ -32,7 +23,7 @@ export default class Glob3d {
 
   // public fields
   camera: THREE.PerspectiveCamera;
-  globe: THREE.Mesh<any, any>;
+  globe: THREE.Mesh;
   globeColor: string;
   globeOpacity: number;
   globeRadius: number;
@@ -43,7 +34,7 @@ export default class Glob3d {
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
-  constructor(root: HTMLElement, opts: Opts) {
+  constructor(root: HTMLElement, options: GlobeOptions) {
     const {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
@@ -51,7 +42,8 @@ export default class Glob3d {
       hexRes = defaultOpts.hexRes,
       hexMargin = defaultOpts.hexMargin,
       debugMode = defaultOpts.debugMode,
-    } = opts;
+    } = options;
+
     this.root = root;
     this.#aspectRatio = window.innerWidth / window.innerHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
