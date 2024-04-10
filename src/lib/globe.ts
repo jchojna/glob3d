@@ -5,7 +5,7 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
-import json from '../data/world_low_geo.json';
+import worldGeoJson from '../data/world_low_geo.json';
 import '../styles.css';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
@@ -14,12 +14,8 @@ export default class Glob3d {
   #aspectRatio: number;
   #bufferGeometryUtils;
   #canvas: HTMLElement;
-  // #debugMode: boolean;
+  #debugMode: boolean;
   #controls: OrbitControls;
-  #hexGlobe: THREE.Mesh<any, any>;
-  #hexGlobeGeometry: THREE.BufferGeometry | undefined;
-  #hexGlobeMaterial: THREE.MeshMatcapMaterial;
-  #matcapTexture: THREE.Texture | null;
   #renderer: THREE.WebGLRenderer;
   root: HTMLElement;
   #textureLoader: THREE.TextureLoader;
@@ -39,16 +35,15 @@ export default class Glob3d {
     root: HTMLElement,
     globeRadius: number,
     hexRes: number,
-    hexMargin: number
-    // debugMode: boolean
+    hexMargin: number,
+    debugMode: boolean
   ) {
     this.root = root;
     this.#aspectRatio = window.innerWidth / window.innerHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.createCanvas(this.root);
-    // this.#debugMode = debugMode;
+    this.#debugMode = debugMode;
     this.#textureLoader = new THREE.TextureLoader();
-    this.#matcapTexture = this.#textureLoader.load('/textures/matcap_1.png');
     this.#renderer = new THREE.WebGLRenderer({
       alpha: true,
       canvas: this.#canvas,
@@ -87,15 +82,6 @@ export default class Glob3d {
     this.gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
     this.scene.add(this.globe);
 
-    // globe made of hexagons
-    this.#hexGlobeGeometry = undefined;
-    this.#hexGlobeMaterial = new THREE.MeshMatcapMaterial();
-    this.#hexGlobeMaterial.matcap = this.#matcapTexture;
-    this.#hexGlobe = new THREE.Mesh(
-      this.#hexGlobeGeometry,
-      this.#hexGlobeMaterial
-    );
-
     this.#controls = new OrbitControls(this.camera, this.#canvas);
     this.#controls.autoRotate = true;
     this.#controls.autoRotateSpeed = 0.1;
@@ -113,12 +99,18 @@ export default class Glob3d {
   }
 
   createHexGlobe() {
-    const { features } = json;
+    const { features } = worldGeoJson;
     // @ts-ignore
     const h3Indexes = getH3Indexes(features, this.hexRes);
+    const material = new THREE.MeshMatcapMaterial();
+    // TODO: should it be possible to set other matcap textures?
+    material.matcap = this.#textureLoader.load('/textures/matcap_1.png');
     const hexBins = h3Indexes.map((index) => getHexBin(index));
-    this.#hexGlobe.geometry = this.updateHexGlobeGeometry(hexBins);
-    this.scene.add(this.#hexGlobe);
+    const globe = new THREE.Mesh(
+      this.updateHexGlobeGeometry(hexBins),
+      material
+    );
+    this.scene.add(globe);
   }
 
   updateHexGlobeGeometry(hexBins: any[]) {
@@ -148,6 +140,8 @@ export default class Glob3d {
   init() {
     this.tick();
     this.createHexGlobe();
+
+    if (!this.#debugMode) this.gui.hide();
 
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;

@@ -7,14 +7,13 @@ const updateButton = document.querySelector('.update-button');
 if (!root || !(root instanceof HTMLElement)) {
   throw new Error('Root element not found');
 }
-const data = await getCitiesData();
+const data = getCitiesData();
 const globeInstance = new BarGlob3d(root, {
-  globeRadius: 100,
-  hexRes: 3,
-  hexMargin: 0.2,
   debugMode: true,
+  globeRadius: 100,
+  hexMargin: 0.2,
+  hexRes: 3,
   highestBar: 0.5,
-  // tooltipsLimit: 5,
 });
 globeInstance.initialize(data);
 

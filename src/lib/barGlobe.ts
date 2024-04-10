@@ -44,9 +44,6 @@ export default class BarGlob3d extends Glob3d {
   barColorHover: string;
   tooltips: HTMLElement[];
   tooltipsLimit: number | null;
-  // tooltipCity: HTMLElement;
-  // tooltipCountry: HTMLElement;
-  // tooltipValue: HTMLElement;
 
   constructor(root: HTMLElement, opts: Opts) {
     const {
@@ -54,11 +51,12 @@ export default class BarGlob3d extends Glob3d {
       hexRes,
       hexMargin,
       highestBar,
+      debugMode,
       tooltipsLimit = null,
       barColor = '#b6c4fb',
       barColorHover = 'purple',
     } = opts;
-    super(root, globeRadius, hexRes, hexMargin);
+    super(root, globeRadius, hexRes, hexMargin, debugMode);
 
     this.aggregatedData = [];
     this.clickedHexObject = null;
@@ -76,9 +74,6 @@ export default class BarGlob3d extends Glob3d {
     this.tooltips = [];
     this.tooltipsLimit = tooltipsLimit;
     this.tooltipsRefPoints = [];
-    // this.tooltipCountry = document.querySelector('.tooltip > .country')!;
-    // this.tooltipCity = document.querySelector('.tooltip > .city')!;
-    // this.tooltipValue = document.querySelector('.tooltip > .value')!;
   }
 
   preProcessData(data: GlobeData[]) {
@@ -348,7 +343,7 @@ export default class BarGlob3d extends Glob3d {
           this.unhighlightHex(this.hoveredHexObject);
         this.hoveredHexObject = null;
         this.hoveredHexId = null;
-        this.hoveredHexIndex = NaN;
+        this.hoveredHexIndex = null;
         // !this.clickedHexObject &&
         //   this.tooltip.classList.remove('tooltip--visible');
       }
@@ -362,7 +357,7 @@ export default class BarGlob3d extends Glob3d {
   clean() {
     this.aggregatedData = [];
     this.hexResults = [];
-    this.hoveredHexIndex = NaN;
+    this.hoveredHexIndex = null;
     this.hexResultsGroup.clear();
     // this.tooltip.classList.remove('tooltip--visible');
   }
@@ -373,7 +368,7 @@ export default class BarGlob3d extends Glob3d {
     this.hexResults = this.visualizeResult(this.aggregatedData);
   }
 
-  initialize(data: any): void {
+  initialize(data: GlobeData[]): void {
     super.init();
     this.barTick();
     this.aggregatedData = this.aggregateData(data);
