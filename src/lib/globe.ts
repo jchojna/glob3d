@@ -7,7 +7,17 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 
 import worldGeoJson from '../data/world_low_geo.json';
 import '../styles.css';
+import defaultOpts from './defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
+
+interface Opts {
+  globeColor?: string;
+  globeOpacity?: number;
+  globeRadius?: number;
+  hexRes?: number;
+  hexMargin?: number;
+  debugMode?: boolean;
+}
 
 export default class Glob3d {
   // private fields
@@ -33,15 +43,15 @@ export default class Glob3d {
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
-  constructor(
-    root: HTMLElement,
-    globeColor: string,
-    globeOpacity: number,
-    globeRadius: number,
-    hexRes: number,
-    hexMargin: number,
-    debugMode: boolean
-  ) {
+  constructor(root: HTMLElement, opts: Opts) {
+    const {
+      globeColor = defaultOpts.globeColor,
+      globeOpacity = defaultOpts.globeOpacity,
+      globeRadius = defaultOpts.globeRadius,
+      hexRes = defaultOpts.hexRes,
+      hexMargin = defaultOpts.hexMargin,
+      debugMode = defaultOpts.debugMode,
+    } = opts;
     this.root = root;
     this.#aspectRatio = window.innerWidth / window.innerHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;

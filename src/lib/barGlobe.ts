@@ -62,15 +62,14 @@ export default class BarGlob3d extends Glob3d {
       highestBar = defaultOpts.highestBar,
       tooltipsLimit = defaultOpts.tooltipsLimit,
     } = opts;
-    super(
-      root,
+    super(root, {
       globeColor,
       globeOpacity,
       globeRadius,
       hexRes,
       hexMargin,
-      debugMode
-    );
+      debugMode,
+    });
 
     this.aggregatedData = [];
     this.clickedHexObject = null;
