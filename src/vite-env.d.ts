@@ -1,5 +1,11 @@
 /// <reference types="vite/client" />
 
+type HexBin = {
+  h3Index: string;
+  center: [number, number];
+  vertices: [number, number][];
+};
+
 type HexData = {
   center: [number, number];
   city: string;

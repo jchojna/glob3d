@@ -10,10 +10,6 @@ if (!root || !(root instanceof HTMLElement)) {
 const data = getCitiesData();
 const globeInstance = new BarGlob3d(root, {
   debugMode: true,
-  globeRadius: 100,
-  hexMargin: 0.2,
-  hexRes: 3,
-  highestBar: 0.5,
 });
 globeInstance.initialize(data);
 

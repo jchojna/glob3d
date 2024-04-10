@@ -23,6 +23,8 @@ export default class Glob3d {
   // public fields
   camera: THREE.PerspectiveCamera;
   globe: THREE.Mesh<any, any>;
+  globeColor: string;
+  globeOpacity: number;
   globeRadius: number;
   gui: dat.GUI;
   hexMargin: number;
@@ -33,6 +35,8 @@ export default class Glob3d {
 
   constructor(
     root: HTMLElement,
+    globeColor: string,
+    globeOpacity: number,
     globeRadius: number,
     hexRes: number,
     hexMargin: number,
@@ -50,19 +54,14 @@ export default class Glob3d {
       antialias: true,
     });
 
-    this.scene = new THREE.Scene();
-    this.gui = new dat.GUI();
-
-    // camera
-    this.camera = new THREE.PerspectiveCamera(55, this.#aspectRatio, 1, 1000);
-    this.camera.position.z = 200;
-    this.camera.position.y = 200;
-    this.scene.add(this.camera);
-
+    this.globeColor = globeColor;
+    this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
+    this.gui = new dat.GUI();
     this.hexMargin = hexMargin;
     this.hexRes = hexRes;
     this.mouse = new THREE.Vector2();
+    this.scene = new THREE.Scene();
     this.sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -70,17 +69,23 @@ export default class Glob3d {
 
     // solid globe
     const solidGlobeMaterial = new THREE.MeshBasicMaterial({
-      color: '#000105',
+      color: this.globeColor,
       transparent: true,
-      opacity: 0.85,
+      opacity: this.globeOpacity,
     });
     this.globe = new THREE.Mesh(
-      new THREE.SphereGeometry(this.globeRadius, 32, 32),
+      new THREE.SphereGeometry(this.globeRadius, 36, 36),
       solidGlobeMaterial
     );
     this.gui.addColor(solidGlobeMaterial, 'color');
     this.gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
     this.scene.add(this.globe);
+
+    // camera
+    this.camera = new THREE.PerspectiveCamera(55, this.#aspectRatio, 1, 1000);
+    this.camera.position.z = 200;
+    this.camera.position.y = 200;
+    this.scene.add(this.camera);
 
     this.#controls = new OrbitControls(this.camera, this.#canvas);
     this.#controls.autoRotate = true;
@@ -113,11 +118,11 @@ export default class Glob3d {
     this.scene.add(globe);
   }
 
-  updateHexGlobeGeometry(hexBins: any[]) {
+  updateHexGlobeGeometry(hexBins: HexBin[]) {
     return !hexBins.length
       ? new THREE.BufferGeometry()
       : this.#bufferGeometryUtils.mergeGeometries(
-          hexBins.map((hex: HexData) => {
+          hexBins.map((hex: HexBin) => {
             const geoJson = getNewGeoJson(hex, this.hexMargin);
             return new ConicPolygonGeometry(
               [geoJson], // GeoJson polygon coordinates
@@ -131,6 +136,24 @@ export default class Glob3d {
         );
   }
 
+  registerMouseMove() {
+    window.addEventListener('mousemove', (e) => {
+      this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
+      this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
+    });
+  }
+
+  registerResize() {
+    window.addEventListener('resize', () => {
+      this.sizes.width = window.innerWidth;
+      this.sizes.height = window.innerHeight;
+      this.#aspectRatio = this.sizes.width / this.sizes.height;
+      this.camera.aspect = this.#aspectRatio;
+      this.camera.updateProjectionMatrix();
+      this.#renderer.setSize(this.sizes.width, this.sizes.height);
+    });
+  }
+
   tick(): number {
     this.#renderer.render(this.scene, this.camera);
     this.#controls.update();
@@ -140,21 +163,7 @@ export default class Glob3d {
   init() {
     this.tick();
     this.createHexGlobe();
-
+    this.registerMouseMove();
     if (!this.#debugMode) this.gui.hide();
-
-    window.addEventListener('mousemove', (e) => {
-      this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
-      this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
-    });
-
-    window.addEventListener('resize', () => {
-      this.sizes.width = window.innerWidth;
-      this.sizes.height = window.innerHeight;
-      this.#aspectRatio = this.sizes.width / this.sizes.height;
-      this.camera.aspect = this.#aspectRatio;
-      this.camera.updateProjectionMatrix();
-      this.#renderer.setSize(this.sizes.width, this.sizes.height);
-    });
   }
 }

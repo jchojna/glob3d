@@ -1,8 +1,10 @@
 import { latLngToCell } from 'h3-js';
 import * as THREE from 'three';
-import Glob3d from './globe';
 // @ts-ignore
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
+
+import defaultOpts from './defaultOpts';
+import Glob3d from './globe';
 import {
   getHexBin,
   getNewGeoJson,
@@ -11,13 +13,15 @@ import {
 } from './helpers';
 
 interface Opts {
-  globeRadius: number;
-  hexRes: number;
-  hexMargin: number;
-  debugMode: boolean;
-  highestBar: number;
   barColor?: string;
   barColorHover?: string;
+  debugMode?: boolean;
+  globeColor?: string;
+  globeOpacity?: number;
+  globeRadius?: number;
+  hexMargin?: number;
+  hexRes?: number;
+  highestBar?: number;
   tooltipsLimit?: number;
 }
 
@@ -29,9 +33,10 @@ type TooltipRefPoint = {
 
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
+  barColor: string;
+  barColorHover: string;
   clickedHexObject: THREE.Mesh<any, any> | null;
   hexMaxValue: number;
-  tooltipsRefPoints: TooltipRefPoint[];
   hexResults: any[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
   highestBar: number;
@@ -39,24 +44,33 @@ export default class BarGlob3d extends Glob3d {
   hoveredHexIndex: number | null;
   hoveredHexObject: THREE.Mesh<any, any> | null;
   raycaster: THREE.Raycaster;
-  tooltipsRaycaster: THREE.Raycaster;
-  barColor: string;
-  barColorHover: string;
   tooltips: HTMLElement[];
   tooltipsLimit: number | null;
+  tooltipsRaycaster: THREE.Raycaster;
+  tooltipsRefPoints: TooltipRefPoint[];
 
   constructor(root: HTMLElement, opts: Opts) {
     const {
+      barColor = defaultOpts.barColor,
+      barColorHover = defaultOpts.barColorHover,
+      debugMode = defaultOpts.debugMode,
+      globeColor = defaultOpts.globeColor,
+      globeOpacity = defaultOpts.globeOpacity,
+      globeRadius = defaultOpts.globeRadius,
+      hexMargin = defaultOpts.hexMargin,
+      hexRes = defaultOpts.hexRes,
+      highestBar = defaultOpts.highestBar,
+      tooltipsLimit = defaultOpts.tooltipsLimit,
+    } = opts;
+    super(
+      root,
+      globeColor,
+      globeOpacity,
       globeRadius,
       hexRes,
       hexMargin,
-      highestBar,
-      debugMode,
-      tooltipsLimit = null,
-      barColor = '#b6c4fb',
-      barColorHover = 'purple',
-    } = opts;
-    super(root, globeRadius, hexRes, hexMargin, debugMode);
+      debugMode
+    );
 
     this.aggregatedData = [];
     this.clickedHexObject = null;

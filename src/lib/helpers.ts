@@ -48,7 +48,7 @@ export const getRandomInt = (min: number, max: number): number => {
 };
 
 // Compute new geojson with relative margin.
-export const getNewGeoJson = (hex: HexData, margin: number) => {
+export const getNewGeoJson = (hex: HexBin, margin: number) => {
   const relNum = (st: number, end: number, rat: number) =>
     st - (st - end) * rat;
   const [clat, clng] = hex.center;
