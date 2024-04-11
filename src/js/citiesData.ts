@@ -15,7 +15,7 @@ type CityData = {
   name: string;
 };
 
-const prepareCitiesData = (data: any) => {
+const prepareCitiesData = (data: CityData[]) => {
   return data.map(({ country, population, coordinates, name }: CityData) => ({
     city: name,
     country,

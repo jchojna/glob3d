@@ -1,4 +1,4 @@
-import { getRandomInt } from '../lib/helpers';
+import { getRandomInt } from '../src/lib/helpers';
 
 const baseGbifUrl = 'https://api.gbif.org/v1/occurrence/search';
 const facetsUrl = `${baseGbifUrl}?kingdomKey=1&phylumKey=44&classKey=212&facet=genusKey&genusKey.facetLimit=1200000&genusKey.facetOffset=0&limit=0`;

@@ -48,7 +48,7 @@ export const getRandomInt = (min: number, max: number): number => {
 };
 
 // Compute new geojson with relative margin.
-export const getNewGeoJson = (hex: HexData, margin: number) => {
+export const getNewGeoJson = (hex: HexBin, margin: number) => {
   const relNum = (st: number, end: number, rat: number) =>
     st - (st - end) * rat;
   const [clat, clng] = hex.center;
@@ -62,7 +62,7 @@ export const getNewGeoJson = (hex: HexData, margin: number) => {
       );
 };
 
-export const polar2Cartesian = (
+export const getXYZCoordinates = (
   lat: number,
   lng: number,
   globeRadius: number,
@@ -70,10 +70,53 @@ export const polar2Cartesian = (
 ) => {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((90 - lng) * Math.PI) / 180;
-  const r = globeRadius * (1 + relAltitude) + 0.1;
+  const r = globeRadius * (1 + relAltitude);
   return {
     x: r * Math.sin(phi) * Math.cos(theta),
     y: r * Math.cos(phi),
     z: r * Math.sin(phi) * Math.sin(theta),
   };
+};
+
+export const getTooltip = (
+  id: string,
+  country: string,
+  city: string,
+  value: number
+) => {
+  const tooltip = document.createElement('div');
+  tooltip.classList.add('tooltip');
+
+  if (id) tooltip.id = `tooltip-${id}`;
+
+  if (country) {
+    const tooltipCountry = document.createElement('p');
+    tooltipCountry.classList.add('country');
+    tooltipCountry.textContent = country;
+    tooltip.appendChild(tooltipCountry);
+  }
+
+  if (city) {
+    const tooltipCity = document.createElement('p');
+    tooltipCity.classList.add('city');
+    tooltipCity.textContent = city;
+    tooltip.appendChild(tooltipCity);
+  }
+
+  if (value) {
+    const tooltipValue = document.createElement('p');
+    tooltipValue.classList.add('value');
+    tooltipValue.textContent = `${value} people`;
+    tooltip.appendChild(tooltipValue);
+  }
+
+  return tooltip;
+};
+
+export const getTooltipScale = (
+  distance: number,
+  minDistance: number,
+  maxDistance: number
+): number => {
+  return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
 };
