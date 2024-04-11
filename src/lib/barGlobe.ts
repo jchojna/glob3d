@@ -9,6 +9,7 @@ import {
   getHexBin,
   getNewGeoJson,
   getTooltip,
+  getTooltipScale,
   getXYZCoordinates,
 } from './helpers';
 
@@ -105,17 +106,16 @@ export default class BarGlob3d extends Glob3d {
   }
 
   aggregateData(data: GlobeData[]) {
-    const processedData = this.preProcessData(data);
-    return processedData.reduce((a: HexData[], b: HexData) => {
-      const idx = a.findIndex(
-        (elem: { h3Index: string }) => elem.h3Index === b.h3Index
+    return this.preProcessData(data).reduce((acc: HexData[], curr: HexData) => {
+      const idx = acc.findIndex(
+        (elem: { h3Index: string }) => elem.h3Index === curr.h3Index
       );
       if (idx >= 0) {
-        a[idx].city += `, ${b.city}`;
-        a[idx].value += b.value;
-        return a;
+        acc[idx].city += `, ${curr.city}`;
+        acc[idx].value += curr.value;
+        return acc;
       } else {
-        return [...a, b];
+        return [...acc, curr];
       }
     }, []);
   }
@@ -162,6 +162,7 @@ export default class BarGlob3d extends Glob3d {
     );
   }
 
+  // get pixel position from normalized device coordinates
   getPixelPosition(point: { x: number; y: number }) {
     return {
       x: ((point.x + 1) / 2) * this.sizes.width,
@@ -169,7 +170,7 @@ export default class BarGlob3d extends Glob3d {
     };
   }
 
-  // update z order of tooltips
+  // update tooltips reference points distances to the camera
   updateTooltipsDistances() {
     this.tooltipsRefPoints = this.tooltipsRefPoints.map((hex) => ({
       ...hex,
@@ -177,7 +178,7 @@ export default class BarGlob3d extends Glob3d {
     }));
   }
 
-  setTooltipsAnchors(data: HexData[]) {
+  setTooltipsRefPoints(data: HexData[]) {
     if (!data) return;
     this.tooltipsRefPoints = data.map((hexData: HexData) => {
       const polarCoordinates = hexData.center;
@@ -196,66 +197,14 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  getTooltipScale = (
-    distance: number,
-    minDistance: number,
-    maxDistance: number
-  ) => {
-    return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
-  };
-
-  updateTooltipVisibility() {
-    const totalTooltips = Math.min(10, this.tooltipsRefPoints.length);
-    const sortedVectors = this.tooltipsRefPoints.sort(
-      (a, b) => a.distance - b.distance
-    );
-    if (sortedVectors.length === 0) return;
-
-    const minDistance = sortedVectors[0].distance;
-    const maxDistance = sortedVectors[totalTooltips - 1].distance;
-
-    this.tooltipsRefPoints.forEach((hex, i) => {
-      const zIndex = this.tooltipsRefPoints.length - i;
-      const tooltip = this.tooltips.find(
-        (tooltip) => tooltip.id === `tooltip-${hex.id}`
-      );
-      if (!tooltip) return;
-      if (i < totalTooltips) {
-        const tooltipScale = this.getTooltipScale(
-          hex.distance,
-          minDistance,
-          maxDistance
-        );
-        tooltip.classList.add('visible');
-        if (hex.id !== this.hoveredHexId) {
-          tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
-          // update z-index
-        } else {
-          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-        }
-      } else {
-        tooltip.classList.remove('visible');
-        if (hex.id !== this.hoveredHexId) {
-          tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
-          // update z-index
-        } else {
-          tooltip.classList.add('visible');
-          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-        }
-      }
-      tooltip.style.zIndex = String(zIndex);
-    });
-  }
-
   createTooltips() {
     let data = this.aggregatedData.sort((a, b) => b.value - a.value);
     if (this.tooltipsLimit !== null) data = data.slice(0, this.tooltipsLimit);
-    this.setTooltipsAnchors(data);
+    this.setTooltipsRefPoints(data);
     this.tooltips = data.map(({ id, country, city, value }: HexData) => {
-      const tooltip = getTooltip(id, country, city, value);
-      this.root.appendChild(tooltip);
-      return tooltip;
+      return getTooltip(id, country, city, value);
     });
+    this.root.append(...this.tooltips);
   }
 
   handleTooltips() {
@@ -293,6 +242,49 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
+  updateTooltipVisibility() {
+    const totalTooltips = Math.min(10, this.tooltipsRefPoints.length);
+    const sortedVectors = this.tooltipsRefPoints.sort(
+      (a, b) => a.distance - b.distance
+    );
+    if (sortedVectors.length === 0) return;
+
+    const minDistance = sortedVectors[0].distance;
+    const maxDistance = sortedVectors[totalTooltips - 1].distance;
+
+    this.tooltipsRefPoints.forEach((hex, i) => {
+      const zIndex = this.tooltipsRefPoints.length - i;
+      const tooltip = this.tooltips.find(
+        (tooltip) => tooltip.id === `tooltip-${hex.id}`
+      );
+      if (!tooltip) return;
+      if (i < totalTooltips) {
+        const tooltipScale = getTooltipScale(
+          hex.distance,
+          minDistance,
+          maxDistance
+        );
+        tooltip.classList.add('visible');
+        if (hex.id !== this.hoveredHexId) {
+          tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
+          // update z-index
+        } else {
+          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
+        }
+      } else {
+        tooltip.classList.remove('visible');
+        if (hex.id !== this.hoveredHexId) {
+          tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
+          // update z-index
+        } else {
+          tooltip.classList.add('visible');
+          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
+        }
+      }
+      tooltip.style.zIndex = String(zIndex);
+    });
+  }
+
   highlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.barActiveColor);
@@ -306,10 +298,11 @@ export default class BarGlob3d extends Glob3d {
   }
 
   barTick(): number {
-    // handle raycasting
     if (this.hexResults.length > 0) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
       this.handleTooltips();
+      this.updateTooltipsDistances();
+      this.updateTooltipVisibility();
 
       const intersects = this.raycaster.intersectObjects([
         this.globe,
@@ -353,10 +346,21 @@ export default class BarGlob3d extends Glob3d {
         //   this.tooltip.classList.remove('tooltip--visible');
       }
     }
-    this.updateTooltipsDistances();
-    this.updateTooltipVisibility();
 
     return window.requestAnimationFrame(() => this.barTick());
+  }
+
+  registerClickEvent() {
+    window.addEventListener('click', () => {
+      if (this.hoveredHexId) {
+        this.clickedHexObject && this.unhighlightHex(this.clickedHexObject);
+        this.clickedHexObject = this.hoveredHexObject;
+        this.highlightHex(this.clickedHexObject);
+      } else {
+        this.unhighlightHex(this.clickedHexObject);
+        this.clickedHexObject = null;
+      }
+    });
   }
 
   clean() {
@@ -380,16 +384,6 @@ export default class BarGlob3d extends Glob3d {
     this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
     this.hexResults = this.visualizeResult(this.aggregatedData);
     this.createTooltips();
-
-    window.addEventListener('click', () => {
-      if (this.hoveredHexId) {
-        this.clickedHexObject && this.unhighlightHex(this.clickedHexObject);
-        this.clickedHexObject = this.hoveredHexObject;
-        this.highlightHex(this.clickedHexObject);
-      } else {
-        this.unhighlightHex(this.clickedHexObject);
-        this.clickedHexObject = null;
-      }
-    });
+    this.registerClickEvent();
   }
 }

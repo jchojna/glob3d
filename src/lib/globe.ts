@@ -138,14 +138,14 @@ export default class Glob3d {
         );
   }
 
-  registerMouseMove() {
+  registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
       this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
     });
   }
 
-  registerResize() {
+  registerResizeEvent() {
     window.addEventListener('resize', () => {
       this.sizes.width = window.innerWidth;
       this.sizes.height = window.innerHeight;
@@ -165,7 +165,8 @@ export default class Glob3d {
   init() {
     this.tick();
     this.createHexGlobe();
-    this.registerMouseMove();
+    this.registerMouseMoveEvent();
+    this.registerResizeEvent();
     if (!this.#debugMode) this.gui.hide();
   }
 }

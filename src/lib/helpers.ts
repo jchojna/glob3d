@@ -112,3 +112,11 @@ export const getTooltip = (
 
   return tooltip;
 };
+
+export const getTooltipScale = (
+  distance: number,
+  minDistance: number,
+  maxDistance: number
+): number => {
+  return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
+};
