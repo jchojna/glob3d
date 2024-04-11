@@ -23,7 +23,9 @@ type HexResult = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
   barColor: string;
-  barColorHover: string;
+  barOpacity: number;
+  barActiveColor: string;
+  barActiveOpacity: number;
   clickedHexObject: HexResult | null;
   hexMaxValue: number;
   hexResults: HexResult[];
@@ -41,7 +43,9 @@ export default class BarGlob3d extends Glob3d {
   constructor(root: HTMLElement, options: BarGlobeOptions) {
     const {
       barColor = defaultOpts.barColor,
-      barColorHover = defaultOpts.barColorHover,
+      barOpacity = defaultOpts.barOpacity,
+      barActiveColor = defaultOpts.barActiveColor,
+      barActiveOpacity = defaultOpts.barActiveOpacity,
       debugMode = defaultOpts.debugMode,
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
@@ -53,29 +57,31 @@ export default class BarGlob3d extends Glob3d {
     } = options;
 
     super(root, {
+      debugMode,
       globeColor,
       globeOpacity,
       globeRadius,
-      hexRes,
       hexMargin,
-      debugMode,
+      hexRes,
     });
 
     this.aggregatedData = [];
+    this.barColor = barColor;
+    this.barOpacity = barOpacity;
+    this.barActiveColor = barActiveColor;
+    this.barActiveOpacity = barActiveOpacity;
     this.clickedHexObject = null;
     this.hexMaxValue = 1; // neutral value in the implementation
-    this.hexResultsGroup = new THREE.Group();
     this.hexResults = [];
+    this.hexResultsGroup = new THREE.Group();
     this.highestBar = highestBar;
-    this.hoveredHexObject = null;
     this.hoveredHexId = null;
     this.hoveredHexIndex = null;
+    this.hoveredHexObject = null;
     this.raycaster = new THREE.Raycaster();
-    this.tooltipsRaycaster = new THREE.Raycaster();
-    this.barColor = barColor;
-    this.barColorHover = barColorHover;
     this.tooltips = [];
     this.tooltipsLimit = tooltipsLimit;
+    this.tooltipsRaycaster = new THREE.Raycaster();
     this.tooltipsRefPoints = [];
   }
 
@@ -114,14 +120,13 @@ export default class BarGlob3d extends Glob3d {
     }, []);
   }
 
-  updateHexResultsGeometry(bin: HexData) {
+  renderHexResultsGeometry(hex: HexData) {
     if (!this.hexMaxValue) return;
+    const offset = this.getOffsetFromCenter(hex.value);
     return new ConicPolygonGeometry(
-      [getNewGeoJson(bin, this.hexMargin)],
-      this.globeRadius + 0.1,
-      this.globeRadius +
-        0.1 +
-        (bin.value / this.hexMaxValue) * this.globeRadius * 2 * this.highestBar,
+      [getNewGeoJson(hex, this.hexMargin)],
+      this.globeRadius,
+      offset,
       true,
       true,
       true,
@@ -132,10 +137,10 @@ export default class BarGlob3d extends Glob3d {
   visualizeResult(aggregatedData: HexData[]) {
     const hexResults = aggregatedData.map((hexData: HexData) => {
       return new THREE.Mesh(
-        this.updateHexResultsGeometry(hexData),
+        this.renderHexResultsGeometry(hexData),
         new THREE.MeshBasicMaterial({
           color: this.barColor,
-          opacity: 0.6,
+          opacity: this.barOpacity,
           side: THREE.DoubleSide,
           transparent: true,
         })
@@ -153,7 +158,6 @@ export default class BarGlob3d extends Glob3d {
   getOffsetFromCenter(value: number) {
     return (
       this.globeRadius +
-      0.1 +
       (value / this.hexMaxValue) * this.globeRadius * 2 * this.highestBar
     );
   }
@@ -291,14 +295,14 @@ export default class BarGlob3d extends Glob3d {
 
   highlightHex(object: HexResult | null) {
     if (!object) return;
-    object.material.color.set(this.barColorHover);
-    object.material.opacity = 0.9;
+    object.material.color.set(this.barActiveColor);
+    object.material.opacity = this.barActiveOpacity;
   }
 
   unhighlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.barColor);
-    object.material.opacity = 0.6;
+    object.material.opacity = this.barOpacity;
   }
 
   barTick(): number {

@@ -129,7 +129,7 @@ export default class Glob3d {
             return new ConicPolygonGeometry(
               [geoJson], // GeoJson polygon coordinates
               this.globeRadius, // bottom height
-              this.globeRadius + 0.1, // top height
+              this.globeRadius, // top height
               true, // closed bottom
               true, // closed top
               false // include sides
