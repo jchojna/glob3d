@@ -10,5 +10,5 @@ export default {
   hexMargin: 0.2,
   hexRes: 3,
   highestBar: 0.5,
-  tooltipsLimit: null,
+  tooltipsLimit: 15,
 };
