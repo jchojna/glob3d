@@ -85,27 +85,46 @@ export const getTooltip = (
   city?: string | undefined
 ) => {
   const tooltip = document.createElement('div');
-  tooltip.classList.add('tooltip');
+  tooltip.style.background = '#fff';
+  tooltip.style.borderRadius = '10px';
+  tooltip.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
+  tooltip.style.color = '#000';
+  tooltip.style.display = 'grid';
+  tooltip.style.fontSize = '0.8rem';
+  tooltip.style.columnGap = '15px';
+  tooltip.style.gridTemplateColumns = 'repeat(2, auto)';
+  tooltip.style.left = '10px';
+  // tooltip.style.opacity = '0';
+  tooltip.style.padding = '10px';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.position = 'absolute';
+  tooltip.style.rowGap = '5px';
+  tooltip.style.top = '10px';
+  tooltip.style.transformOrigin = 'top left';
+  tooltip.style.transition = 'opacity 0.2s, transform 0.1s, visibility 0s 0.2s';
+  tooltip.style.userSelect = 'none';
+  // tooltip.style.visibility = 'hidden';
 
   if (id) tooltip.id = `tooltip-${id}`;
 
   if (country) {
     const tooltipCountry = document.createElement('p');
-    tooltipCountry.classList.add('country');
+    tooltipCountry.style.margin = '0';
     tooltipCountry.textContent = country;
     tooltip.appendChild(tooltipCountry);
   }
 
   if (city) {
     const tooltipCity = document.createElement('p');
-    tooltipCity.classList.add('city');
+    tooltipCity.style.margin = '0';
     tooltipCity.textContent = city;
     tooltip.appendChild(tooltipCity);
   }
 
   if (value) {
     const tooltipValue = document.createElement('p');
-    tooltipValue.classList.add('value');
+    tooltipValue.style.gridColumn = '1 / 3';
+    tooltipValue.style.margin = '0';
     tooltipValue.textContent = `${value} people`;
     tooltip.appendChild(tooltipValue);
   }

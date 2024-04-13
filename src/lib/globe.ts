@@ -5,8 +5,8 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
+import matcap from '../assets/textures/matcap_1.png';
 import worldGeoJson from '../data/world_low_geo.json';
-import '../styles.css';
 import defaultOpts from './defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
@@ -100,7 +100,8 @@ export default class Glob3d {
 
   createCanvas(root: HTMLElement) {
     const canvas = document.createElement('canvas');
-    canvas.classList.add('webglobe');
+    canvas.style.outline = 'none';
+    canvas.style.userSelect = 'none';
     root.appendChild(canvas);
     return canvas;
   }
@@ -111,7 +112,7 @@ export default class Glob3d {
     const h3Indexes = getH3Indexes(features, this.hexRes);
     const material = new THREE.MeshMatcapMaterial();
     // TODO: should it be possible to set other matcap textures?
-    material.matcap = this.#textureLoader.load('/textures/matcap_1.png');
+    material.matcap = this.#textureLoader.load(matcap);
     const hexBins = h3Indexes.map((index) => getHexBin(index));
     const globe = new THREE.Mesh(
       this.updateHexGlobeGeometry(hexBins),

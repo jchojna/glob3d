@@ -12,5 +12,5 @@ export default {
   highestBar: 0.5,
   tooltipActiveBackgroundColor: 'purple',
   tooltipActiveTextColor: 'white',
-  tooltipsLimit: null,
+  tooltipsLimit: 15,
 };
