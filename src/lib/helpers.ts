@@ -94,16 +94,15 @@ export const getTooltip = (
   tooltip.style.columnGap = '15px';
   tooltip.style.gridTemplateColumns = 'repeat(2, auto)';
   tooltip.style.left = '10px';
-  // tooltip.style.opacity = '0';
   tooltip.style.padding = '10px';
   tooltip.style.pointerEvents = 'none';
   tooltip.style.position = 'absolute';
   tooltip.style.rowGap = '5px';
   tooltip.style.top = '10px';
   tooltip.style.transformOrigin = 'top left';
-  tooltip.style.transition = 'opacity 0.2s, transform 0.1s, visibility 0s 0.2s';
+  tooltip.style.transition =
+    'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
   tooltip.style.userSelect = 'none';
-  // tooltip.style.visibility = 'hidden';
 
   if (id) tooltip.id = `tooltip-${id}`;
 

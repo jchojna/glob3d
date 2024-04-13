@@ -82,9 +82,9 @@ export default class Tooltip implements TooltipProperties {
   }
 
   show(onTop = false) {
-    this.element.classList.add('visible');
     this.element.style.backgroundColor = '#fff';
     this.element.style.color = '#000';
+    this.element.style.opacity = '1';
     if (onTop) {
       this.element.style.zIndex = String(this.tooltipsLimit + 1);
       this.element.style.backgroundColor = this.tooltipActiveBackgroundColor;
@@ -93,7 +93,7 @@ export default class Tooltip implements TooltipProperties {
   }
 
   hide() {
-    this.element.classList.remove('visible');
+    this.element.style.opacity = '0';
     this.element.style.transform = `${this.element.style.transform} scale(0)`;
   }
 

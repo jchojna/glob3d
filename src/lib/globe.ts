@@ -45,7 +45,7 @@ export default class Glob3d {
     } = options;
 
     this.root = root;
-    this.#aspectRatio = window.innerWidth / window.innerHeight;
+    this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.createCanvas(this.root);
     this.#debugMode = debugMode;
@@ -65,8 +65,8 @@ export default class Glob3d {
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
     this.sizes = {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: this.root.clientWidth,
+      height: this.root.clientHeight,
     };
 
     // solid globe
@@ -141,8 +141,10 @@ export default class Glob3d {
 
   registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
-      this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
-      this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
+      const xPos = e.clientX - this.root.getBoundingClientRect().left;
+      const yPos = e.clientY - this.root.getBoundingClientRect().top;
+      this.mouse.x = (xPos / this.sizes.width) * 2 - 1;
+      this.mouse.y = -((yPos / this.sizes.height) * 2 - 1);
     });
   }
 
@@ -167,7 +169,7 @@ export default class Glob3d {
     this.tick();
     this.createHexGlobe();
     this.registerMouseMoveEvent();
-    this.registerResizeEvent();
+    // this.registerResizeEvent();
     if (!this.#debugMode) this.gui.hide();
   }
 }
