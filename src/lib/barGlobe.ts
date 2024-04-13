@@ -5,21 +5,8 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import defaultOpts from './defaultOpts';
 import Glob3d from './globe';
-import {
-  getHexBin,
-  getNewGeoJson,
-  getTooltip,
-  getTooltipScale,
-  getXYZCoordinates,
-} from './helpers';
-
-type TooltipRefPoint = {
-  distance: number;
-  id: string;
-  vector: THREE.Vector3;
-};
-
-type HexResult = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+import { getHexBin, getNewGeoJson, getXYZCoordinates } from './helpers';
+import Tooltip from './tooltip';
 
 export default class BarGlob3d extends Glob3d {
   aggregatedData: HexData[];
@@ -27,19 +14,17 @@ export default class BarGlob3d extends Glob3d {
   barOpacity: number;
   barActiveColor: string;
   barActiveOpacity: number;
+  clickedHexId: string | null;
   clickedHexObject: HexResult | null;
   hexMaxValue: number;
   hexResults: HexResult[];
   hexResultsGroup: THREE.Object3D | THREE.Group;
   highestBar: number;
   hoveredHexId: string | null;
-  hoveredHexIndex: number | null;
   hoveredHexObject: HexResult | null;
   raycaster: THREE.Raycaster;
-  tooltips: HTMLElement[];
+  tooltips: TooltipProperties[] | null;
   tooltipsLimit: number | null;
-  tooltipsRaycaster: THREE.Raycaster;
-  tooltipsRefPoints: TooltipRefPoint[];
 
   constructor(root: HTMLElement, options: BarGlobeOptions) {
     const {
@@ -71,19 +56,17 @@ export default class BarGlob3d extends Glob3d {
     this.barOpacity = barOpacity;
     this.barActiveColor = barActiveColor;
     this.barActiveOpacity = barActiveOpacity;
+    this.clickedHexId = null;
     this.clickedHexObject = null;
     this.hexMaxValue = 1; // neutral value in the implementation
     this.hexResults = [];
     this.hexResultsGroup = new THREE.Group();
     this.highestBar = highestBar;
     this.hoveredHexId = null;
-    this.hoveredHexIndex = null;
     this.hoveredHexObject = null;
     this.raycaster = new THREE.Raycaster();
-    this.tooltips = [];
+    this.tooltips = null;
     this.tooltipsLimit = tooltipsLimit;
-    this.tooltipsRaycaster = new THREE.Raycaster();
-    this.tooltipsRefPoints = [];
   }
 
   preProcessData(data: GlobeData[]) {
@@ -151,138 +134,85 @@ export default class BarGlob3d extends Glob3d {
       id: hexResults[i].uuid,
     }));
     hexResults.forEach((hex: HexResult) => this.hexResultsGroup.add(hex));
+    if (typeof this.tooltipsLimit != 'number')
+      this.tooltipsLimit = hexResults.length;
     this.scene.add(this.hexResultsGroup);
     return hexResults;
   }
 
-  getOffsetFromCenter(value: number) {
+  getOffsetFromCenter(value: number): number {
     return (
       this.globeRadius +
       (value / this.hexMaxValue) * this.globeRadius * 2 * this.highestBar
     );
   }
 
-  // get pixel position from normalized device coordinates
-  getPixelPosition(point: { x: number; y: number }) {
-    return {
-      x: ((point.x + 1) / 2) * this.sizes.width,
-      y: ((point.y - 1) / 2) * this.sizes.height * -1,
-    };
-  }
-
   // update tooltips reference points distances to the camera
-  updateTooltipsDistances() {
-    this.tooltipsRefPoints = this.tooltipsRefPoints.map((hex) => ({
-      ...hex,
-      distance: hex.vector.distanceTo(this.camera.position),
-    }));
+  updateCameraForTooltips() {
+    if (!this.tooltips) return;
+    this.tooltips.forEach((tooltip) => tooltip.handleCameraUpdate(this.camera));
   }
 
-  setTooltipsRefPoints(data: HexData[]) {
-    if (!data) return;
-    this.tooltipsRefPoints = data.map((hexData: HexData) => {
-      const polarCoordinates = hexData.center;
-      const offset = this.getOffsetFromCenter(hexData.value);
-      const { x, y, z } = getXYZCoordinates(
-        polarCoordinates[0],
-        polarCoordinates[1],
-        offset
-      );
-      const vector = new THREE.Vector3(x, y, z);
-      return {
-        id: hexData.id,
-        vector,
-        distance: vector.distanceTo(this.camera.position),
-      };
+  updateTooltipsOrder() {
+    if (!this.tooltips) return;
+    const sortedTooltips = this.tooltips.sort(
+      (a, b) => a.distance - b.distance
+    );
+    const distances = sortedTooltips
+      .map((tooltip) => tooltip.distance)
+      .slice(0, this.tooltipsLimit || sortedTooltips.length);
+
+    sortedTooltips.forEach((tooltip, i) => {
+      if (
+        tooltip.id === this.hoveredHexId ||
+        tooltip.id === this.clickedHexId
+      ) {
+        tooltip.show(true);
+      } else if (
+        typeof this.tooltipsLimit === 'number' &&
+        i < this.tooltipsLimit
+      ) {
+        tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
+        tooltip.show();
+      } else {
+        tooltip.hide();
+      }
     });
   }
 
   createTooltips() {
-    let data = this.aggregatedData.sort((a, b) => b.value - a.value);
-    if (this.tooltipsLimit !== null) data = data.slice(0, this.tooltipsLimit);
-    this.setTooltipsRefPoints(data);
-    this.tooltips = data.map(({ id, country, city, value }: HexData) => {
-      return getTooltip(id, country, city, value);
-    });
-    this.root.append(...this.tooltips);
-  }
-
-  handleTooltips() {
-    this.tooltips.forEach((tooltip: HTMLElement, i: number) => {
-      const hexData = this.aggregatedData[i];
-      const polarCoordinates = hexData.center;
-      const offset = this.getOffsetFromCenter(hexData.value);
-      if (!offset) return;
-      const { x, y, z } = getXYZCoordinates(
-        polarCoordinates[0],
-        polarCoordinates[1],
-        offset
-      );
-      const point = new THREE.Vector3(x, y, z).project(this.camera);
-      this.tooltipsRaycaster.setFromCamera(
-        new THREE.Vector2(point.x, point.y),
-        this.camera
-      );
-
-      const intersectObjects = this.tooltipsRaycaster.intersectObject(
-        this.globe
-      );
-      const isBehindGlobe =
-        intersectObjects.length > 0 &&
-        intersectObjects[0].distance <
-          new THREE.Vector3(x, y, z).distanceTo(this.camera.position);
-
-      const pxPosition = this.getPixelPosition(point);
-      tooltip.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
-      if (isBehindGlobe) {
-        tooltip.classList.remove('visible');
-      } else {
-        tooltip.classList.add('visible');
-      }
-    });
-  }
-
-  updateTooltipVisibility() {
-    const totalTooltips = Math.min(10, this.tooltipsRefPoints.length);
-    const sortedVectors = this.tooltipsRefPoints.sort(
-      (a, b) => a.distance - b.distance
-    );
-    if (sortedVectors.length === 0) return;
-
-    const minDistance = sortedVectors[0].distance;
-    const maxDistance = sortedVectors[totalTooltips - 1].distance;
-
-    this.tooltipsRefPoints.forEach((hex, i) => {
-      const zIndex = this.tooltipsRefPoints.length - i;
-      const tooltip = this.tooltips.find(
-        (tooltip) => tooltip.id === `tooltip-${hex.id}`
-      );
-      if (!tooltip) return;
-      if (i < totalTooltips) {
-        const tooltipScale = getTooltipScale(
-          hex.distance,
-          minDistance,
-          maxDistance
+    this.tooltips = this.aggregatedData.map(
+      ({ id, center, country, city, value }: HexData) => {
+        const offset = this.getOffsetFromCenter(value);
+        const coordinates = getXYZCoordinates(center[0], center[1], offset);
+        return new Tooltip(
+          id,
+          coordinates,
+          this.sizes,
+          this.tooltipsLimit || this.aggregateData.length,
+          value,
+          {
+            tooltipActiveBackgroundColor: this.barActiveColor,
+            tooltipActiveTextColor: '#fff',
+            country,
+            city,
+            mask: this.globe,
+          }
         );
-        tooltip.classList.add('visible');
-        if (hex.id !== this.hoveredHexId) {
-          tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
-          // update z-index
-        } else {
-          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-        }
-      } else {
-        tooltip.classList.remove('visible');
-        if (hex.id !== this.hoveredHexId) {
-          tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
-          // update z-index
-        } else {
-          tooltip.classList.add('visible');
-          tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-        }
       }
-      tooltip.style.zIndex = String(zIndex);
-    });
+    );
+    const tooltipsElements = this.tooltips.map((tooltip) => tooltip.element);
+    const tooltips = document.createElement('div');
+    tooltips.style.height = '100%';
+    tooltips.style.width = '100%';
+    tooltips.style.overflow = 'hidden';
+    tooltips.style.position = 'absolute';
+    tooltips.style.left = '0';
+    tooltips.style.top = '0';
+    tooltips.style.pointerEvents = 'none';
+    tooltips.append(...tooltipsElements);
+    this.root.style.position = 'relative';
+    this.root.appendChild(tooltips);
   }
 
   highlightHex(object: HexResult | null) {
@@ -300,9 +230,8 @@ export default class BarGlob3d extends Glob3d {
   barTick(): number {
     if (this.hexResults.length > 0) {
       this.raycaster.setFromCamera(this.mouse, this.camera);
-      this.handleTooltips();
-      this.updateTooltipsDistances();
-      this.updateTooltipVisibility();
+      this.updateCameraForTooltips();
+      this.updateTooltipsOrder();
 
       const intersects = this.raycaster.intersectObjects([
         this.globe,
@@ -320,9 +249,6 @@ export default class BarGlob3d extends Glob3d {
 
         // on mouse over
         if (this.hoveredHexId !== hoveredHexId) {
-          const hoveredHexIndex = this.hexResults.findIndex(
-            (hex: HexResult) => hex.uuid === hoveredHexId
-          );
           this.hoveredHexObject &&
             this.hoveredHexObject !== this.clickedHexObject &&
             this.unhighlightHex(this.hoveredHexObject);
@@ -330,10 +256,6 @@ export default class BarGlob3d extends Glob3d {
 
           this.hoveredHexObject = hoveredHexObject;
           this.hoveredHexId = hoveredHexId;
-          this.hoveredHexIndex = hoveredHexIndex;
-          this.tooltips
-            .find((tooltip) => tooltip.id === `tooltip-${hoveredHexId}`)!
-            .classList.add('visible');
         }
       } else {
         this.hoveredHexObject &&
@@ -341,9 +263,6 @@ export default class BarGlob3d extends Glob3d {
           this.unhighlightHex(this.hoveredHexObject);
         this.hoveredHexObject = null;
         this.hoveredHexId = null;
-        this.hoveredHexIndex = null;
-        // !this.clickedHexObject &&
-        //   this.tooltip.classList.remove('tooltip--visible');
       }
     }
 
@@ -355,10 +274,12 @@ export default class BarGlob3d extends Glob3d {
       if (this.hoveredHexId) {
         this.clickedHexObject && this.unhighlightHex(this.clickedHexObject);
         this.clickedHexObject = this.hoveredHexObject;
+        this.clickedHexId = this.hoveredHexId;
         this.highlightHex(this.clickedHexObject);
       } else {
         this.unhighlightHex(this.clickedHexObject);
         this.clickedHexObject = null;
+        this.clickedHexId = null;
       }
     });
   }
@@ -366,13 +287,10 @@ export default class BarGlob3d extends Glob3d {
   clean() {
     this.aggregatedData = [];
     this.hexResults = [];
-    this.hoveredHexIndex = null;
     this.hexResultsGroup.clear();
-    // this.tooltip.classList.remove('tooltip--visible');
   }
 
   update(data: GlobeData[]) {
-    console.log('UPDATE');
     this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);
   }

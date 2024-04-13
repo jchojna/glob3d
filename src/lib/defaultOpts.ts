@@ -10,5 +10,7 @@ export default {
   hexMargin: 0.2,
   hexRes: 3,
   highestBar: 0.5,
-  tooltipsLimit: null,
+  tooltipActiveBackgroundColor: 'purple',
+  tooltipActiveTextColor: 'white',
+  tooltipsLimit: 15,
 };

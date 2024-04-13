@@ -5,8 +5,8 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
+import matcap from '../assets/textures/matcap_1.png';
 import worldGeoJson from '../data/world_low_geo.json';
-import '../styles.css';
 import defaultOpts from './defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
@@ -45,7 +45,7 @@ export default class Glob3d {
     } = options;
 
     this.root = root;
-    this.#aspectRatio = window.innerWidth / window.innerHeight;
+    this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.createCanvas(this.root);
     this.#debugMode = debugMode;
@@ -65,8 +65,8 @@ export default class Glob3d {
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
     this.sizes = {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: this.root.clientWidth,
+      height: this.root.clientHeight,
     };
 
     // solid globe
@@ -100,7 +100,8 @@ export default class Glob3d {
 
   createCanvas(root: HTMLElement) {
     const canvas = document.createElement('canvas');
-    canvas.classList.add('webglobe');
+    canvas.style.outline = 'none';
+    canvas.style.userSelect = 'none';
     root.appendChild(canvas);
     return canvas;
   }
@@ -111,7 +112,7 @@ export default class Glob3d {
     const h3Indexes = getH3Indexes(features, this.hexRes);
     const material = new THREE.MeshMatcapMaterial();
     // TODO: should it be possible to set other matcap textures?
-    material.matcap = this.#textureLoader.load('/textures/matcap_1.png');
+    material.matcap = this.#textureLoader.load(matcap);
     const hexBins = h3Indexes.map((index) => getHexBin(index));
     const globe = new THREE.Mesh(
       this.updateHexGlobeGeometry(hexBins),
@@ -140,8 +141,10 @@ export default class Glob3d {
 
   registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
-      this.mouse.x = (e.clientX / this.sizes.width) * 2 - 1;
-      this.mouse.y = -((e.clientY / this.sizes.height) * 2 - 1);
+      const xPos = e.clientX - this.root.getBoundingClientRect().left;
+      const yPos = e.clientY - this.root.getBoundingClientRect().top;
+      this.mouse.x = (xPos / this.sizes.width) * 2 - 1;
+      this.mouse.y = -((yPos / this.sizes.height) * 2 - 1);
     });
   }
 
@@ -166,7 +169,7 @@ export default class Glob3d {
     this.tick();
     this.createHexGlobe();
     this.registerMouseMoveEvent();
-    this.registerResizeEvent();
+    // this.registerResizeEvent();
     if (!this.#debugMode) this.gui.hide();
   }
 }

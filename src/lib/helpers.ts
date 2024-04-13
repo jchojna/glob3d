@@ -80,32 +80,50 @@ export const getXYZCoordinates = (
 
 export const getTooltip = (
   id: string,
-  country: string,
-  city: string,
-  value: number
+  value: number,
+  country?: string | undefined,
+  city?: string | undefined
 ) => {
   const tooltip = document.createElement('div');
-  tooltip.classList.add('tooltip');
+  tooltip.style.background = '#fff';
+  tooltip.style.borderRadius = '10px';
+  tooltip.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
+  tooltip.style.color = '#000';
+  tooltip.style.display = 'grid';
+  tooltip.style.fontSize = '0.8rem';
+  tooltip.style.columnGap = '15px';
+  tooltip.style.gridTemplateColumns = 'repeat(2, auto)';
+  tooltip.style.left = '10px';
+  tooltip.style.padding = '10px';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.position = 'absolute';
+  tooltip.style.rowGap = '5px';
+  tooltip.style.top = '10px';
+  tooltip.style.transformOrigin = 'top left';
+  tooltip.style.transition =
+    'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
+  tooltip.style.userSelect = 'none';
 
   if (id) tooltip.id = `tooltip-${id}`;
 
   if (country) {
     const tooltipCountry = document.createElement('p');
-    tooltipCountry.classList.add('country');
+    tooltipCountry.style.margin = '0';
     tooltipCountry.textContent = country;
     tooltip.appendChild(tooltipCountry);
   }
 
   if (city) {
     const tooltipCity = document.createElement('p');
-    tooltipCity.classList.add('city');
+    tooltipCity.style.margin = '0';
     tooltipCity.textContent = city;
     tooltip.appendChild(tooltipCity);
   }
 
   if (value) {
     const tooltipValue = document.createElement('p');
-    tooltipValue.classList.add('value');
+    tooltipValue.style.gridColumn = '1 / 3';
+    tooltipValue.style.margin = '0';
     tooltipValue.textContent = `${value} people`;
     tooltip.appendChild(tooltipValue);
   }
