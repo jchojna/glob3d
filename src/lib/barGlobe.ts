@@ -5,12 +5,7 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import defaultOpts from './defaultOpts';
 import Glob3d from './globe';
-import {
-  getHexBin,
-  getNewGeoJson,
-  getTooltipScale,
-  getXYZCoordinates,
-} from './helpers';
+import { getHexBin, getNewGeoJson, getXYZCoordinates } from './helpers';
 import Tooltip from './tooltip';
 
 type TooltipRefPoint = {
@@ -36,7 +31,7 @@ export default class BarGlob3d extends Glob3d {
   hoveredHexIndex: number | null;
   hoveredHexObject: HexResult | null;
   raycaster: THREE.Raycaster;
-  tooltips;
+  tooltips: TooltipProperties[] | null;
   tooltipsLimit: number | null;
   tooltipsRefPoints: TooltipRefPoint[];
 
@@ -79,7 +74,7 @@ export default class BarGlob3d extends Glob3d {
     this.hoveredHexIndex = null;
     this.hoveredHexObject = null;
     this.raycaster = new THREE.Raycaster();
-    this.tooltips;
+    this.tooltips = null;
     this.tooltipsLimit = tooltipsLimit;
     this.tooltipsRefPoints = [];
   }
@@ -155,7 +150,7 @@ export default class BarGlob3d extends Glob3d {
     return hexResults;
   }
 
-  getOffsetFromCenter(value: number) {
+  getOffsetFromCenter(value: number): number {
     return (
       this.globeRadius +
       (value / this.hexMaxValue) * this.globeRadius * 2 * this.highestBar
@@ -164,19 +159,29 @@ export default class BarGlob3d extends Glob3d {
 
   // update tooltips reference points distances to the camera
   updateCameraForTooltips() {
+    if (!this.tooltips) return;
     this.tooltips.forEach((tooltip) => tooltip.handleCameraUpdate(this.camera));
   }
 
   updateTooltipsOrder() {
+    if (!this.tooltips) return;
     const sortedTooltips = this.tooltips.sort(
       (a, b) => a.distance - b.distance
     );
     const distances = sortedTooltips
       .map((tooltip) => tooltip.distance)
-      .slice(0, this.tooltipsLimit);
+      .slice(0, this.tooltipsLimit || sortedTooltips.length);
 
     sortedTooltips.forEach((tooltip, i) => {
-      if (typeof this.tooltipsLimit === 'number' && i < this.tooltipsLimit) {
+      if (
+        tooltip.id === this.hoveredHexId ||
+        tooltip.id === this.clickedHexObject?.uuid
+      ) {
+        tooltip.show(true);
+      } else if (
+        typeof this.tooltipsLimit === 'number' &&
+        i < this.tooltipsLimit
+      ) {
         tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
         tooltip.show();
       } else {
@@ -192,13 +197,12 @@ export default class BarGlob3d extends Glob3d {
     this.tooltips = this.aggregatedData.map(
       ({ id, center, country, city, value }: HexData) => {
         const offset = this.getOffsetFromCenter(value);
-        if (!offset) return;
         const coordinates = getXYZCoordinates(center[0], center[1], offset);
         return new Tooltip(id, coordinates, this.sizes, value, {
           country,
           city,
           mask: this.globe,
-          tooltipsLimit: this.tooltipsLimit,
+          tooltipsLimit: this.tooltipsLimit || this.aggregateData.length,
         });
       }
     );
@@ -251,9 +255,6 @@ export default class BarGlob3d extends Glob3d {
           this.hoveredHexObject = hoveredHexObject;
           this.hoveredHexId = hoveredHexId;
           this.hoveredHexIndex = hoveredHexIndex;
-          // this.tooltips
-          //   .find((tooltip) => tooltip.id === `tooltip-${hoveredHexId}`)!
-          //   .classList.add('visible');
         }
       } else {
         this.hoveredHexObject &&
@@ -288,7 +289,6 @@ export default class BarGlob3d extends Glob3d {
     this.hexResults = [];
     this.hoveredHexIndex = null;
     this.hexResultsGroup.clear();
-    // this.tooltip.classList.remove('tooltip--visible');
   }
 
   update(data: GlobeData[]) {

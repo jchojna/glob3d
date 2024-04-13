@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 import { getTooltip, getTooltipScale } from './helpers';
 
-export default class Tooltip {
+export default class Tooltip implements TooltipProperties {
   city: string;
   coordinates: THREE.Vector3;
   country: string;
-  distance: number | null;
+  distance: number;
   element: HTMLElement;
   id: string;
   mask: THREE.Mesh;
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
-  tooltipsLimit: number | null;
+  tooltipsLimit: number;
   value: number;
 
   constructor(
@@ -24,7 +24,7 @@ export default class Tooltip {
       country: string;
       city: string;
       mask: THREE.Mesh;
-      tooltipsLimit: number | null;
+      tooltipsLimit: number;
     }
   ) {
     const { country, city, mask, tooltipsLimit } = options;
@@ -32,7 +32,7 @@ export default class Tooltip {
     this.city = city;
     this.coordinates = new THREE.Vector3(x, y, z);
     this.country = country;
-    this.distance = null;
+    this.distance = 0;
     this.element = getTooltip(id, country, city, value);
     this.id = id;
     this.mask = mask;
@@ -51,39 +51,6 @@ export default class Tooltip {
     };
   }
 
-  // updateTooltipVisibility() {
-  //   this.tooltipsRefPoints.forEach((hex, i) => {
-  //     const zIndex = this.tooltipsRefPoints.length - i;
-  //     const tooltip = this.tooltips.find(
-  //       (tooltip) => tooltip.id === `tooltip-${hex.id}`
-  //     );
-  //     if (!tooltip) return;
-  //     if (i < totalTooltips) {
-  //       const tooltipScale = getTooltipScale(
-  //         hex.distance,
-  //         minDistance,
-  //         maxDistance
-  //       );
-  //       tooltip.classList.add('visible');
-  //       if (hex.id !== this.hoveredHexId) {
-  //         tooltip.style.transform = `${tooltip.style.transform} scale(${tooltipScale})`;
-  //         // update z-index
-  //       } else {
-  //         tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-  //       }
-  //     } else {
-  //       tooltip.classList.remove('visible');
-  //       if (hex.id !== this.hoveredHexId) {
-  //         tooltip.style.transform = `${tooltip.style.transform} scale(0)`;
-  //         // update z-index
-  //       } else {
-  //         tooltip.classList.add('visible');
-  //         tooltip.style.transform = `${tooltip.style.transform} scale(1)`;
-  //       }
-  //     }
-  //   });
-  // }
-
   updateOrder(index: number, minDistance: number, maxDistance: number) {
     this.element.style.zIndex = String(this.tooltipsLimit - index);
     if (!this.distance) return;
@@ -95,8 +62,11 @@ export default class Tooltip {
     this.element.style.transform = `${this.element.style.transform} scale(${tooltipScale})`;
   }
 
-  show() {
+  show(onTop = false) {
     this.element.classList.add('visible');
+    if (onTop) {
+      this.element.style.zIndex = String(this.tooltipsLimit + 1);
+    }
   }
 
   hide() {

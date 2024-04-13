@@ -55,3 +55,26 @@ type BarGlobeOptions = {
   highestBar?: number;
   tooltipsLimit?: number;
 } & GlobeOptions;
+
+interface TooltipProperties {
+  city: string;
+  coordinates: THREE.Vector3;
+  country: string;
+  distance: number;
+  element: HTMLElement;
+  id: string;
+  mask: THREE.Mesh;
+  point: THREE.Vector3;
+  raycaster: THREE.Raycaster;
+  sizes: { width: number; height: number };
+  tooltipsLimit: number;
+  value: number;
+  handleCameraUpdate: (camera: THREE.Camera) => void;
+  show: (onTop?: boolean) => void;
+  hide: () => void;
+  updateOrder: (
+    index: number,
+    minDistance: number,
+    maxDistance: number
+  ) => void;
+}
