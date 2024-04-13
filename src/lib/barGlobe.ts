@@ -202,7 +202,17 @@ export default class BarGlob3d extends Glob3d {
       }
     );
     const tooltipsElements = this.tooltips.map((tooltip) => tooltip.element);
-    this.root.append(...tooltipsElements);
+    const tooltips = document.createElement('div');
+    tooltips.style.height = '100%';
+    tooltips.style.width = '100%';
+    tooltips.style.overflow = 'hidden';
+    tooltips.style.position = 'absolute';
+    tooltips.style.left = '0';
+    tooltips.style.top = '0';
+    tooltips.style.pointerEvents = 'none';
+    tooltips.append(...tooltipsElements);
+    this.root.style.position = 'relative';
+    this.root.appendChild(tooltips);
   }
 
   highlightHex(object: HexResult | null) {
