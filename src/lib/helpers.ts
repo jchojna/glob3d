@@ -80,9 +80,9 @@ export const getXYZCoordinates = (
 
 export const getTooltip = (
   id: string,
-  country: string,
-  city: string,
-  value: number
+  value: number,
+  country?: string | undefined,
+  city?: string | undefined
 ) => {
   const tooltip = document.createElement('div');
   tooltip.classList.add('tooltip');

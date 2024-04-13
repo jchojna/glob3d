@@ -57,24 +57,31 @@ type BarGlobeOptions = {
 } & GlobeOptions;
 
 interface TooltipProperties {
-  city: string;
+  city: string | undefined;
   coordinates: THREE.Vector3;
-  country: string;
+  country: string | undefined;
   distance: number;
   element: HTMLElement;
   id: string;
-  mask: THREE.Mesh;
+  mask: THREE.Mesh | undefined;
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
+  tooltipActiveBackgroundColor: string;
+  tooltipActiveTextColor: string;
   tooltipsLimit: number;
   value: number;
+  getPixelPosition: (point: THREE.Vector3) => { x: number; y: number };
   handleCameraUpdate: (camera: THREE.Camera) => void;
-  show: (onTop?: boolean) => void;
+  handleMasking: (camera: THREE.Camera) => void;
   hide: () => void;
+  show: (onTop?: boolean) => void;
   updateOrder: (
     index: number,
     minDistance: number,
     maxDistance: number
   ) => void;
+  updateTooltipPosition: () => void;
 }
+
+type HexResult = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
