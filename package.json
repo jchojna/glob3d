@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "main": "./dist/glob3d.umd.cjs",
+  "module": "./dist/glob3d.js",
+  "exports": {
+    ".": {
+      "import": "./dist/glob3d.js",
+      "require": "./dist/glob3d.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

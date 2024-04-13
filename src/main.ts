@@ -1,20 +1,4 @@
-import { getCitiesData } from './js/citiesData';
 import BarGlob3d from './lib/barGlobe';
-import './styles.css';
+import Glob3d from './lib/globe';
 
-const root = document.querySelector('#root');
-const updateButton = document.querySelector('.update-button');
-if (!root || !(root instanceof HTMLElement)) {
-  throw new Error('Root element not found');
-}
-const data = getCitiesData();
-const globeInstance = new BarGlob3d(root, {
-  debugMode: true,
-});
-globeInstance.initialize(data);
-
-updateButton &&
-  updateButton.addEventListener('click', async () => {
-    globeInstance.clean();
-    globeInstance.update(data);
-  });
+export { BarGlob3d, Glob3d };
