@@ -95,6 +95,7 @@ export default class Glob3d {
     this.#controls.enableDamping = true;
 
     this.#renderer.setSize(this.sizes.width, this.sizes.height);
+    this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.render(this.scene, this.camera);
   }
 
@@ -148,17 +149,6 @@ export default class Glob3d {
     });
   }
 
-  registerResizeEvent() {
-    window.addEventListener('resize', () => {
-      this.sizes.width = window.innerWidth;
-      this.sizes.height = window.innerHeight;
-      this.#aspectRatio = this.sizes.width / this.sizes.height;
-      this.camera.aspect = this.#aspectRatio;
-      this.camera.updateProjectionMatrix();
-      this.#renderer.setSize(this.sizes.width, this.sizes.height);
-    });
-  }
-
   tick(): number {
     this.#renderer.render(this.scene, this.camera);
     this.#controls.update();
@@ -169,7 +159,6 @@ export default class Glob3d {
     this.tick();
     this.createHexGlobe();
     this.registerMouseMoveEvent();
-    // this.registerResizeEvent();
     if (!this.#debugMode) this.gui.hide();
   }
 }
