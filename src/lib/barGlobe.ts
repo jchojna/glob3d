@@ -26,6 +26,7 @@ export default class BarGlob3d extends Glob3d {
   tooltips: TooltipProperties[] | null;
   tooltipActiveBackgroundColor: string;
   tooltipActiveTextColor: string;
+  tooltipsContainer: HTMLElement | null;
   tooltipsLimit: number | null;
   tooltipValueSuffix: string;
 
@@ -74,6 +75,7 @@ export default class BarGlob3d extends Glob3d {
     this.tooltips = null;
     this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.tooltipActiveTextColor = tooltipActiveTextColor;
+    this.tooltipsContainer = null;
     this.tooltipsLimit = tooltipsLimit;
     this.tooltipValueSuffix = tooltipValueSuffix;
 
@@ -228,6 +230,7 @@ export default class BarGlob3d extends Glob3d {
     tooltips.style.top = '0';
     tooltips.style.pointerEvents = 'none';
     tooltips.append(...tooltipsElements);
+    this.tooltipsContainer = tooltips;
     this.root.style.position = 'relative';
     this.root.appendChild(tooltips);
   }
@@ -301,14 +304,15 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  clean() {
-    this.aggregatedData = [];
-    this.hexResults = [];
-    this.hexResultsGroup.clear();
-  }
-
   update(data: GlobeData[]) {
-    this.aggregatedData = this.aggregateData(data);
+    // remove old elements
+    this.hexResultsGroup.clear();
+    if (this.tooltipsContainer) this.root.removeChild(this.tooltipsContainer);
+    // create new elements
+    this.aggregatedData = this.aggregateData(
+      data.slice(0, Math.round(Math.random() * 100))
+    );
     this.hexResults = this.visualizeResult(this.aggregatedData);
+    this.createTooltips();
   }
 }
