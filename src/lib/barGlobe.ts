@@ -24,7 +24,10 @@ export default class BarGlob3d extends Glob3d {
   hoveredHexObject: HexResult | null;
   raycaster: THREE.Raycaster;
   tooltips: TooltipProperties[] | null;
+  tooltipActiveBackgroundColor: string;
+  tooltipActiveTextColor: string;
   tooltipsLimit: number | null;
+  tooltipValueSuffix: string;
 
   constructor(root: HTMLElement, options: BarGlobeOptions) {
     const {
@@ -39,7 +42,10 @@ export default class BarGlob3d extends Glob3d {
       hexMargin = defaultOpts.hexMargin,
       hexRes = defaultOpts.hexRes,
       highestBar = defaultOpts.highestBar,
+      tooltipActiveBackgroundColor = defaultOpts.tooltipActiveBackgroundColor,
+      tooltipActiveTextColor = defaultOpts.tooltipActiveTextColor,
       tooltipsLimit = defaultOpts.tooltipsLimit,
+      tooltipValueSuffix = defaultOpts.tooltipValueSuffix,
     } = options;
 
     super(root, {
@@ -66,7 +72,10 @@ export default class BarGlob3d extends Glob3d {
     this.hoveredHexObject = null;
     this.raycaster = new THREE.Raycaster();
     this.tooltips = null;
+    this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
+    this.tooltipActiveTextColor = tooltipActiveTextColor;
     this.tooltipsLimit = tooltipsLimit;
+    this.tooltipValueSuffix = tooltipValueSuffix;
   }
 
   preProcessData(data: GlobeData[]) {
@@ -192,11 +201,12 @@ export default class BarGlob3d extends Glob3d {
           this.tooltipsLimit || this.aggregateData.length,
           value,
           {
-            tooltipActiveBackgroundColor: this.barActiveColor,
-            tooltipActiveTextColor: '#fff',
-            country,
             city,
+            country,
             mask: this.globe,
+            tooltipActiveBackgroundColor: this.tooltipActiveBackgroundColor,
+            tooltipActiveTextColor: this.tooltipActiveTextColor,
+            tooltipValueSuffix: this.tooltipValueSuffix,
           }
         );
       }

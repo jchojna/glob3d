@@ -2,9 +2,7 @@ import * as THREE from 'three';
 import { getTooltip, getTooltipScale } from './helpers';
 
 export default class Tooltip implements TooltipProperties {
-  city: string | undefined;
   coordinates: THREE.Vector3;
-  country: string | undefined;
   distance: number;
   element: HTMLElement;
   id: string;
@@ -12,10 +10,9 @@ export default class Tooltip implements TooltipProperties {
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string;
-  tooltipActiveTextColor: string;
+  tooltipActiveBackgroundColor: string | undefined;
+  tooltipActiveTextColor: string | undefined;
   tooltipsLimit: number;
-  value: number;
 
   constructor(
     id: string,
@@ -26,24 +23,24 @@ export default class Tooltip implements TooltipProperties {
     options: {
       tooltipActiveBackgroundColor: string;
       tooltipActiveTextColor: string;
-      country?: string;
+      tooltipValueSuffix: string;
       city?: string;
+      country?: string;
       mask?: THREE.Mesh;
     }
   ) {
     const {
+      city,
+      country,
+      mask,
       tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
-      country,
-      city,
-      mask,
+      tooltipValueSuffix,
     } = options;
     const { x, y, z } = coordinates;
-    this.city = city;
     this.coordinates = new THREE.Vector3(x, y, z);
-    this.country = country;
     this.distance = 0;
-    this.element = getTooltip(id, value, country, city);
+    this.element = getTooltip(id, value, tooltipValueSuffix, country, city);
     this.id = id;
     this.mask = mask;
     this.point = new THREE.Vector3();
@@ -52,7 +49,6 @@ export default class Tooltip implements TooltipProperties {
     this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.tooltipActiveTextColor = tooltipActiveTextColor;
     this.tooltipsLimit = tooltipsLimit;
-    this.value = value;
   }
 
   // get pixel position from normalized device coordinates
@@ -85,10 +81,15 @@ export default class Tooltip implements TooltipProperties {
     this.element.style.backgroundColor = '#fff';
     this.element.style.color = '#000';
     this.element.style.opacity = '1';
+
     if (onTop) {
       this.element.style.zIndex = String(this.tooltipsLimit + 1);
-      this.element.style.backgroundColor = this.tooltipActiveBackgroundColor;
-      this.element.style.color = this.tooltipActiveTextColor;
+      if (this.tooltipActiveBackgroundColor) {
+        this.element.style.backgroundColor = this.tooltipActiveBackgroundColor;
+      }
+      if (this.tooltipActiveTextColor) {
+        this.element.style.color = this.tooltipActiveTextColor;
+      }
     }
   }
 

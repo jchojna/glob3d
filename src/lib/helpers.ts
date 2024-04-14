@@ -81,6 +81,7 @@ export const getXYZCoordinates = (
 export const getTooltip = (
   id: string,
   value: number,
+  tooltipValueSuffix: string,
   country?: string | undefined,
   city?: string | undefined
 ) => {
@@ -124,7 +125,9 @@ export const getTooltip = (
     const tooltipValue = document.createElement('p');
     tooltipValue.style.gridColumn = '1 / 3';
     tooltipValue.style.margin = '0';
-    tooltipValue.textContent = `${value} people`;
+    tooltipValue.textContent = `${new Intl.NumberFormat().format(
+      value
+    )} ${tooltipValueSuffix}`;
     tooltip.appendChild(tooltipValue);
   }
 

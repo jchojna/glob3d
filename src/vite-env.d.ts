@@ -53,13 +53,14 @@ type BarGlobeOptions = {
   barActiveColor?: string;
   barActiveOpacity?: number;
   highestBar?: number;
+  tooltipActiveBackgroundColor: string;
+  tooltipActiveTextColor: string;
   tooltipsLimit?: number;
+  tooltipValueSuffix: string;
 } & GlobeOptions;
 
 interface TooltipProperties {
-  city: string | undefined;
   coordinates: THREE.Vector3;
-  country: string | undefined;
   distance: number;
   element: HTMLElement;
   id: string;
@@ -67,10 +68,9 @@ interface TooltipProperties {
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string;
-  tooltipActiveTextColor: string;
+  tooltipActiveBackgroundColor: string | undefined;
+  tooltipActiveTextColor: string | undefined;
   tooltipsLimit: number;
-  value: number;
   getPixelPosition: (point: THREE.Vector3) => { x: number; y: number };
   handleCameraUpdate: (camera: THREE.Camera) => void;
   handleMasking: (camera: THREE.Camera) => void;
