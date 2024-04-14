@@ -29,7 +29,7 @@ export default class BarGlob3d extends Glob3d {
   tooltipsLimit: number | null;
   tooltipValueSuffix: string;
 
-  constructor(root: HTMLElement, options: BarGlobeOptions) {
+  constructor(root: HTMLElement, data: GlobeData[], options: BarGlobeOptions) {
     const {
       barColor = defaultOpts.barColor,
       barOpacity = defaultOpts.barOpacity,
@@ -76,6 +76,13 @@ export default class BarGlob3d extends Glob3d {
     this.tooltipActiveTextColor = tooltipActiveTextColor;
     this.tooltipsLimit = tooltipsLimit;
     this.tooltipValueSuffix = tooltipValueSuffix;
+
+    this.barTick();
+    this.aggregatedData = this.aggregateData(data);
+    this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
+    this.hexResults = this.visualizeResult(this.aggregatedData);
+    this.createTooltips();
+    this.registerClickEvent();
   }
 
   preProcessData(data: GlobeData[]) {
@@ -303,15 +310,5 @@ export default class BarGlob3d extends Glob3d {
   update(data: GlobeData[]) {
     this.aggregatedData = this.aggregateData(data);
     this.hexResults = this.visualizeResult(this.aggregatedData);
-  }
-
-  initialize(data: GlobeData[]): void {
-    super.init();
-    this.barTick();
-    this.aggregatedData = this.aggregateData(data);
-    this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
-    this.hexResults = this.visualizeResult(this.aggregatedData);
-    this.createTooltips();
-    this.registerClickEvent();
   }
 }

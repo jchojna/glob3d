@@ -97,6 +97,11 @@ export default class Glob3d {
     this.#renderer.setSize(this.sizes.width, this.sizes.height);
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.render(this.scene, this.camera);
+
+    this.tick();
+    this.createHexGlobe();
+    this.registerMouseMoveEvent();
+    if (!this.#debugMode) this.gui.hide();
   }
 
   createCanvas(root: HTMLElement) {
@@ -153,12 +158,5 @@ export default class Glob3d {
     this.#renderer.render(this.scene, this.camera);
     this.#controls.update();
     return window.requestAnimationFrame(() => this.tick());
-  }
-
-  init() {
-    this.tick();
-    this.createHexGlobe();
-    this.registerMouseMoveEvent();
-    if (!this.#debugMode) this.gui.hide();
   }
 }
