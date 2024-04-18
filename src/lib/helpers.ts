@@ -81,6 +81,9 @@ export const getXYZCoordinates = (
 export const getTooltip = (
   id: string,
   value: number,
+  valueRank: number,
+  tooltipValueSuffix: string,
+  accentColor: string,
   country?: string | undefined,
   city?: string | undefined
 ) => {
@@ -92,7 +95,7 @@ export const getTooltip = (
   tooltip.style.display = 'grid';
   tooltip.style.fontSize = '0.8rem';
   tooltip.style.columnGap = '15px';
-  tooltip.style.gridTemplateColumns = 'repeat(2, auto)';
+  tooltip.style.gridTemplateColumns = 'repeat(3, auto)';
   tooltip.style.left = '10px';
   tooltip.style.padding = '10px';
   tooltip.style.pointerEvents = 'none';
@@ -100,14 +103,34 @@ export const getTooltip = (
   tooltip.style.rowGap = '5px';
   tooltip.style.top = '10px';
   tooltip.style.transformOrigin = 'top left';
-  tooltip.style.transition =
-    'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
   tooltip.style.userSelect = 'none';
+  // delay transition to prevent initial animation
+  setTimeout(() => {
+    tooltip.style.transition =
+      'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
+  }, 10);
 
   if (id) tooltip.id = `tooltip-${id}`;
 
+  const tooltipRank = document.createElement('p');
+  tooltipRank.style.alignItems = 'center';
+  tooltipRank.style.backgroundColor = '#fff';
+  tooltipRank.style.border = `2px solid ${accentColor}`;
+  tooltipRank.style.borderRadius = '50%';
+  tooltipRank.style.color = accentColor;
+  tooltipRank.style.display = 'flex';
+  tooltipRank.style.fontWeight = 'bold';
+  tooltipRank.style.gridRow = '1 / 3';
+  tooltipRank.style.height = '30px';
+  tooltipRank.style.justifyContent = 'center';
+  tooltipRank.style.margin = '0';
+  tooltipRank.style.width = '30px';
+  tooltipRank.textContent = String(valueRank);
+  tooltip.appendChild(tooltipRank);
+
   if (country) {
     const tooltipCountry = document.createElement('p');
+    tooltipCountry.style.gridColumn = '2 / 3';
     tooltipCountry.style.margin = '0';
     tooltipCountry.textContent = country;
     tooltip.appendChild(tooltipCountry);
@@ -115,18 +138,19 @@ export const getTooltip = (
 
   if (city) {
     const tooltipCity = document.createElement('p');
+    tooltipCity.style.gridColumn = '3 / 4';
     tooltipCity.style.margin = '0';
     tooltipCity.textContent = city;
     tooltip.appendChild(tooltipCity);
   }
 
-  if (value) {
-    const tooltipValue = document.createElement('p');
-    tooltipValue.style.gridColumn = '1 / 3';
-    tooltipValue.style.margin = '0';
-    tooltipValue.textContent = `${value} people`;
-    tooltip.appendChild(tooltipValue);
-  }
+  const tooltipValue = document.createElement('p');
+  tooltipValue.style.gridColumn = '2 / 4';
+  tooltipValue.style.margin = '0';
+  tooltipValue.textContent = `${new Intl.NumberFormat().format(
+    value
+  )} ${tooltipValueSuffix}`;
+  tooltip.appendChild(tooltipValue);
 
   return tooltip;
 };

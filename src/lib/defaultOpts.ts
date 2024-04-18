@@ -3,7 +3,6 @@ export default {
   barOpacity: 0.6,
   barActiveColor: 'purple',
   barActiveOpacity: 0.9,
-  debugMode: false,
   globeColor: '#000105',
   globeOpacity: 0.85,
   globeRadius: 100,
@@ -13,4 +12,5 @@ export default {
   tooltipActiveBackgroundColor: 'purple',
   tooltipActiveTextColor: 'white',
   tooltipsLimit: 15,
+  tooltipValueSuffix: '',
 };

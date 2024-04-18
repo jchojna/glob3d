@@ -24,26 +24,31 @@ export default class BarGlob3d extends Glob3d {
   hoveredHexObject: HexResult | null;
   raycaster: THREE.Raycaster;
   tooltips: TooltipProperties[] | null;
+  tooltipActiveBackgroundColor: string;
+  tooltipActiveTextColor: string;
+  tooltipsContainer: HTMLElement | null;
   tooltipsLimit: number | null;
+  tooltipValueSuffix: string;
 
-  constructor(root: HTMLElement, options: BarGlobeOptions) {
+  constructor(root: HTMLElement, data: GlobeData[], options: BarGlobeOptions) {
     const {
       barColor = defaultOpts.barColor,
       barOpacity = defaultOpts.barOpacity,
       barActiveColor = defaultOpts.barActiveColor,
       barActiveOpacity = defaultOpts.barActiveOpacity,
-      debugMode = defaultOpts.debugMode,
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
       hexMargin = defaultOpts.hexMargin,
       hexRes = defaultOpts.hexRes,
       highestBar = defaultOpts.highestBar,
+      tooltipActiveBackgroundColor = defaultOpts.tooltipActiveBackgroundColor,
+      tooltipActiveTextColor = defaultOpts.tooltipActiveTextColor,
       tooltipsLimit = defaultOpts.tooltipsLimit,
+      tooltipValueSuffix = defaultOpts.tooltipValueSuffix,
     } = options;
 
     super(root, {
-      debugMode,
       globeColor,
       globeOpacity,
       globeRadius,
@@ -66,7 +71,18 @@ export default class BarGlob3d extends Glob3d {
     this.hoveredHexObject = null;
     this.raycaster = new THREE.Raycaster();
     this.tooltips = null;
+    this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
+    this.tooltipActiveTextColor = tooltipActiveTextColor;
+    this.tooltipsContainer = null;
     this.tooltipsLimit = tooltipsLimit;
+    this.tooltipValueSuffix = tooltipValueSuffix;
+
+    this.barTick();
+    this.aggregatedData = this.aggregateData(data);
+    this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
+    this.hexResults = this.visualizeResult(this.aggregatedData);
+    this.createTooltips();
+    this.registerClickEvent();
   }
 
   preProcessData(data: GlobeData[]) {
@@ -180,10 +196,18 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
+  getValueRank(value: number, values: number[]): number {
+    return values.filter((val: number) => val > value).length + 1;
+  }
+
   createTooltips() {
     this.tooltips = this.aggregatedData.map(
       ({ id, center, country, city, value }: HexData) => {
         const offset = this.getOffsetFromCenter(value);
+        const valueRank = this.getValueRank(
+          value,
+          this.aggregatedData.map((hex) => hex.value)
+        );
         const coordinates = getXYZCoordinates(center[0], center[1], offset);
         return new Tooltip(
           id,
@@ -192,17 +216,20 @@ export default class BarGlob3d extends Glob3d {
           this.tooltipsLimit || this.aggregateData.length,
           value,
           {
-            tooltipActiveBackgroundColor: this.barActiveColor,
-            tooltipActiveTextColor: '#fff',
-            country,
             city,
+            country,
             mask: this.globe,
+            tooltipActiveBackgroundColor: this.tooltipActiveBackgroundColor,
+            tooltipActiveTextColor: this.tooltipActiveTextColor,
+            tooltipValueSuffix: this.tooltipValueSuffix,
+            valueRank,
           }
         );
       }
     );
     const tooltipsElements = this.tooltips.map((tooltip) => tooltip.element);
     const tooltips = document.createElement('div');
+    // TODO: use styled-components
     tooltips.style.height = '100%';
     tooltips.style.width = '100%';
     tooltips.style.overflow = 'hidden';
@@ -211,6 +238,7 @@ export default class BarGlob3d extends Glob3d {
     tooltips.style.top = '0';
     tooltips.style.pointerEvents = 'none';
     tooltips.append(...tooltipsElements);
+    this.tooltipsContainer = tooltips;
     this.root.style.position = 'relative';
     this.root.appendChild(tooltips);
   }
@@ -284,24 +312,15 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  clean() {
-    this.aggregatedData = [];
-    this.hexResults = [];
-    this.hexResultsGroup.clear();
-  }
-
   update(data: GlobeData[]) {
-    this.aggregatedData = this.aggregateData(data);
-    this.hexResults = this.visualizeResult(this.aggregatedData);
-  }
-
-  initialize(data: GlobeData[]): void {
-    super.init();
-    this.barTick();
-    this.aggregatedData = this.aggregateData(data);
-    this.hexMaxValue = Math.max(...this.aggregatedData.map((obj) => obj.value));
+    // remove old elements
+    this.hexResultsGroup.clear();
+    if (this.tooltipsContainer) this.root.removeChild(this.tooltipsContainer);
+    // create new elements
+    this.aggregatedData = this.aggregateData(
+      data.slice(0, Math.round(Math.random() * 100))
+    );
     this.hexResults = this.visualizeResult(this.aggregatedData);
     this.createTooltips();
-    this.registerClickEvent();
   }
 }
