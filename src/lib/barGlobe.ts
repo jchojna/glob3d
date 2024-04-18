@@ -196,10 +196,18 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
+  getValueRank(value: number, values: number[]): number {
+    return values.filter((val: number) => val > value).length + 1;
+  }
+
   createTooltips() {
     this.tooltips = this.aggregatedData.map(
       ({ id, center, country, city, value }: HexData) => {
         const offset = this.getOffsetFromCenter(value);
+        const valueRank = this.getValueRank(
+          value,
+          this.aggregatedData.map((hex) => hex.value)
+        );
         const coordinates = getXYZCoordinates(center[0], center[1], offset);
         return new Tooltip(
           id,
@@ -214,12 +222,14 @@ export default class BarGlob3d extends Glob3d {
             tooltipActiveBackgroundColor: this.tooltipActiveBackgroundColor,
             tooltipActiveTextColor: this.tooltipActiveTextColor,
             tooltipValueSuffix: this.tooltipValueSuffix,
+            valueRank,
           }
         );
       }
     );
     const tooltipsElements = this.tooltips.map((tooltip) => tooltip.element);
     const tooltips = document.createElement('div');
+    // TODO: use styled-components
     tooltips.style.height = '100%';
     tooltips.style.width = '100%';
     tooltips.style.overflow = 'hidden';

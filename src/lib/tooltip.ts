@@ -24,6 +24,7 @@ export default class Tooltip implements TooltipProperties {
       tooltipActiveBackgroundColor: string;
       tooltipActiveTextColor: string;
       tooltipValueSuffix: string;
+      valueRank: number;
       city?: string;
       country?: string;
       mask?: THREE.Mesh;
@@ -36,11 +37,20 @@ export default class Tooltip implements TooltipProperties {
       tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
       tooltipValueSuffix,
+      valueRank,
     } = options;
     const { x, y, z } = coordinates;
     this.coordinates = new THREE.Vector3(x, y, z);
     this.distance = 0;
-    this.element = getTooltip(id, value, tooltipValueSuffix, country, city);
+    this.element = getTooltip(
+      id,
+      value,
+      valueRank,
+      tooltipValueSuffix,
+      tooltipActiveBackgroundColor,
+      country,
+      city
+    );
     this.id = id;
     this.mask = mask;
     this.point = new THREE.Vector3();
