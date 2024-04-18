@@ -76,8 +76,8 @@ export default class Glob3d {
 
     // camera
     this.camera = new THREE.PerspectiveCamera(55, this.#aspectRatio, 1, 1000);
-    this.camera.position.z = 200;
-    this.camera.position.y = 200;
+    this.camera.position.z = 240;
+    this.camera.position.y = 240;
     this.scene.add(this.camera);
 
     this.#controls = new OrbitControls(this.camera, this.#canvas);
@@ -92,6 +92,7 @@ export default class Glob3d {
     this.tick();
     this.createHexGlobe();
     this.registerMouseMoveEvent();
+    this.registerResizeEvent();
   }
 
   createCanvas(root: HTMLElement) {
@@ -141,6 +142,18 @@ export default class Glob3d {
       const yPos = e.clientY - this.root.getBoundingClientRect().top;
       this.mouse.x = (xPos / this.sizes.width) * 2 - 1;
       this.mouse.y = -((yPos / this.sizes.height) * 2 - 1);
+    });
+  }
+
+  registerResizeEvent() {
+    window.addEventListener('resize', () => {
+      this.sizes.width = this.root.clientWidth;
+      this.sizes.height = this.root.clientHeight;
+      this.#aspectRatio = this.sizes.width / this.sizes.height;
+      this.camera.aspect = this.#aspectRatio;
+      this.camera.updateProjectionMatrix();
+      this.#renderer.setSize(this.sizes.width, this.sizes.height);
+      this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     });
   }
 
