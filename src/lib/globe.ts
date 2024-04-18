@@ -1,4 +1,3 @@
-import * as dat from 'lil-gui';
 import * as THREE from 'three';
 // @ts-ignore
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
@@ -15,7 +14,6 @@ export default class Glob3d {
   #aspectRatio: number;
   #bufferGeometryUtils;
   #canvas: HTMLElement;
-  #debugMode: boolean;
   #controls: OrbitControls;
   #renderer: THREE.WebGLRenderer;
   root: HTMLElement;
@@ -27,7 +25,6 @@ export default class Glob3d {
   globeColor: string;
   globeOpacity: number;
   globeRadius: number;
-  gui: dat.GUI;
   hexMargin: number;
   hexRes: number;
   mouse: THREE.Vector2;
@@ -41,14 +38,12 @@ export default class Glob3d {
       globeRadius = defaultOpts.globeRadius,
       hexRes = defaultOpts.hexRes,
       hexMargin = defaultOpts.hexMargin,
-      debugMode = defaultOpts.debugMode,
     } = options;
 
     this.root = root;
     this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.createCanvas(this.root);
-    this.#debugMode = debugMode;
     this.#textureLoader = new THREE.TextureLoader();
     this.#renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -59,7 +54,6 @@ export default class Glob3d {
     this.globeColor = globeColor;
     this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
-    this.gui = new dat.GUI();
     this.hexMargin = hexMargin;
     this.hexRes = hexRes;
     this.mouse = new THREE.Vector2();
@@ -70,17 +64,14 @@ export default class Glob3d {
     };
 
     // solid globe
-    const solidGlobeMaterial = new THREE.MeshBasicMaterial({
-      color: this.globeColor,
-      transparent: true,
-      opacity: this.globeOpacity,
-    });
     this.globe = new THREE.Mesh(
       new THREE.SphereGeometry(this.globeRadius, 36, 36),
-      solidGlobeMaterial
+      new THREE.MeshBasicMaterial({
+        color: this.globeColor,
+        transparent: true,
+        opacity: this.globeOpacity,
+      })
     );
-    this.gui.addColor(solidGlobeMaterial, 'color');
-    this.gui.add(solidGlobeMaterial, 'opacity').min(0).max(1).step(0.01);
     this.scene.add(this.globe);
 
     // camera
@@ -101,7 +92,6 @@ export default class Glob3d {
     this.tick();
     this.createHexGlobe();
     this.registerMouseMoveEvent();
-    if (!this.#debugMode) this.gui.hide();
   }
 
   createCanvas(root: HTMLElement) {

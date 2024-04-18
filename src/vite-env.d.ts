@@ -44,7 +44,6 @@ type GlobeOptions = {
   globeRadius?: number;
   hexRes?: number;
   hexMargin?: number;
-  debugMode?: boolean;
 };
 
 type BarGlobeOptions = {

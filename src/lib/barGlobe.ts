@@ -36,7 +36,6 @@ export default class BarGlob3d extends Glob3d {
       barOpacity = defaultOpts.barOpacity,
       barActiveColor = defaultOpts.barActiveColor,
       barActiveOpacity = defaultOpts.barActiveOpacity,
-      debugMode = defaultOpts.debugMode,
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
@@ -50,7 +49,6 @@ export default class BarGlob3d extends Glob3d {
     } = options;
 
     super(root, {
-      debugMode,
       globeColor,
       globeOpacity,
       globeRadius,

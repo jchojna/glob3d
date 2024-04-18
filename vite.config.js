@@ -8,7 +8,7 @@ export default {
       fileName: 'glob3d',
     },
     rollupOptions: {
-      external: ['h3-js', 'lil-gui', 'three', 'three-conic-polygon-geometry'],
+      external: ['h3-js', 'three', 'three-conic-polygon-geometry'],
     },
   },
 };
