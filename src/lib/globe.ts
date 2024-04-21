@@ -31,7 +31,7 @@ export default class Glob3d {
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
-  constructor(root: HTMLElement, options: GlobeOptions) {
+  constructor(root: HTMLElement, options: GlobeOptions = {}) {
     const {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,

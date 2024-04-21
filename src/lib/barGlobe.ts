@@ -30,7 +30,11 @@ export default class BarGlob3d extends Glob3d {
   tooltipsLimit: number | null;
   tooltipValueSuffix: string;
 
-  constructor(root: HTMLElement, data: GlobeData[], options: BarGlobeOptions) {
+  constructor(
+    root: HTMLElement,
+    data: GlobeData[],
+    options: BarGlobeOptions = {}
+  ) {
     const {
       barColor = defaultOpts.barColor,
       barOpacity = defaultOpts.barOpacity,
