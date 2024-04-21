@@ -41,12 +41,6 @@ export const getHexBin = (h3Index: string) => {
   return { h3Index, center, vertices };
 };
 
-export const getRandomInt = (min: number, max: number): number => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min)) + min;
-};
-
 // Compute new geojson with relative margin.
 export const getNewGeoJson = (hex: HexBin, margin: number) => {
   const relNum = (st: number, end: number, rat: number) =>
@@ -160,5 +154,14 @@ export const getTooltipScale = (
   minDistance: number,
   maxDistance: number
 ): number => {
-  return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
+  if (minDistance >= maxDistance)
+    throw new Error('minDistance must be less than maxDistance');
+
+  const croppedDistance = Math.min(
+    Math.max(distance, minDistance),
+    maxDistance
+  );
+  return (
+    ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 + 0.5
+  );
 };
