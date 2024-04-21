@@ -1,6 +1,14 @@
 # Glob3d
 
+![Glob3d](public/screenshot_1.jpg)
+![Glob3d](public/screenshot_4.jpg)
+
 An [npm package](https://www.npmjs.com/package/glob3d) for creating interactive 3D globes. Built with TypeScript and Three.js, Glob3d allows you to customize many aspects of the globe appearance and visualize geographic data in an engaging way.
+
+- [Repo](https://github.com/jchojna/glob3d)
+- [Demo](https://jchojna.github.io/glob3d-app/)
+- [NPM](https://www.npmjs.com/package/glob3d)
+- [My website](https://jakubchojna.pl/)
 
 ## Technologies
 
@@ -77,3 +85,6 @@ new BarGlob3d(container, data, options);
   - **`tooltipActiveTextColor`** The text color of the tooltip when hovered or clicked.
   - **`tooltipsLimit`** The number of tooltips to display, starting from the ones closest to the camera.
   - **`tooltipValueSuffix`** The suffix added to the value displayed in the tooltip.
+
+![Glob3d](public/screenshot_2.jpg)
+![Glob3d](public/screenshot_3.jpg)
