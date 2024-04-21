@@ -25,7 +25,7 @@ export default class Glob3d {
   globeColor: string;
   globeOpacity: number;
   globeRadius: number;
-  hexMargin: number;
+  hexPadding: number;
   hexRes: number;
   mouse: THREE.Vector2;
   scene: THREE.Scene;
@@ -37,7 +37,7 @@ export default class Glob3d {
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
       hexRes = defaultOpts.hexRes,
-      hexMargin = defaultOpts.hexMargin,
+      hexPadding = defaultOpts.hexPadding,
     } = options;
 
     this.root = root;
@@ -54,7 +54,7 @@ export default class Glob3d {
     this.globeColor = globeColor;
     this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
-    this.hexMargin = hexMargin;
+    this.hexPadding = hexPadding;
     this.hexRes = hexRes;
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
@@ -123,7 +123,7 @@ export default class Glob3d {
       ? new THREE.BufferGeometry()
       : this.#bufferGeometryUtils.mergeGeometries(
           hexBins.map((hex: HexBin) => {
-            const geoJson = getNewGeoJson(hex, this.hexMargin);
+            const geoJson = getNewGeoJson(hex, this.hexPadding);
             return new ConicPolygonGeometry(
               [geoJson], // GeoJson polygon coordinates
               this.globeRadius, // bottom height

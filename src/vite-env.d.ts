@@ -43,7 +43,7 @@ type GlobeOptions = {
   globeOpacity?: number;
   globeRadius?: number;
   hexRes?: number;
-  hexMargin?: number;
+  hexPadding?: number;
 };
 
 type BarGlobeOptions = {

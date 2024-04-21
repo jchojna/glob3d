@@ -43,7 +43,7 @@ export default class BarGlob3d extends Glob3d {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
-      hexMargin = defaultOpts.hexMargin,
+      hexPadding = defaultOpts.hexPadding,
       hexRes = defaultOpts.hexRes,
       highestBar = defaultOpts.highestBar,
       tooltipActiveBackgroundColor = defaultOpts.tooltipActiveBackgroundColor,
@@ -56,7 +56,7 @@ export default class BarGlob3d extends Glob3d {
       globeColor,
       globeOpacity,
       globeRadius,
-      hexMargin,
+      hexPadding,
       hexRes,
     });
 
@@ -127,7 +127,7 @@ export default class BarGlob3d extends Glob3d {
     if (!this.hexMaxValue) return;
     const offset = this.getOffsetFromCenter(hex.value);
     return new ConicPolygonGeometry(
-      [getNewGeoJson(hex, this.hexMargin)],
+      [getNewGeoJson(hex, this.hexPadding)],
       this.globeRadius,
       offset,
       true,
