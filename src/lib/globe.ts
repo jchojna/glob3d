@@ -25,19 +25,19 @@ export default class Glob3d {
   globeColor: string;
   globeOpacity: number;
   globeRadius: number;
-  hexMargin: number;
+  hexPadding: number;
   hexRes: number;
   mouse: THREE.Vector2;
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
-  constructor(root: HTMLElement, options: GlobeOptions) {
+  constructor(root: HTMLElement, options: GlobeOptions = {}) {
     const {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
       hexRes = defaultOpts.hexRes,
-      hexMargin = defaultOpts.hexMargin,
+      hexPadding = defaultOpts.hexPadding,
     } = options;
 
     this.root = root;
@@ -54,8 +54,8 @@ export default class Glob3d {
     this.globeColor = globeColor;
     this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
-    this.hexMargin = hexMargin;
-    this.hexRes = hexRes;
+    this.hexPadding = Math.max(0, Math.min(hexPadding, 1));
+    this.hexRes = Math.max(1, Math.min(hexRes, 5));
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
     this.sizes = {
@@ -118,16 +118,24 @@ export default class Glob3d {
     this.scene.add(globe);
   }
 
+  getHexOffsetFromGlobe(radius: number, hexRes: number) {
+    return radius * (Math.pow(5, 5) - Math.pow(hexRes, 5)) * 0.000001;
+  }
+
   updateHexGlobeGeometry(hexBins: HexBin[]) {
     return !hexBins.length
       ? new THREE.BufferGeometry()
       : this.#bufferGeometryUtils.mergeGeometries(
           hexBins.map((hex: HexBin) => {
-            const geoJson = getNewGeoJson(hex, this.hexMargin);
+            const geoJson = getNewGeoJson(hex, this.hexPadding);
+            const offset = this.getHexOffsetFromGlobe(
+              this.globeRadius,
+              this.hexRes
+            );
             return new ConicPolygonGeometry(
               [geoJson], // GeoJson polygon coordinates
-              this.globeRadius, // bottom height
-              this.globeRadius, // top height
+              this.globeRadius + offset, // bottom height
+              this.globeRadius + offset, // top height
               true, // closed bottom
               true, // closed top
               false // include sides

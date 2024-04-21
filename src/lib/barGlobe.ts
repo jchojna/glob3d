@@ -30,7 +30,11 @@ export default class BarGlob3d extends Glob3d {
   tooltipsLimit: number | null;
   tooltipValueSuffix: string;
 
-  constructor(root: HTMLElement, data: GlobeData[], options: BarGlobeOptions) {
+  constructor(
+    root: HTMLElement,
+    data: GlobeData[],
+    options: BarGlobeOptions = {}
+  ) {
     const {
       barColor = defaultOpts.barColor,
       barOpacity = defaultOpts.barOpacity,
@@ -39,7 +43,7 @@ export default class BarGlob3d extends Glob3d {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
-      hexMargin = defaultOpts.hexMargin,
+      hexPadding = defaultOpts.hexPadding,
       hexRes = defaultOpts.hexRes,
       highestBar = defaultOpts.highestBar,
       tooltipActiveBackgroundColor = defaultOpts.tooltipActiveBackgroundColor,
@@ -52,7 +56,7 @@ export default class BarGlob3d extends Glob3d {
       globeColor,
       globeOpacity,
       globeRadius,
-      hexMargin,
+      hexPadding,
       hexRes,
     });
 
@@ -110,7 +114,7 @@ export default class BarGlob3d extends Glob3d {
         (elem: { h3Index: string }) => elem.h3Index === curr.h3Index
       );
       if (idx >= 0) {
-        acc[idx].city += `, ${curr.city}`;
+        if (curr.city) acc[idx].city += `, ${curr.city}`;
         acc[idx].value += curr.value;
         return acc;
       } else {
@@ -123,7 +127,7 @@ export default class BarGlob3d extends Glob3d {
     if (!this.hexMaxValue) return;
     const offset = this.getOffsetFromCenter(hex.value);
     return new ConicPolygonGeometry(
-      [getNewGeoJson(hex, this.hexMargin)],
+      [getNewGeoJson(hex, this.hexPadding)],
       this.globeRadius,
       offset,
       true,
@@ -200,6 +204,7 @@ export default class BarGlob3d extends Glob3d {
     return values.filter((val: number) => val > value).length + 1;
   }
 
+  // TODO: refactor the method
   createTooltips() {
     this.tooltips = this.aggregatedData.map(
       ({ id, center, country, city, value }: HexData) => {

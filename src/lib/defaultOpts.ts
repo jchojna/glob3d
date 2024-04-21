@@ -6,7 +6,7 @@ export default {
   globeColor: '#000105',
   globeOpacity: 0.85,
   globeRadius: 100,
-  hexMargin: 0.2,
+  hexPadding: 0.2,
   hexRes: 3,
   highestBar: 0.5,
   tooltipActiveBackgroundColor: 'purple',
