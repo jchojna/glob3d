@@ -114,7 +114,7 @@ export default class BarGlob3d extends Glob3d {
         (elem: { h3Index: string }) => elem.h3Index === curr.h3Index
       );
       if (idx >= 0) {
-        acc[idx].city += `, ${curr.city}`;
+        if (curr.city) acc[idx].city += `, ${curr.city}`;
         acc[idx].value += curr.value;
         return acc;
       } else {
@@ -204,6 +204,7 @@ export default class BarGlob3d extends Glob3d {
     return values.filter((val: number) => val > value).length + 1;
   }
 
+  // TODO: refactor the method
   createTooltips() {
     this.tooltips = this.aggregatedData.map(
       ({ id, center, country, city, value }: HexData) => {
