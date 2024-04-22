@@ -28,7 +28,7 @@ export const getH3Indexes = (
 export const getHexBin = (h3Index: string) => {
   // Get center of a given hexagon - point as a [lat, lng] pair.
   const center = cellToLatLng(h3Index);
-  // Get the vertices of a given hexagon as an array of [lat, lng] points.
+  // Get the vertices of a given hexagon as an array of [lng, lat] points.
   const vertices = cellToBoundary(h3Index, true).reverse();
   // Split geometries at the anti-meridian.
   const centerLng = center[1];
