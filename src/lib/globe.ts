@@ -16,7 +16,6 @@ export default class Glob3d {
   #canvas: HTMLElement;
   #controls: OrbitControls;
   #renderer: THREE.WebGLRenderer;
-  root: HTMLElement;
   #textureLoader: THREE.TextureLoader;
 
   // public fields
@@ -28,6 +27,7 @@ export default class Glob3d {
   hexPadding: number;
   hexRes: number;
   mouse: THREE.Vector2;
+  root: HTMLElement;
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
@@ -43,7 +43,7 @@ export default class Glob3d {
     this.root = root;
     this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
-    this.#canvas = this.createCanvas(this.root);
+    this.#canvas = this.#createCanvas(this.root);
     this.#textureLoader = new THREE.TextureLoader();
     this.#renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -89,13 +89,13 @@ export default class Glob3d {
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.render(this.scene, this.camera);
 
-    this.tick();
-    this.createHexGlobe();
-    this.registerMouseMoveEvent();
-    this.registerResizeEvent();
+    this.#tick();
+    this.#createHexGlobe();
+    this.#registerMouseMoveEvent();
+    this.#registerResizeEvent();
   }
 
-  createCanvas(root: HTMLElement) {
+  #createCanvas(root: HTMLElement) {
     const canvas = document.createElement('canvas');
     canvas.style.outline = 'none';
     canvas.style.userSelect = 'none';
@@ -103,7 +103,7 @@ export default class Glob3d {
     return canvas;
   }
 
-  createHexGlobe() {
+  #createHexGlobe() {
     const { features } = worldGeoJson;
     // @ts-ignore
     const h3Indexes = getH3Indexes(features, this.hexRes);
@@ -112,23 +112,23 @@ export default class Glob3d {
     material.matcap = this.#textureLoader.load(matcap);
     const hexBins = h3Indexes.map((index) => getHexBin(index));
     const globe = new THREE.Mesh(
-      this.updateHexGlobeGeometry(hexBins),
+      this.#updateHexGlobeGeometry(hexBins),
       material
     );
     this.scene.add(globe);
   }
 
-  getHexOffsetFromGlobe(radius: number, hexRes: number) {
+  #getHexOffsetFromGlobe(radius: number, hexRes: number) {
     return radius * (Math.pow(5, 5) - Math.pow(hexRes, 5)) * 0.000001;
   }
 
-  updateHexGlobeGeometry(hexBins: HexBin[]) {
+  #updateHexGlobeGeometry(hexBins: HexBin[]) {
     return !hexBins.length
       ? new THREE.BufferGeometry()
       : this.#bufferGeometryUtils.mergeGeometries(
           hexBins.map((hex: HexBin) => {
             const geoJson = getNewGeoJson(hex, this.hexPadding);
-            const offset = this.getHexOffsetFromGlobe(
+            const offset = this.#getHexOffsetFromGlobe(
               this.globeRadius,
               this.hexRes
             );
@@ -144,7 +144,7 @@ export default class Glob3d {
         );
   }
 
-  registerMouseMoveEvent() {
+  #registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
       const xPos = e.clientX - this.root.getBoundingClientRect().left;
       const yPos = e.clientY - this.root.getBoundingClientRect().top;
@@ -153,7 +153,7 @@ export default class Glob3d {
     });
   }
 
-  registerResizeEvent() {
+  #registerResizeEvent() {
     window.addEventListener('resize', () => {
       this.sizes.width = this.root.clientWidth;
       this.sizes.height = this.root.clientHeight;
@@ -165,9 +165,9 @@ export default class Glob3d {
     });
   }
 
-  tick(): number {
+  #tick(): number {
     this.#renderer.render(this.scene, this.camera);
     this.#controls.update();
-    return window.requestAnimationFrame(() => this.tick());
+    return window.requestAnimationFrame(() => this.#tick());
   }
 }
