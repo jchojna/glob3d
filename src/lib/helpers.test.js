@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getHexBin, getTooltipScale, getXYZCoordinates } from './helpers';
+import {
+  getHexBin,
+  getNewGeoJson,
+  getTooltipScale,
+  getXYZCoordinates,
+} from './helpers';
 
 describe('getTooltipScale', () => {
   it('returns correct value when distance is equal to minDistance', () => {
@@ -81,6 +86,39 @@ describe('getHexBin', () => {
       expect(vertex[0]).toBeLessThanOrEqual(180);
       expect(vertex[1]).toBeGreaterThanOrEqual(-90);
       expect(vertex[1]).toBeLessThanOrEqual(90);
+    });
+  });
+});
+
+describe('getNewGeoJson', () => {
+  const mockHex = {
+    center: [34.500094979532754, -118.44763026078893],
+    city: 'Los Angeles',
+    coordinates: [34.05223, -118.24368],
+    country: 'United States',
+    h3Index: '8329a1fffffffff',
+    id: '',
+    value: 3898747,
+    vertices: [
+      [-118.04038609770777, 33.94617247140065],
+      [-118.83106703017793, 33.91826626424625],
+      [-119.2405536967384, 34.468622114983724],
+      [-118.85814740530697, 35.04976785327958],
+      [-118.05943919190459, 35.079775914541045],
+      [-117.65127589971758, 34.52652822808556],
+      [-118.04038609770777, 33.94617247140065],
+    ],
+  };
+
+  it('returns correct geoJson', () => {
+    const result = getNewGeoJson(mockHex, 0.5);
+
+    expect(result).toHaveLength(7);
+    result.forEach(([lon, lat]) => {
+      expect(lon).toBeGreaterThanOrEqual(-180);
+      expect(lon).toBeLessThanOrEqual(180);
+      expect(lat).toBeGreaterThanOrEqual(-90);
+      expect(lat).toBeLessThanOrEqual(90);
     });
   });
 });
