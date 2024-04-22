@@ -1,7 +1,22 @@
 # Glob3d
 
-![Glob3d](public/screenshot_1.jpg)
-![Glob3d](public/screenshot_4.jpg)
+<div>
+  <a href="https://www.npmjs.com/package/glob3d">
+    <img src="https://img.shields.io/npm/v/glob3d.svg" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/glob3d">
+    <img src="https://img.shields.io/npm/dt/glob3d.svg" alt="npm downloads" />
+  </a>
+</div>
+
+<div style="display: flex; gap: 10px">
+  <a href="https://jchojna.github.io/glob3d-app/">
+    <img src="https://jchojna.github.io/glob3d-app/screenshots/globe_1.jpg" alt="Globe 1" />
+  </a>
+  <a href="https://jchojna.github.io/glob3d-app/">
+    <img src="https://jchojna.github.io/glob3d-app/screenshots/globe_2.jpg" alt="Globe 2" />
+  </a>
+</div>
 
 An [npm package](https://www.npmjs.com/package/glob3d) for creating interactive 3D globes. Built with TypeScript and Three.js, Glob3d allows you to customize many aspects of the globe appearance and visualize geographic data in an engaging way.
 
@@ -85,6 +100,3 @@ new BarGlob3d(container, data, options);
   - **`tooltipActiveTextColor`** The text color of the tooltip when hovered or clicked.
   - **`tooltipsLimit`** The number of tooltips to display, starting from the ones closest to the camera.
   - **`tooltipValueSuffix`** The suffix added to the value displayed in the tooltip.
-
-![Glob3d](public/screenshot_2.jpg)
-![Glob3d](public/screenshot_3.jpg)
