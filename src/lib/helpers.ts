@@ -19,7 +19,7 @@ export const getH3Indexes = (
         );
       });
     } else {
-      console.warn(`Unsupported GeoJson geometry type (${type})`);
+      console.warn(`Unsupported GeoJson geometry type: ${type}`);
     }
   });
   return indexes;
@@ -28,7 +28,7 @@ export const getH3Indexes = (
 export const getHexBin = (h3Index: string) => {
   // Get center of a given hexagon - point as a [lat, lng] pair.
   const center = cellToLatLng(h3Index);
-  // Get the vertices of a given hexagon as an array of [lat, lng] points.
+  // Get the vertices of a given hexagon as an array of [lng, lat] points.
   const vertices = cellToBoundary(h3Index, true).reverse();
   // Split geometries at the anti-meridian.
   const centerLng = center[1];
@@ -39,12 +39,6 @@ export const getHexBin = (h3Index: string) => {
     }
   });
   return { h3Index, center, vertices };
-};
-
-export const getRandomInt = (min: number, max: number): number => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min)) + min;
 };
 
 // Compute new geojson with relative margin.
@@ -104,6 +98,7 @@ export const getTooltip = (
   tooltip.style.top = '10px';
   tooltip.style.transformOrigin = 'top left';
   tooltip.style.userSelect = 'none';
+  tooltip.setAttribute('data-id', 'tooltip');
   // delay transition to prevent initial animation
   setTimeout(() => {
     tooltip.style.transition =
@@ -126,6 +121,7 @@ export const getTooltip = (
   tooltipRank.style.margin = '0';
   tooltipRank.style.width = '30px';
   tooltipRank.textContent = String(valueRank);
+  tooltipRank.setAttribute('data-id', 'tooltipRank');
   tooltip.appendChild(tooltipRank);
 
   if (country) {
@@ -133,6 +129,7 @@ export const getTooltip = (
     tooltipCountry.style.gridColumn = '2 / 3';
     tooltipCountry.style.margin = '0';
     tooltipCountry.textContent = country;
+    tooltipCountry.setAttribute('data-id', 'tooltipCountry');
     tooltip.appendChild(tooltipCountry);
   }
 
@@ -141,6 +138,7 @@ export const getTooltip = (
     tooltipCity.style.gridColumn = '3 / 4';
     tooltipCity.style.margin = '0';
     tooltipCity.textContent = city;
+    tooltipCity.setAttribute('data-id', 'tooltipCity');
     tooltip.appendChild(tooltipCity);
   }
 
@@ -150,6 +148,7 @@ export const getTooltip = (
   tooltipValue.textContent = `${new Intl.NumberFormat().format(
     value
   )} ${tooltipValueSuffix}`;
+  tooltipValue.setAttribute('data-id', 'tooltipValue');
   tooltip.appendChild(tooltipValue);
 
   return tooltip;
@@ -160,5 +159,14 @@ export const getTooltipScale = (
   minDistance: number,
   maxDistance: number
 ): number => {
-  return ((maxDistance - distance) / (maxDistance - minDistance)) * 0.5 + 0.5;
+  if (minDistance >= maxDistance)
+    throw new Error('minDistance must be less than maxDistance');
+
+  const croppedDistance = Math.min(
+    Math.max(distance, minDistance),
+    maxDistance
+  );
+  return (
+    ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 + 0.5
+  );
 };

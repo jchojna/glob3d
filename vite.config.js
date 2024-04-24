@@ -1,6 +1,12 @@
+/// <reference types="vitest" />
 import { resolve } from 'path';
+import { defineConfig } from 'vite';
 
-export default {
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/main.ts'),
@@ -11,4 +17,4 @@ export default {
       external: ['h3-js', 'three', 'three-conic-polygon-geometry'],
     },
   },
-};
+});
