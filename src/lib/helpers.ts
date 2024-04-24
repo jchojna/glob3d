@@ -19,7 +19,7 @@ export const getH3Indexes = (
         );
       });
     } else {
-      console.warn(`Unsupported GeoJson geometry type (${type})`);
+      console.warn(`Unsupported GeoJson geometry type: ${type}`);
     }
   });
   return indexes;

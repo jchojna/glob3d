@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import multiPolygonFeature from '../mocks/multiPolygonFeature.json';
+import polygonFeature from '../mocks/polygonFeature.json';
+
 import {
+  getH3Indexes,
   getHexBin,
   getNewGeoJson,
   getTooltipScale,
@@ -120,5 +124,47 @@ describe('getNewGeoJson', () => {
       expect(lat).toBeGreaterThanOrEqual(-90);
       expect(lat).toBeLessThanOrEqual(90);
     });
+  });
+});
+
+describe('getH3Indexes', () => {
+  it('returns correct h3Indexes of multiPolygonFeature', () => {
+    const result = getH3Indexes(multiPolygonFeature, 1);
+    expect(result).toStrictEqual([
+      '8129bffffffffff',
+      '8144fffffffffff',
+      '8148bffffffffff',
+      '8126bffffffffff',
+      '81447ffffffffff',
+      '81263ffffffffff',
+      '81277ffffffffff',
+      '8128bffffffffff',
+      '8148fffffffffff',
+      '8126fffffffffff',
+      '812abffffffffff',
+      '81267ffffffffff',
+      '8127bffffffffff',
+      '810c3ffffffffff',
+      '810d7ffffffffff',
+    ]);
+  });
+
+  it('returns correct h3Indexes of polygonFeature', () => {
+    const result = getH3Indexes(polygonFeature, 2);
+    expect(result).toStrictEqual([
+      '821e27fffffffff',
+      '821f0ffffffffff',
+      '821e2ffffffffff',
+      '821f57fffffffff',
+    ]);
+  });
+
+  it('returns warning when Point geometry type specified', () => {
+    const features = [{ geometry: { type: 'Point', coordinates: [0, 0] } }];
+    console.warn = vitest.fn();
+    getH3Indexes(features, 2);
+    expect(console.warn).toHaveBeenCalledWith(
+      'Unsupported GeoJson geometry type: Point'
+    );
   });
 });
