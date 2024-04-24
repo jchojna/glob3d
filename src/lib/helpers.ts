@@ -98,6 +98,7 @@ export const getTooltip = (
   tooltip.style.top = '10px';
   tooltip.style.transformOrigin = 'top left';
   tooltip.style.userSelect = 'none';
+  tooltip.setAttribute('data-id', 'tooltip');
   // delay transition to prevent initial animation
   setTimeout(() => {
     tooltip.style.transition =
@@ -120,6 +121,7 @@ export const getTooltip = (
   tooltipRank.style.margin = '0';
   tooltipRank.style.width = '30px';
   tooltipRank.textContent = String(valueRank);
+  tooltipRank.setAttribute('data-id', 'tooltipRank');
   tooltip.appendChild(tooltipRank);
 
   if (country) {
@@ -127,6 +129,7 @@ export const getTooltip = (
     tooltipCountry.style.gridColumn = '2 / 3';
     tooltipCountry.style.margin = '0';
     tooltipCountry.textContent = country;
+    tooltipCountry.setAttribute('data-id', 'tooltipCountry');
     tooltip.appendChild(tooltipCountry);
   }
 
@@ -135,6 +138,7 @@ export const getTooltip = (
     tooltipCity.style.gridColumn = '3 / 4';
     tooltipCity.style.margin = '0';
     tooltipCity.textContent = city;
+    tooltipCity.setAttribute('data-id', 'tooltipCity');
     tooltip.appendChild(tooltipCity);
   }
 
@@ -144,6 +148,7 @@ export const getTooltip = (
   tooltipValue.textContent = `${new Intl.NumberFormat().format(
     value
   )} ${tooltipValueSuffix}`;
+  tooltipValue.setAttribute('data-id', 'tooltipValue');
   tooltip.appendChild(tooltipValue);
 
   return tooltip;
