@@ -3,9 +3,10 @@ import * as THREE from 'three';
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+// @ts-expect-error missing types
+import world from 'world-map-geojson';
 
 import matcap from '../assets/textures/matcap_1.png';
-import worldGeoJson from '../data/world_low_geo.json';
 import defaultOpts from './defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
 
@@ -104,9 +105,7 @@ export default class Glob3d {
   }
 
   #createHexGlobe() {
-    const { features } = worldGeoJson;
-    // @ts-expect-error missing types for features
-    const h3Indexes = getH3Indexes(features, this.hexRes);
+    const h3Indexes = getH3Indexes(world.features, this.hexRes);
     const material = new THREE.MeshMatcapMaterial();
     // TODO: should it be possible to set other matcap textures?
     material.matcap = this.#textureLoader.load(matcap);
