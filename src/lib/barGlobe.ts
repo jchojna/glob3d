@@ -1,6 +1,6 @@
 import { latLngToCell } from 'h3-js';
 import * as THREE from 'three';
-// @ts-ignore
+// @ts-expect-error no types available
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import defaultOpts from './defaultOpts';
