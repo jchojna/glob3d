@@ -1,4 +1,4 @@
-name: Run Unit Tests
+name: Run Tests and Lint
 
 on: [push, pull_request]
 
