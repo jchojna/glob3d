@@ -20,14 +20,20 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "lint": "eslint 'src/**/*.{js,ts}'",
+    "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:cov": "vitest --coverage"
   },
   "devDependencies": {
+    "@eslint/js": "^9.1.1",
     "@types/three": "^0.162.0",
     "@vitest/coverage-v8": "^1.5.0",
+    "eslint": "^8.57.0",
+    "globals": "^15.0.0",
     "happy-dom": "^14.7.1",
     "typescript": "^5.2.2",
+    "typescript-eslint": "^7.7.1",
     "vite": "^5.2.0",
     "vitest": "^1.5.0"
   },
