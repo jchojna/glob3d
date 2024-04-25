@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-// @ts-ignore
+// @ts-expect-error missing types
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
@@ -105,7 +105,7 @@ export default class Glob3d {
 
   #createHexGlobe() {
     const { features } = worldGeoJson;
-    // @ts-ignore
+    // @ts-expect-error missing types for features
     const h3Indexes = getH3Indexes(features, this.hexRes);
     const material = new THREE.MeshMatcapMaterial();
     // TODO: should it be possible to set other matcap textures?

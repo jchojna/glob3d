@@ -1,5 +1,4 @@
-import { parseHTML } from 'happy-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import multiPolygonFeature from '../mocks/multiPolygonFeature.json';
 import polygonFeature from '../mocks/polygonFeature.json';
@@ -163,7 +162,7 @@ describe('getH3Indexes', () => {
 
   it('returns warning when Point geometry type specified', () => {
     const features = [{ geometry: { type: 'Point', coordinates: [0, 0] } }];
-    console.warn = vitest.fn();
+    console.warn = vi.fn();
     getH3Indexes(features, 2);
     expect(console.warn).toHaveBeenCalledWith(
       'Unsupported GeoJson geometry type: Point'
