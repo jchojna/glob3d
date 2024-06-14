@@ -159,8 +159,8 @@ export const getTooltipScale = (
   minDistance: number,
   maxDistance: number
 ): number => {
-  if (minDistance >= maxDistance)
-    throw new Error('minDistance must be less than maxDistance');
+  if (minDistance > maxDistance)
+    throw new Error('minDistance cannot be greater than maxDistance');
 
   const croppedDistance = Math.min(
     Math.max(distance, minDistance),
