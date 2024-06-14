@@ -70,7 +70,6 @@ interface TooltipProperties {
   tooltipActiveBackgroundColor: string | undefined;
   tooltipActiveTextColor: string | undefined;
   tooltipsLimit: number;
-  getPixelPosition: (point: THREE.Vector3) => { x: number; y: number };
   handleCameraUpdate: (camera: THREE.Camera) => void;
   handleMasking: (camera: THREE.Camera) => void;
   hide: () => void;

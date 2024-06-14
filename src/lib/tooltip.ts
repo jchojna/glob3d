@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { getTooltip, getTooltipScale } from './helpers';
+
+import { getPixelPosition, getTooltip, getTooltipScale } from './helpers';
 
 export default class Tooltip implements TooltipProperties {
   coordinates: THREE.Vector3;
@@ -61,14 +62,6 @@ export default class Tooltip implements TooltipProperties {
     this.tooltipsLimit = tooltipsLimit;
   }
 
-  // get pixel position from normalized device coordinates
-  getPixelPosition(point: THREE.Vector3) {
-    return {
-      x: ((point.x + 1) / 2) * this.sizes.width,
-      y: ((point.y - 1) / 2) * this.sizes.height * -1,
-    };
-  }
-
   updateOrder(index: number, minDistance: number, maxDistance: number) {
     this.element.style.zIndex = String(this.tooltipsLimit - index);
     if (!this.distance) return;
@@ -83,7 +76,11 @@ export default class Tooltip implements TooltipProperties {
   }
 
   updateTooltipPosition() {
-    const pxPosition = this.getPixelPosition(this.point);
+    const pxPosition = getPixelPosition(
+      this.point,
+      this.sizes.width,
+      this.sizes.height
+    );
     this.element.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
   }
 
