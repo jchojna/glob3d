@@ -11,6 +11,7 @@ import {
   getPixelPosition,
   getXYZCoordinates,
 } from './helpers';
+import { loaderStyles } from './styles';
 import Tooltip from './tooltip';
 
 export default class BarGlob3d extends Glob3d {
@@ -138,16 +139,22 @@ export default class BarGlob3d extends Glob3d {
 
   #getLoader() {
     const loader = document.createElement('div');
-    loader.style.position = 'absolute';
-    loader.style.transform = 'translate(-50%, -50%)';
-    loader.style.zIndex = '999';
+    loader.style.cssText = loaderStyles;
     loader.innerHTML = 'Loading...';
     this.root.appendChild(loader);
     return loader;
   }
 
+  #showLoader() {
+    this.#loader.style.visibility = 'visible';
+  }
+
+  #hideLoader() {
+    this.#loader.style.visibility = 'hidden';
+  }
+
   #updateLoaderPosition() {
-    if (!this.#loader) return;
+    if (!this.#loader || this.#loader.style.visibility == 'hidden') return;
     const globePosition = getPixelPosition(
       this.globe.position.clone().project(this.camera),
       this.sizes.width,
@@ -355,13 +362,15 @@ export default class BarGlob3d extends Glob3d {
   }
 
   onLoading() {
+    this.#showLoader();
     // remove old elements
     // this.#hexResultsGroup.clear();
     // remove tooltips
     if (this.#tooltipsContainer) this.root.removeChild(this.#tooltipsContainer);
   }
 
-  update(data: GlobeData[]) {
+  onUpdate(data: GlobeData[]) {
+    this.#hideLoader();
     // create new elements
     this.#aggregatedData = this.#aggregateData(data);
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
