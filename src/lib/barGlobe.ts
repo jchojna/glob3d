@@ -90,11 +90,13 @@ export default class BarGlob3d extends Glob3d {
     this.#tooltipValueSuffix = tooltipValueSuffix;
 
     this.#barTick();
-    this.#aggregatedData = this.#aggregateData(data);
-    this.#hexMaxValue = Math.max(
-      ...this.#aggregatedData.map((obj) => obj.value)
-    );
-    this.#hexResults = this.#visualizeResult(this.#aggregatedData);
+    if (data !== null) {
+      this.#aggregatedData = this.#aggregateData(data);
+      this.#hexMaxValue = Math.max(
+        ...this.#aggregatedData.map((obj) => obj.value)
+      );
+      this.#hexResults = this.#visualizeResult(this.#aggregatedData);
+    }
     this.#createTooltips();
     this.#registerClickEvent();
     this.#updateLoaderPosition();
@@ -364,7 +366,7 @@ export default class BarGlob3d extends Glob3d {
   onLoading() {
     this.#showLoader();
     // remove old elements
-    // this.#hexResultsGroup.clear();
+    this.#hexResultsGroup.clear();
     // remove tooltips
     if (this.#tooltipsContainer) this.root.removeChild(this.#tooltipsContainer);
   }
@@ -373,6 +375,9 @@ export default class BarGlob3d extends Glob3d {
     this.#hideLoader();
     // create new elements
     this.#aggregatedData = this.#aggregateData(data);
+    this.#hexMaxValue = Math.max(
+      ...this.#aggregatedData.map((obj) => obj.value)
+    );
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
     this.#createTooltips();
   }
