@@ -9,3 +9,13 @@ export const loaderStyles = `
   visibility: hidden;
   zIndex: 999;
 `;
+
+export const tooltipsStyles = `
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+`;
