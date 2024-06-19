@@ -90,13 +90,7 @@ export default class BarGlob3d extends Glob3d {
     this.#tooltipValueSuffix = tooltipValueSuffix;
 
     this.#barTick();
-    if (data !== null) {
-      this.#aggregatedData = this.#aggregateData(data);
-      this.#hexMaxValue = Math.max(
-        ...this.#aggregatedData.map((obj) => obj.value)
-      );
-      this.#hexResults = this.#visualizeResult(this.#aggregatedData);
-    }
+    if (data !== null) this.#createHexResults(data);
     this.#createTooltips();
     this.#registerClickEvent();
     this.#updateLoaderPosition();
@@ -137,6 +131,14 @@ export default class BarGlob3d extends Glob3d {
       },
       []
     );
+  }
+
+  #createHexResults(data: GlobeData[]) {
+    this.#aggregatedData = this.#aggregateData(data);
+    this.#hexMaxValue = Math.max(
+      ...this.#aggregatedData.map((obj) => obj.value)
+    );
+    this.#hexResults = this.#visualizeResult(this.#aggregatedData);
   }
 
   #getLoader() {
@@ -393,12 +395,7 @@ export default class BarGlob3d extends Glob3d {
 
   onUpdate(data: GlobeData[]) {
     this.#hideLoader(this.#loader);
-    // create new elements
-    this.#aggregatedData = this.#aggregateData(data);
-    this.#hexMaxValue = Math.max(
-      ...this.#aggregatedData.map((obj) => obj.value)
-    );
-    this.#hexResults = this.#visualizeResult(this.#aggregatedData);
+    this.#createHexResults(data);
     this.#createTooltips();
   }
 
