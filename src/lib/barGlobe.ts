@@ -142,17 +142,23 @@ export default class BarGlob3d extends Glob3d {
   #getLoader() {
     const loader = document.createElement('div');
     loader.style.cssText = loaderStyles;
-    loader.innerHTML = 'Loading...';
+    this.#showLoader(loader);
     this.root.appendChild(loader);
     return loader;
   }
 
-  #showLoader() {
-    this.#loader.style.visibility = 'visible';
+  #showLoader(loader: HTMLElement) {
+    this.#updateLoaderText(loader, 'Loading...');
+    loader.style.visibility = 'visible';
   }
 
-  #hideLoader() {
-    this.#loader.style.visibility = 'hidden';
+  #hideLoader(loader: HTMLElement) {
+    loader.style.visibility = 'hidden';
+  }
+
+  #showError(loader: HTMLElement) {
+    this.#updateLoaderText(loader, 'Error');
+    loader.style.visibility = 'visible';
   }
 
   #updateLoaderPosition() {
@@ -305,6 +311,10 @@ export default class BarGlob3d extends Glob3d {
     object.material.opacity = this.#barOpacity;
   }
 
+  #updateLoaderText(loader: HTMLElement, text: string) {
+    loader.innerHTML = text;
+  }
+
   #barTick(): number {
     if (this.#hexResults.length > 0) {
       this.#raycaster.setFromCamera(this.mouse, this.camera);
@@ -363,16 +373,26 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  onLoading() {
-    this.#showLoader();
-    // remove old elements
+  #removeTooltips() {
+    if (this.#tooltipsContainer) {
+      this.root.removeChild(this.#tooltipsContainer);
+      this.#tooltipsContainer = null;
+    }
+  }
+
+  #removeHexResults() {
     this.#hexResultsGroup.clear();
-    // remove tooltips
-    if (this.#tooltipsContainer) this.root.removeChild(this.#tooltipsContainer);
+    this.#hexResults = [];
+  }
+
+  onLoading() {
+    this.#showLoader(this.#loader);
+    this.#removeHexResults();
+    this.#removeTooltips();
   }
 
   onUpdate(data: GlobeData[]) {
-    this.#hideLoader();
+    this.#hideLoader(this.#loader);
     // create new elements
     this.#aggregatedData = this.#aggregateData(data);
     this.#hexMaxValue = Math.max(
@@ -380,5 +400,11 @@ export default class BarGlob3d extends Glob3d {
     );
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
     this.#createTooltips();
+  }
+
+  onError() {
+    this.#showError(this.#loader);
+    this.#removeHexResults();
+    this.#removeTooltips();
   }
 }
