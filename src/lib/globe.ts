@@ -25,6 +25,8 @@ export default class Glob3d {
   globeColor: string;
   globeOpacity: number;
   globeRadius: number;
+  hexGlobe: THREE.Mesh | null;
+  hexOpacity: number;
   hexPadding: number;
   hexRes: number;
   mouse: THREE.Vector2;
@@ -37,8 +39,9 @@ export default class Glob3d {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
-      hexRes = defaultOpts.hexRes,
+      hexOpacity = defaultOpts.hexOpacity,
       hexPadding = defaultOpts.hexPadding,
+      hexRes = defaultOpts.hexRes,
     } = options;
 
     this.root = root;
@@ -55,6 +58,8 @@ export default class Glob3d {
     this.globeColor = globeColor;
     this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
+    this.hexGlobe = null;
+    this.hexOpacity = hexOpacity;
     this.hexPadding = Math.max(0, Math.min(hexPadding, 1));
     this.hexRes = Math.max(1, Math.min(hexRes, 5));
     this.mouse = new THREE.Vector2();
@@ -106,15 +111,18 @@ export default class Glob3d {
 
   #createHexGlobe() {
     const h3Indexes = getH3Indexes(world.features, this.hexRes);
-    const material = new THREE.MeshMatcapMaterial();
+    const material = new THREE.MeshMatcapMaterial({
+      opacity: this.hexOpacity,
+      transparent: true,
+    });
     // TODO: should it be possible to set other matcap textures?
     material.matcap = this.#textureLoader.load(matcap);
     const hexBins = h3Indexes.map((index) => getHexBin(index));
-    const globe = new THREE.Mesh(
+    this.hexGlobe = new THREE.Mesh(
       this.#updateHexGlobeGeometry(hexBins),
       material
     );
-    this.scene.add(globe);
+    this.scene.add(this.hexGlobe);
   }
 
   #getHexOffsetFromGlobe(radius: number, hexRes: number) {
@@ -141,6 +149,20 @@ export default class Glob3d {
             );
           })
         );
+  }
+
+  #updateHexOpacity(opacity: number) {
+    if (this.hexGlobe) {
+      (this.hexGlobe.material as THREE.Material).opacity = opacity;
+    }
+  }
+
+  fadeOutHexes() {
+    this.#updateHexOpacity(0.3);
+  }
+
+  fadeInHexes() {
+    this.#updateHexOpacity(1);
   }
 
   #registerMouseMoveEvent() {
