@@ -384,17 +384,20 @@ export default class BarGlob3d extends Glob3d {
     this.#showLoader(this.#loader);
     this.#removeHexResults();
     this.#removeTooltips();
+    this.fadeOutHexes();
   }
 
   onUpdate(data: GlobeData[]) {
     this.#hideLoader(this.#loader);
     this.#createHexResults(data);
     this.#createTooltips();
+    this.fadeInHexes();
   }
 
   onError() {
     this.#showError(this.#loader);
     this.#removeHexResults();
     this.#removeTooltips();
+    this.fadeOutHexes();
   }
 }
