@@ -43,12 +43,13 @@ describe('getTooltipScale', () => {
     expect(scale).toBe(0.5);
   });
 
-  it('expects error when minDistance is >= maxDistance', () => {
-    expect(() => getTooltipScale(0.5, 1, 0)).toThrowError();
+  it('expects error when minDistance is equal to maxDistance', () => {
+    const scale = getTooltipScale(0.5, 1, 1);
+    expect(scale).toBe(1);
   });
 
-  it('expects error when all arguments values are equal', () => {
-    expect(() => getTooltipScale(1, 1, 1)).toThrowError();
+  it('expects error when minDistance is > maxDistance', () => {
+    expect(() => getTooltipScale(0.5, 1, 0)).toThrowError();
   });
 });
 
