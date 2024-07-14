@@ -144,7 +144,6 @@ export default class BarGlob3d extends Glob3d {
   #getLoader() {
     const loader = document.createElement('div');
     loader.style.cssText = loaderStyles;
-    this.#showLoader(loader);
     this.root.appendChild(loader);
     return loader;
   }
@@ -389,6 +388,8 @@ export default class BarGlob3d extends Glob3d {
 
   onUpdate(data: GlobeData[]) {
     this.#hideLoader(this.#loader);
+    this.#removeHexResults();
+    this.#removeTooltips();
     this.#createHexResults(data);
     this.#createTooltips();
     this.fadeInHexes();
