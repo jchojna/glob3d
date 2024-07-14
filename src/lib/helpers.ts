@@ -167,9 +167,10 @@ export const getTooltipScale = (
     Math.max(distance, minDistance),
     maxDistance
   );
-  return (
-    ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 + 0.5
-  );
+  return maxDistance === minDistance
+    ? 1
+    : ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 +
+        0.5;
 };
 
 // get pixel position from normalized device coordinates
