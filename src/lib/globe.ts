@@ -174,6 +174,15 @@ export default class Glob3d {
     });
   }
 
+  setGlobeOpacity(opacity: number) {
+    this.globeOpacity = opacity;
+    this.globe.material = new THREE.MeshBasicMaterial({
+      color: this.globeColor,
+      transparent: true,
+      opacity: this.globeOpacity,
+    });
+  }
+
   #registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
       const xPos = e.clientX - this.root.getBoundingClientRect().left;
