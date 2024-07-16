@@ -165,6 +165,15 @@ export default class Glob3d {
     this.#updateHexOpacity(1);
   }
 
+  setGlobeColor(color: string) {
+    this.globeColor = color;
+    this.globe.material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: this.globeOpacity,
+    });
+  }
+
   #registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
       const xPos = e.clientX - this.root.getBoundingClientRect().left;

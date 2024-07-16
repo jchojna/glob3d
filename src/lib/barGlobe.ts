@@ -379,6 +379,13 @@ export default class BarGlob3d extends Glob3d {
     this.#hexResults = [];
   }
 
+  setActiveColor(color: string) {
+    this.#barActiveColor = color;
+    this.#removeTooltips();
+    this.#tooltipActiveBackgroundColor = color;
+    this.#createTooltips();
+  }
+
   onLoading() {
     this.#showLoader(this.#loader);
     this.#removeHexResults();
