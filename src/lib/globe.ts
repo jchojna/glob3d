@@ -183,6 +183,10 @@ export default class Glob3d {
     });
   }
 
+  setAutoRotate(autoRotate: boolean) {
+    this.#controls.autoRotate = autoRotate;
+  }
+
   #registerMouseMoveEvent() {
     window.addEventListener('mousemove', (e) => {
       const xPos = e.clientX - this.root.getBoundingClientRect().left;
