@@ -9,8 +9,9 @@ import {
   getPixelPosition,
   getXYZCoordinates,
 } from '../utils/helpers';
-import { loaderStyles, tooltipsStyles } from '../utils/styles';
+import { tooltipsStyles } from '../utils/styles';
 import Glob3d from './Glob3d';
+import Loader from './Loader';
 import Tooltip from './Tooltip';
 
 export default class BarGlob3d extends Glob3d {
@@ -79,7 +80,7 @@ export default class BarGlob3d extends Glob3d {
     this.#highestBar = highestBar;
     this.#hoveredHexId = null;
     this.#hoveredHexObject = null;
-    this.#loader = this.#getLoader();
+    this.#loader = new Loader(root).loader;
     this.#raycaster = new THREE.Raycaster();
     this.#tooltips = null;
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
@@ -101,13 +102,6 @@ export default class BarGlob3d extends Glob3d {
       ...this.#aggregatedData.map((obj) => obj.value)
     );
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
-  }
-
-  #getLoader() {
-    const loader = document.createElement('div');
-    loader.style.cssText = loaderStyles;
-    this.root.appendChild(loader);
-    return loader;
   }
 
   #showLoader(loader: HTMLElement) {
