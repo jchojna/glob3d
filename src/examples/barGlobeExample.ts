@@ -78,6 +78,12 @@ const data = [
 document.addEventListener('DOMContentLoaded', () => {
   const appElement = document.getElementById('root');
   if (appElement) {
-    new BarGlob3d(appElement, data);
+    const globe = new BarGlob3d(appElement, []);
+    globe.onLoading();
+    // globe.onError();
+
+    setTimeout(() => {
+      globe.onUpdate(data);
+    }, 1000);
   }
 });
