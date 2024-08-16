@@ -4,10 +4,10 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import { aggregateData } from './dataHandlers';
 import defaultOpts from './defaultOpts';
-import Glob3d from './globe';
+import Glob3d from './Glob3d';
 import { getNewGeoJson, getPixelPosition, getXYZCoordinates } from './helpers';
 import { loaderStyles, tooltipsStyles } from './styles';
-import Tooltip from './tooltip';
+import Tooltip from './Tooltip';
 
 export default class BarGlob3d extends Glob3d {
   #aggregatedData: HexData[];

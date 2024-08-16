@@ -1,4 +1,4 @@
-import BarGlob3d from '../lib/barGlobe';
+import BarGlob3d from '../lib/BarGlob3d';
 
 const data = [
   {
