@@ -4,15 +4,10 @@ import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import { aggregateData } from '../utils/dataHandlers';
 import defaultOpts from '../utils/defaultOpts';
-import {
-  getNewGeoJson,
-  getPixelPosition,
-  getXYZCoordinates,
-} from '../utils/helpers';
-import { tooltipsStyles } from '../utils/styles';
+import { getNewGeoJson, getPixelPosition } from '../utils/helpers';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
-import Tooltip from './Tooltip';
+import TooltipsManager from './TooltipsManager';
 
 export default class BarGlob3d extends Glob3d {
   #aggregatedData: HexData[];
@@ -31,12 +26,10 @@ export default class BarGlob3d extends Glob3d {
   #hoveredHexObject: HexResult | null;
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
+  #tooltipsManager: TooltipsManager;
   #tooltips: TooltipProperties[] | null;
   #tooltipActiveBackgroundColor: string;
-  #tooltipActiveTextColor: string;
-  #tooltipsContainer: HTMLElement | null;
   #tooltipsLimit: number | null;
-  #tooltipValueSuffix: string;
 
   constructor(
     root: HTMLElement,
@@ -86,14 +79,17 @@ export default class BarGlob3d extends Glob3d {
     this.#raycaster = new THREE.Raycaster();
     this.#tooltips = null;
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
-    this.#tooltipActiveTextColor = tooltipActiveTextColor;
-    this.#tooltipsContainer = null;
     this.#tooltipsLimit = tooltipsLimit;
-    this.#tooltipValueSuffix = tooltipValueSuffix;
 
+    this.#tooltipsManager = new TooltipsManager(root, this.globe, {
+      tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
+      tooltipActiveTextColor,
+      tooltipsLimit: this.#tooltipsLimit,
+      tooltipValueSuffix,
+    });
     this.#barTick();
     if (data !== null) this.#createHexResults(data);
-    this.#createTooltips();
+    this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
@@ -193,47 +189,6 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  #getValueRank(value: number, values: number[]): number {
-    return values.filter((val: number) => val > value).length + 1;
-  }
-
-  // TODO: refactor the method
-  #createTooltips() {
-    this.#tooltips = this.#aggregatedData.map(
-      ({ id, center, country, city, value }: HexData) => {
-        const offset = this.#getOffsetFromCenter(value);
-        const valueRank = this.#getValueRank(
-          value,
-          this.#aggregatedData.map((hex) => hex.value)
-        );
-        const coordinates = getXYZCoordinates(center[0], center[1], offset);
-        return new Tooltip(
-          id,
-          coordinates,
-          this.sizes,
-          this.#tooltipsLimit || this.#aggregatedData.length,
-          value,
-          {
-            city,
-            country,
-            mask: this.globe,
-            tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-            tooltipActiveTextColor: this.#tooltipActiveTextColor,
-            tooltipValueSuffix: this.#tooltipValueSuffix,
-            valueRank,
-          }
-        );
-      }
-    );
-    const tooltipsElements = this.#tooltips.map((tooltip) => tooltip.element);
-    const tooltips = document.createElement('div');
-    tooltips.style.cssText = tooltipsStyles;
-    tooltips.append(...tooltipsElements);
-    this.#tooltipsContainer = tooltips;
-    this.root.style.position = 'relative';
-    this.root.appendChild(tooltips);
-  }
-
   #highlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.#barActiveColor);
@@ -305,12 +260,12 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  #removeTooltips() {
-    if (this.#tooltipsContainer) {
-      this.root.removeChild(this.#tooltipsContainer);
-      this.#tooltipsContainer = null;
-    }
-  }
+  // #removeTooltips() {
+  //   if (this.#tooltipsContainer) {
+  //     this.root.removeChild(this.#tooltipsContainer);
+  //     this.#tooltipsContainer = null;
+  //   }
+  // }
 
   #removeHexResults() {
     this.#hexResultsGroup.clear();
@@ -319,31 +274,31 @@ export default class BarGlob3d extends Glob3d {
 
   setActiveColor(color: string) {
     this.#barActiveColor = color;
-    this.#removeTooltips();
+    // this.#removeTooltips();
     this.#tooltipActiveBackgroundColor = color;
-    this.#createTooltips();
+    this.#tooltipsManager.createTooltips(this.#aggregatedData);
   }
 
   onLoading() {
     this.#loaderManager.showLoader();
     this.#removeHexResults();
-    this.#removeTooltips();
+    // this.#removeTooltips();
     this.fadeOutHexes();
   }
 
   onUpdate(data: GlobeData[]) {
     this.#loaderManager.hideLoader();
     this.#removeHexResults();
-    this.#removeTooltips();
+    // this.#removeTooltips();
     this.#createHexResults(data);
-    this.#createTooltips();
+    this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.fadeInHexes();
   }
 
   onError() {
     this.#loaderManager.showError();
     this.#removeHexResults();
-    this.#removeTooltips();
+    // this.#removeTooltips();
     this.fadeOutHexes();
   }
 }
