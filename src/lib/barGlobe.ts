@@ -40,24 +40,24 @@ export default class BarGlob3d extends Glob3d {
   constructor(
     root: HTMLElement,
     data: GlobeData[],
-    options: BarGlobeOptions = {}
+    options: BarGlobeOptions = defaultOpts
   ) {
     const {
-      barColor = defaultOpts.barColor,
-      barOpacity = defaultOpts.barOpacity,
-      barActiveColor = defaultOpts.barActiveColor,
-      barActiveOpacity = defaultOpts.barActiveOpacity,
-      globeColor = defaultOpts.globeColor,
-      globeOpacity = defaultOpts.globeOpacity,
-      globeRadius = defaultOpts.globeRadius,
-      hexPadding = defaultOpts.hexPadding,
-      hexRes = defaultOpts.hexRes,
-      highestBar = defaultOpts.highestBar,
-      tooltipActiveBackgroundColor = defaultOpts.tooltipActiveBackgroundColor,
-      tooltipActiveTextColor = defaultOpts.tooltipActiveTextColor,
-      tooltipsLimit = defaultOpts.tooltipsLimit,
-      tooltipValueSuffix = defaultOpts.tooltipValueSuffix,
-    } = options;
+      barColor,
+      barOpacity,
+      barActiveColor,
+      barActiveOpacity,
+      globeColor,
+      globeOpacity,
+      globeRadius,
+      hexPadding,
+      hexRes,
+      highestBar,
+      tooltipActiveBackgroundColor,
+      tooltipActiveTextColor,
+      tooltipsLimit,
+      tooltipValueSuffix,
+    } = { ...defaultOpts, ...options };
 
     super(root, {
       globeColor,
