@@ -1,16 +1,11 @@
-import { latLngToCell } from 'h3-js';
 import * as THREE from 'three';
 // @ts-expect-error no types available
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
+import { aggregateData } from './dataHandlers';
 import defaultOpts from './defaultOpts';
 import Glob3d from './globe';
-import {
-  getHexBin,
-  getNewGeoJson,
-  getPixelPosition,
-  getXYZCoordinates,
-} from './helpers';
+import { getNewGeoJson, getPixelPosition, getXYZCoordinates } from './helpers';
 import { loaderStyles, tooltipsStyles } from './styles';
 import Tooltip from './tooltip';
 
@@ -40,7 +35,7 @@ export default class BarGlob3d extends Glob3d {
   constructor(
     root: HTMLElement,
     data: GlobeData[],
-    options: BarGlobeOptions = defaultOpts
+    options: BarGlobeOptions = {}
   ) {
     const {
       barColor,
@@ -96,45 +91,8 @@ export default class BarGlob3d extends Glob3d {
     this.#updateLoaderPosition();
   }
 
-  #preProcessData(data: GlobeData[]) {
-    return data.map(({ city, country, coordinates, value }): HexData => {
-      const h3Index = latLngToCell(
-        coordinates.lat,
-        coordinates.lon,
-        this.hexRes
-      );
-      const hexBin = getHexBin(h3Index);
-      return {
-        city,
-        country,
-        coordinates: [coordinates.lat, coordinates.lon],
-        ...hexBin,
-        id: '',
-        value,
-      };
-    });
-  }
-
-  #aggregateData(data: GlobeData[]) {
-    return this.#preProcessData(data).reduce(
-      (acc: HexData[], curr: HexData) => {
-        const idx = acc.findIndex(
-          (elem: { h3Index: string }) => elem.h3Index === curr.h3Index
-        );
-        if (idx >= 0) {
-          if (curr.city) acc[idx].city += `, ${curr.city}`;
-          acc[idx].value += curr.value;
-          return acc;
-        } else {
-          return [...acc, curr];
-        }
-      },
-      []
-    );
-  }
-
   #createHexResults(data: GlobeData[]) {
-    this.#aggregatedData = this.#aggregateData(data);
+    this.#aggregatedData = aggregateData(data, this.hexRes);
     this.#hexMaxValue = Math.max(
       ...this.#aggregatedData.map((obj) => obj.value)
     );
@@ -270,7 +228,7 @@ export default class BarGlob3d extends Glob3d {
           id,
           coordinates,
           this.sizes,
-          this.#tooltipsLimit || this.#aggregateData.length,
+          this.#tooltipsLimit || this.#aggregatedData.length,
           value,
           {
             city,
