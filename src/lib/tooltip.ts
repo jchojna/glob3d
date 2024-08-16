@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 
-import { getPixelPosition, getTooltip, getTooltipScale } from './helpers';
+import {
+  getPixelPosition,
+  getTooltip,
+  getTooltipScale,
+} from '../utils/helpers';
 
 export default class Tooltip implements TooltipProperties {
   coordinates: THREE.Vector3;

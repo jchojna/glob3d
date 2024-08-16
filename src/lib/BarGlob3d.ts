@@ -2,11 +2,15 @@ import * as THREE from 'three';
 // @ts-expect-error no types available
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
-import { aggregateData } from './dataHandlers';
-import defaultOpts from './defaultOpts';
+import { aggregateData } from '../utils/dataHandlers';
+import defaultOpts from '../utils/defaultOpts';
+import {
+  getNewGeoJson,
+  getPixelPosition,
+  getXYZCoordinates,
+} from '../utils/helpers';
+import { loaderStyles, tooltipsStyles } from '../utils/styles';
 import Glob3d from './Glob3d';
-import { getNewGeoJson, getPixelPosition, getXYZCoordinates } from './helpers';
-import { loaderStyles, tooltipsStyles } from './styles';
 import Tooltip from './Tooltip';
 
 export default class BarGlob3d extends Glob3d {
