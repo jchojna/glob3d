@@ -59,6 +59,11 @@ type BarGlobeOptions = {
   tooltipValueSuffix?: string;
 } & GlobeOptions;
 
+type GlobePosition = {
+  x: number;
+  y: number;
+};
+
 interface TooltipProperties {
   coordinates: THREE.Vector3;
   distance: number;
