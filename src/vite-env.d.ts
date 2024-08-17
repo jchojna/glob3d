@@ -29,7 +29,7 @@ type GeojsonFeature = {
   };
 };
 
-type GlobeData = {
+interface GlobeData {
   country: string;
   city: string;
   coordinates: {
@@ -37,7 +37,11 @@ type GlobeData = {
     lat: number;
   };
   value: number;
-};
+}
+
+interface GlobeDataWithOffsets extends GlobeData {
+  offsetFromCenter: number;
+}
 
 type GlobeOptions = {
   globeColor?: string;

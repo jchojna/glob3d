@@ -2,9 +2,9 @@ import * as THREE from 'three';
 // @ts-expect-error no types available
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
-import { aggregateData } from '../utils/dataHandlers';
 import defaultOpts from '../utils/defaultOpts';
 import { getNewGeoJson, getPixelPosition } from '../utils/helpers';
+import DataManager from './DataManager';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
 import TooltipsManager from './TooltipsManager';
@@ -89,12 +89,12 @@ export default class BarGlob3d extends Glob3d {
 
   #createHexResults(data: GlobeData[]) {
     if (!data.length) return;
-    this.#aggregatedData = aggregateData(
+    this.#aggregatedData = new DataManager(
       data,
       this.hexRes,
       this.globeRadius,
       this.#highestBar
-    );
+    ).data;
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
   }
 
