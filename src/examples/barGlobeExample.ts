@@ -76,14 +76,32 @@ const data = [
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
-  const appElement = document.getElementById('root');
-  if (appElement) {
-    const globe = new BarGlob3d(appElement, []);
+  const root = document.getElementById('root');
+  const updateButton = document.createElement('button');
+  const colorButton = document.createElement('button');
+  updateButton.style.position = 'absolute';
+  colorButton.style.position = 'absolute';
+  colorButton.style.top = '30px';
+  updateButton.innerText = 'Update';
+  colorButton.innerText = 'Change color';
+
+  if (root) {
+    root.appendChild(updateButton);
+    root.appendChild(colorButton);
+
+    const globe = new BarGlob3d(root, []);
     globe.onLoading();
     // globe.onError();
 
     setTimeout(() => {
       globe.onUpdate(data);
     }, 1000);
+
+    updateButton.addEventListener('click', () => {
+      globe.onUpdate(data);
+    });
+    colorButton.addEventListener('click', () => {
+      globe.setActiveColor('blue');
+    });
   }
 });
