@@ -13,6 +13,7 @@ type HexData = {
   country: string;
   h3Index: string;
   id: string;
+  offsetFromCenter: number;
   value: number;
   vertices: [number, number][];
 };
