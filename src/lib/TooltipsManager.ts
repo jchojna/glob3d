@@ -10,12 +10,18 @@ type TooltipsOptions = {
   tooltipsLimit: number;
 };
 
+type TooltipColors = {
+  backgroundColor: string;
+  textColor: string;
+};
+
 export default class TooltipsManager {
   #root: HTMLElement;
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
   #options: TooltipsOptions;
   #tooltips: TooltipProperties[];
+  #tooltipsContainer: HTMLElement | null;
   #clickedHexId: string | null;
   #hoveredHexId: string | null;
 
@@ -30,6 +36,7 @@ export default class TooltipsManager {
     this.#camera = camera;
     this.#options = options;
     this.#tooltips = [];
+    this.#tooltipsContainer = null;
     this.#clickedHexId = null;
     this.#hoveredHexId = null;
     this.#tick();
@@ -47,12 +54,20 @@ export default class TooltipsManager {
     this.#hoveredHexId = id;
   }
 
+  set activeTooltipColors({ backgroundColor, textColor }: TooltipColors) {
+    this.#options = {
+      ...this.#options,
+      tooltipActiveBackgroundColor: backgroundColor,
+      tooltipActiveTextColor: textColor,
+    };
+  }
+
   // TODO: refactor the method
   createTooltips(data: HexData[]): HTMLElement | undefined {
     if (!data.length) return;
     this.#tooltips = data.map(
       ({ id, center, country, city, value, offsetFromCenter }: HexData) => {
-        const valueRank = this.getValueRank(
+        const valueRank = this.#getValueRank(
           value,
           data.map((hex) => hex.value)
         );
@@ -81,14 +96,22 @@ export default class TooltipsManager {
       }
     );
     const tooltipsElements = this.#tooltips.map((tooltip) => tooltip.element);
-    const tooltips = document.createElement('div');
-    tooltips.style.cssText = tooltipsStyles;
-    tooltips.append(...tooltipsElements);
+    const tooltipsContainer = document.createElement('div');
+    tooltipsContainer.style.cssText = tooltipsStyles;
+    tooltipsContainer.append(...tooltipsElements);
     this.#root.style.position = 'relative';
-    this.#root.appendChild(tooltips);
+    this.#root.appendChild(tooltipsContainer);
+    this.#tooltipsContainer = tooltipsContainer;
   }
 
-  getValueRank(value: number, values: number[]): number {
+  removeTooltips() {
+    if (this.#tooltipsContainer) {
+      this.#root.removeChild(this.#tooltipsContainer);
+      this.#tooltipsContainer = null;
+    }
+  }
+
+  #getValueRank(value: number, values: number[]): number {
     return values.filter((val: number) => val > value).length + 1;
   }
 

@@ -212,13 +212,6 @@ export default class BarGlob3d extends Glob3d {
     });
   }
 
-  // #removeTooltips() {
-  //   if (this.#tooltipsContainer) {
-  //     this.root.removeChild(this.#tooltipsContainer);
-  //     this.#tooltipsContainer = null;
-  //   }
-  // }
-
   #removeHexResults() {
     this.#hexResultsGroup.clear();
     this.#hexResults = [];
@@ -226,22 +219,25 @@ export default class BarGlob3d extends Glob3d {
 
   setActiveColor(color: string) {
     this.#barActiveColor = color;
-    // this.#removeTooltips();
-    this.#tooltipActiveBackgroundColor = color;
+    this.#tooltipsManager.activeTooltipColors = {
+      backgroundColor: color,
+      textColor: '#fff',
+    };
+    this.#tooltipsManager.removeTooltips();
     this.#tooltipsManager.createTooltips(this.#aggregatedData);
   }
 
   onLoading() {
     this.#loaderManager.showLoader();
     this.#removeHexResults();
-    // this.#removeTooltips();
+    this.#tooltipsManager.removeTooltips();
     this.fadeOutHexes();
   }
 
   onUpdate(data: GlobeData[]) {
     this.#loaderManager.hideLoader();
     this.#removeHexResults();
-    // this.#removeTooltips();
+    this.#tooltipsManager.removeTooltips();
     this.#createHexResults(data);
     this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.fadeInHexes();
@@ -250,7 +246,7 @@ export default class BarGlob3d extends Glob3d {
   onError() {
     this.#loaderManager.showError();
     this.#removeHexResults();
-    // this.#removeTooltips();
+    this.#tooltipsManager.removeTooltips();
     this.fadeOutHexes();
   }
 }
