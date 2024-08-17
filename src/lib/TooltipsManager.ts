@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-// import defaultOpts from '../utils/defaultOpts';
 import { getXYZCoordinates } from '../utils/helpers';
 import { tooltipsStyles } from '../utils/styles';
 import Tooltip from './Tooltip';
@@ -11,31 +10,41 @@ type TooltipsOptions = {
   tooltipsLimit: number;
 };
 
-// const options = {
-//   tooltipActiveBackgroundColor: defaultOpts.tooltipActiveBackgroundColor,
-//   tooltipActiveTextColor: defaultOpts.tooltipActiveTextColor,
-//   tooltipValueSuffix: defaultOpts.tooltipValueSuffix,
-//   tooltipsLimit: defaultOpts.tooltipsLimit,
-// };
-
 export default class TooltipsManager {
   #root: HTMLElement;
   #globe: THREE.Mesh;
+  #camera: THREE.PerspectiveCamera;
   #options: TooltipsOptions;
   #tooltips: TooltipProperties[];
+  #clickedHexId: string | null;
+  #hoveredHexId: string | null;
 
-  // #tooltipActiveTextColor: string;
-  // #tooltipValueSuffix: string;
-
-  constructor(root: HTMLElement, globe: THREE.Mesh, options: TooltipsOptions) {
+  constructor(
+    root: HTMLElement,
+    globe: THREE.Mesh,
+    camera: THREE.PerspectiveCamera,
+    options: TooltipsOptions
+  ) {
     this.#root = root;
     this.#globe = globe;
+    this.#camera = camera;
     this.#options = options;
     this.#tooltips = [];
+    this.#clickedHexId = null;
+    this.#hoveredHexId = null;
+    this.#tick();
   }
 
   get tooltips(): TooltipProperties[] {
     return this.#tooltips;
+  }
+
+  set clickedHexId(id: string | null) {
+    this.#clickedHexId = id;
+  }
+
+  set hoveredHexId(id: string | null) {
+    this.#hoveredHexId = id;
   }
 
   // TODO: refactor the method
@@ -81,5 +90,47 @@ export default class TooltipsManager {
 
   getValueRank(value: number, values: number[]): number {
     return values.filter((val: number) => val > value).length + 1;
+  }
+
+  // update tooltips reference points distances to the camera
+  #updateCameraForTooltips() {
+    if (!this.#tooltips) return;
+    this.#tooltips.forEach((tooltip) =>
+      tooltip.handleCameraUpdate(this.#camera)
+    );
+  }
+
+  #updateTooltipsOrder() {
+    if (!this.#tooltips) return;
+    const sortedTooltips = this.#tooltips.sort(
+      (a, b) => a.distance - b.distance
+    );
+    const distances = sortedTooltips
+      .map((tooltip) => tooltip.distance)
+      .slice(0, this.#options.tooltipsLimit || sortedTooltips.length);
+
+    sortedTooltips.forEach((tooltip, i) => {
+      if (
+        tooltip.id === this.#hoveredHexId ||
+        tooltip.id === this.#clickedHexId
+      ) {
+        tooltip.show(true);
+      } else if (
+        typeof this.#options.tooltipsLimit === 'number' &&
+        i < this.#options.tooltipsLimit
+      ) {
+        tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
+        tooltip.show();
+      } else {
+        tooltip.hide();
+      }
+    });
+  }
+
+  #tick() {
+    this.#updateCameraForTooltips();
+    this.#updateTooltipsOrder();
+
+    requestAnimationFrame(() => this.#tick());
   }
 }
