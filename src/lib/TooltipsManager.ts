@@ -1,7 +1,8 @@
 import * as THREE from 'three';
+
 import { getXYZCoordinates } from '../utils/helpers';
 import { tooltipsStyles } from '../utils/styles';
-import Tooltip from './Tooltip';
+import Tooltip from './TooltipElement';
 
 type TooltipsOptions = {
   tooltipActiveBackgroundColor: string;
