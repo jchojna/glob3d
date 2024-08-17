@@ -34,18 +34,24 @@ export default class TooltipsManager {
     this.#tooltips = [];
   }
 
+  get tooltips(): TooltipProperties[] {
+    return this.#tooltips;
+  }
+
   // TODO: refactor the method
   createTooltips(data: HexData[]): HTMLElement | undefined {
     if (!data.length) return;
     this.#tooltips = data.map(
-      ({ id, center, country, city, value }: HexData) => {
-        // const offset = this.#getOffsetFromCenter(value);
-        const offset = 0;
+      ({ id, center, country, city, value, offsetFromCenter }: HexData) => {
         const valueRank = this.getValueRank(
           value,
           data.map((hex) => hex.value)
         );
-        const coordinates = getXYZCoordinates(center[0], center[1], offset);
+        const coordinates = getXYZCoordinates(
+          center[0],
+          center[1],
+          offsetFromCenter
+        );
         return new Tooltip(
           id,
           coordinates,

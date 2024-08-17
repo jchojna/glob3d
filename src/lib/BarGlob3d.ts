@@ -18,7 +18,6 @@ export default class BarGlob3d extends Glob3d {
   #clickedHexId: string | null;
   #clickedHexObject: HexResult | null;
   #globePosition: GlobePosition;
-  #hexMaxValue: number;
   #hexResults: HexResult[];
   #hexResultsGroup: THREE.Object3D | THREE.Group;
   #highestBar: number;
@@ -27,7 +26,6 @@ export default class BarGlob3d extends Glob3d {
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
   #tooltipsManager: TooltipsManager;
-  #tooltips: TooltipProperties[] | null;
   #tooltipActiveBackgroundColor: string;
   #tooltipsLimit: number | null;
 
@@ -69,7 +67,6 @@ export default class BarGlob3d extends Glob3d {
     this.#clickedHexId = null;
     this.#clickedHexObject = null;
     this.#globePosition = this.#getGlobePosition();
-    this.#hexMaxValue = 1; // neutral value in the implementation
     this.#hexResults = [];
     this.#hexResultsGroup = new THREE.Group();
     this.#highestBar = highestBar;
@@ -77,38 +74,37 @@ export default class BarGlob3d extends Glob3d {
     this.#hoveredHexObject = null;
     this.#loaderManager = new LoaderManager(root);
     this.#raycaster = new THREE.Raycaster();
-    this.#tooltips = null;
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipsLimit = tooltipsLimit;
 
+    this.#barTick();
+    if (data !== null) this.#createHexResults(data);
     this.#tooltipsManager = new TooltipsManager(root, this.globe, {
       tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
       tooltipsLimit: this.#tooltipsLimit,
       tooltipValueSuffix,
     });
-    this.#barTick();
-    if (data !== null) this.#createHexResults(data);
-    this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
 
   #createHexResults(data: GlobeData[]) {
-    this.#aggregatedData = aggregateData(data, this.hexRes);
-    this.#hexMaxValue = Math.max(
-      ...this.#aggregatedData.map((obj) => obj.value)
+    if (!data.length) return;
+    this.#aggregatedData = aggregateData(
+      data,
+      this.hexRes,
+      this.globeRadius,
+      this.#highestBar
     );
     this.#hexResults = this.#visualizeResult(this.#aggregatedData);
   }
 
   #renderHexResultsGeometry(hex: HexData) {
-    if (!this.#hexMaxValue) return;
-    const offset = this.#getOffsetFromCenter(hex.value);
     return new ConicPolygonGeometry(
       [getNewGeoJson(hex, this.hexPadding)],
       this.globeRadius,
-      offset,
+      hex.offsetFromCenter,
       true,
       true,
       true,
@@ -139,13 +135,6 @@ export default class BarGlob3d extends Glob3d {
     return hexResults;
   }
 
-  #getOffsetFromCenter(value: number): number {
-    return (
-      this.globeRadius +
-      (value / this.#hexMaxValue) * this.globeRadius * 2 * this.#highestBar
-    );
-  }
-
   #getGlobePosition() {
     return getPixelPosition(
       this.globe.position.clone().project(this.camera),
@@ -156,15 +145,15 @@ export default class BarGlob3d extends Glob3d {
 
   // update tooltips reference points distances to the camera
   #updateCameraForTooltips() {
-    if (!this.#tooltips) return;
-    this.#tooltips.forEach((tooltip) =>
+    if (!this.#tooltipsManager.tooltips) return;
+    this.#tooltipsManager.tooltips.forEach((tooltip) =>
       tooltip.handleCameraUpdate(this.camera)
     );
   }
 
   #updateTooltipsOrder() {
-    if (!this.#tooltips) return;
-    const sortedTooltips = this.#tooltips.sort(
+    if (!this.#tooltipsManager.tooltips) return;
+    const sortedTooltips = this.#tooltipsManager.tooltips.sort(
       (a, b) => a.distance - b.distance
     );
     const distances = sortedTooltips
