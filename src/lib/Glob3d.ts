@@ -7,8 +7,8 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import world from 'world-map-geojson';
 
 import matcap from '../assets/textures/matcap_1.png';
-import defaultOpts from './defaultOpts';
-import { getH3Indexes, getHexBin, getNewGeoJson } from './helpers';
+import defaultOpts from '../utils/defaultOpts';
+import { getH3Indexes, getHexBin, getNewGeoJson } from '../utils/helpers';
 
 export default class Glob3d {
   // private fields

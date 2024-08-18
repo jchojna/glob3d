@@ -13,6 +13,7 @@ type HexData = {
   country: string;
   h3Index: string;
   id: string;
+  offsetFromCenter: number;
   value: number;
   vertices: [number, number][];
 };
@@ -28,7 +29,7 @@ type GeojsonFeature = {
   };
 };
 
-type GlobeData = {
+interface GlobeData {
   country: string;
   city: string;
   coordinates: {
@@ -36,7 +37,11 @@ type GlobeData = {
     lat: number;
   };
   value: number;
-};
+}
+
+interface GlobeDataWithOffsets extends GlobeData {
+  offsetFromCenter: number;
+}
 
 type GlobeOptions = {
   globeColor?: string;
@@ -58,6 +63,11 @@ type BarGlobeOptions = {
   tooltipsLimit?: number;
   tooltipValueSuffix?: string;
 } & GlobeOptions;
+
+type GlobePosition = {
+  x: number;
+  y: number;
+};
 
 interface TooltipProperties {
   coordinates: THREE.Vector3;
