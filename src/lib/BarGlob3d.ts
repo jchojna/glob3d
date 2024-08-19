@@ -7,6 +7,7 @@ import { getNewGeoJson, getPixelPosition } from '../utils/helpers';
 import DataManager from './DataManager';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
+import ResultsManager from './ResultsManager';
 import TooltipsManager from './TooltipsManager';
 
 export default class BarGlob3d extends Glob3d {
@@ -24,6 +25,7 @@ export default class BarGlob3d extends Glob3d {
   #hoveredHexBar: HexResult | null;
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
+  #resultsManager: ResultsManager | null;
   #tooltipsManager: TooltipsManager;
   #tooltipActiveBackgroundColor: string;
   #tooltipsLimit: number | null;
@@ -72,6 +74,7 @@ export default class BarGlob3d extends Glob3d {
     this.#hoveredHexBar = null;
     this.#loaderManager = new LoaderManager(root);
     this.#raycaster = new THREE.Raycaster();
+    this.#resultsManager = null;
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipsLimit = tooltipsLimit;
 
@@ -95,6 +98,8 @@ export default class BarGlob3d extends Glob3d {
       this.globeRadius,
       this.#highestBar
     ).data;
+    this.#resultsManager = new ResultsManager(this.root, this.#aggregatedData);
+    console.log(this.#resultsManager);
     this.#hexBars = this.#visualizeResult(this.#aggregatedData);
   }
 

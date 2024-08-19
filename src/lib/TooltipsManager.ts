@@ -67,11 +67,15 @@ export default class TooltipsManager {
   createTooltips(data: HexData[]): HTMLElement | undefined {
     if (!data.length) return;
     this.#tooltips = data.map(
-      ({ id, center, country, city, value, offsetFromCenter }: HexData) => {
-        const valueRank = this.#getValueRank(
-          value,
-          data.map((hex) => hex.value)
-        );
+      ({
+        id,
+        center,
+        country,
+        city,
+        value,
+        valueRank,
+        offsetFromCenter,
+      }: HexData) => {
         const coordinates = getXYZCoordinates(
           center[0],
           center[1],
@@ -110,10 +114,6 @@ export default class TooltipsManager {
       this.#root.removeChild(this.#tooltipsContainer);
       this.#tooltipsContainer = null;
     }
-  }
-
-  #getValueRank(value: number, values: number[]): number {
-    return values.filter((val: number) => val > value).length + 1;
   }
 
   // update tooltips reference points distances to the camera

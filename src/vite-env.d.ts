@@ -15,6 +15,7 @@ type HexData = {
   id: string;
   offsetFromCenter: number;
   value: number;
+  valueRank: number;
   vertices: [number, number][];
 };
 
@@ -37,10 +38,8 @@ interface GlobeData {
     lat: number;
   };
   value: number;
-}
-
-interface GlobeDataWithOffsets extends GlobeData {
-  offsetFromCenter: number;
+  offsetFromCenter?: number;
+  valueRank?: number;
 }
 
 type GlobeOptions = {
