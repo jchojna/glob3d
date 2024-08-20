@@ -29,6 +29,7 @@
     "@eslint/js": "^9.1.1",
     "@types/three": "^0.162.0",
     "@vitest/coverage-v8": "^1.5.0",
+    "clsx": "^2.1.1",
     "eslint": "^8.57.0",
     "globals": "^15.0.0",
     "happy-dom": "^14.7.1",
