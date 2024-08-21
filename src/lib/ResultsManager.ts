@@ -1,4 +1,4 @@
-import classes from '../styles/resultsManager.module.css';
+import classes from '../styles/results.module.css';
 import Result from './Result';
 
 export default class ResultsManager {

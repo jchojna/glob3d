@@ -1,4 +1,4 @@
-import { loaderStyles } from '../utils/styles';
+import classes from '../styles/loader.module.css';
 
 export default class LoaderManager {
   #loader: HTMLElement;
@@ -9,7 +9,7 @@ export default class LoaderManager {
 
   createLoader(root: HTMLElement) {
     const loader = document.createElement('div');
-    loader.style.cssText = loaderStyles;
+    loader.className = classes.loader;
     root.appendChild(loader);
     return loader;
   }

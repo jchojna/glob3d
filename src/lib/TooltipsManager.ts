@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
+import classes from '../styles/tooltips.module.css';
 import { getXYZCoordinates } from '../utils/helpers';
-import { tooltipsStyles } from '../utils/styles';
 import Tooltip from './TooltipElement';
 
 type TooltipsOptions = {
@@ -102,7 +102,7 @@ export default class TooltipsManager {
     );
     const tooltipsElements = this.#tooltips.map((tooltip) => tooltip.element);
     const tooltipsContainer = document.createElement('div');
-    tooltipsContainer.style.cssText = tooltipsStyles;
+    tooltipsContainer.className = classes.tooltips;
     tooltipsContainer.append(...tooltipsElements);
     this.#root.style.position = 'relative';
     this.#root.appendChild(tooltipsContainer);
