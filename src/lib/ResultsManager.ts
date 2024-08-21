@@ -1,29 +1,41 @@
+import classes from '../styles/resultsManager.module.css';
 import Result from './Result';
 
 export default class ResultsManager {
-  #results: (HTMLElement | null)[];
+  #results: HTMLDivElement[];
 
-  constructor(root: HTMLElement, data: HexData[]) {
+  constructor(
+    root: HTMLElement,
+    data: HexData[],
+    { tooltipActiveBackgroundColor, valueSuffix }: ResultOptions
+  ) {
     this.#results = [];
 
-    this.#createResults(data);
+    this.#createResults(data, {
+      tooltipActiveBackgroundColor,
+      valueSuffix,
+    });
     this.#appendResults(root);
   }
 
-  #createResults(data: HexData[]) {
-    this.#results = data.map((hexData: HexData) => {
-      return new Result(hexData).result;
-    });
+  #createResults(data: HexData[], options: ResultOptions) {
+    this.#results = data
+      .sort((a, b) => a.valueRank - b.valueRank)
+      .map((hexData: HexData) => {
+        return new Result(hexData, options).result;
+      });
   }
 
   #appendResults(root: HTMLElement) {
     const resultsContainer = document.createElement('div');
-    resultsContainer.style.cssText = `
-      position: absolute;
-    `;
+    resultsContainer.className = classes.container;
     this.#results.forEach((result) => {
       if (result) resultsContainer.appendChild(result);
     });
     root.appendChild(resultsContainer);
+  }
+
+  get results() {
+    return this.#results;
   }
 }

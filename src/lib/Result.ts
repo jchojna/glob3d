@@ -1,25 +1,25 @@
+import { getResultNode } from '../utils/helpers';
+
 export default class Result {
-  #resultNode: HTMLElement | null;
+  #result: HTMLDivElement;
 
-  constructor(data: HexData) {
-    this.#resultNode = null;
-
-    this.#createResultNode(data);
-  }
-
-  #createResultNode(data: HexData) {
-    const node = document.createElement('div');
-    node.classList.add('result');
-    node.innerHTML = `
-      <h2>${data.city}</h2>
-      <p>Country: ${data.country}</p>
-      <p>Value: ${data.value}</p>
-      <p>Rank: ${data.valueRank}</p>
-    `;
-    this.#resultNode = node;
+  constructor(
+    { id, country, city, value, valueRank }: HexData,
+    { tooltipActiveBackgroundColor, valueSuffix }: ResultOptions
+  ) {
+    this.#result = getResultNode(
+      id,
+      'score',
+      value,
+      valueRank,
+      valueSuffix,
+      tooltipActiveBackgroundColor,
+      country,
+      city
+    );
   }
 
   get result() {
-    return this.#resultNode;
+    return this.#result;
   }
 }

@@ -1,5 +1,8 @@
+import clsx from 'clsx';
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
 import * as THREE from 'three';
+
+import classes from '../styles/result.module.css';
 
 // Get H3 indexes for all hexagons in Polygon or MultiPolygon
 export const getH3Indexes = (
@@ -73,86 +76,53 @@ export const getXYZCoordinates = (
   };
 };
 
-export const getTooltip = (
+export const getResultNode = (
   id: string,
+  type: 'score' | 'tooltip',
   value: number,
   valueRank: number,
-  tooltipValueSuffix: string,
+  valueSuffix: string,
   accentColor: string,
   country?: string | undefined,
   city?: string | undefined
 ) => {
-  const tooltip = document.createElement('div');
-  tooltip.style.background = '#fff';
-  tooltip.style.borderRadius = '10px';
-  tooltip.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
-  tooltip.style.color = '#000';
-  tooltip.style.display = 'grid';
-  tooltip.style.fontSize = '0.8rem';
-  tooltip.style.columnGap = '15px';
-  tooltip.style.gridTemplateColumns = 'repeat(3, auto)';
-  tooltip.style.left = '10px';
-  tooltip.style.padding = '10px';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.position = 'absolute';
-  tooltip.style.rowGap = '5px';
-  tooltip.style.top = '10px';
-  tooltip.style.transformOrigin = 'top left';
-  tooltip.style.userSelect = 'none';
-  tooltip.setAttribute('data-id', 'tooltip');
+  const node = document.createElement('div');
+  node.className = clsx(classes.result, classes[type]);
+  node.setAttribute('data-id', type);
+
   // delay transition to prevent initial animation
   setTimeout(() => {
-    tooltip.style.transition =
+    node.style.transition =
       'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
   }, 10);
 
-  if (id) tooltip.id = `tooltip-${id}`;
-
-  const tooltipRank = document.createElement('p');
-  tooltipRank.style.alignItems = 'center';
-  tooltipRank.style.backgroundColor = '#fff';
-  tooltipRank.style.border = `2px solid ${accentColor}`;
-  tooltipRank.style.borderRadius = '50%';
-  tooltipRank.style.color = accentColor;
-  tooltipRank.style.display = 'flex';
-  tooltipRank.style.fontWeight = 'bold';
-  tooltipRank.style.gridRow = '1 / 3';
-  tooltipRank.style.height = '30px';
-  tooltipRank.style.justifyContent = 'center';
-  tooltipRank.style.margin = '0';
-  tooltipRank.style.width = '30px';
-  tooltipRank.textContent = String(valueRank);
-  tooltipRank.setAttribute('data-id', 'tooltipRank');
-  tooltip.appendChild(tooltipRank);
+  node.innerHTML = `
+    <p
+      id="${type}-${id}"
+      class=${classes.rank}
+      style="border-color: ${accentColor}; color: ${accentColor}"
+      data-id="${type}Rank"
+    >
+      ${valueRank}
+    </p>
+    <p class=${classes.value} data-id="${type}Value">
+      ${new Intl.NumberFormat().format(value)} ${valueSuffix}
+    </p>
+  `;
 
   if (country) {
-    const tooltipCountry = document.createElement('p');
-    tooltipCountry.style.gridColumn = '2 / 3';
-    tooltipCountry.style.margin = '0';
-    tooltipCountry.textContent = country;
-    tooltipCountry.setAttribute('data-id', 'tooltipCountry');
-    tooltip.appendChild(tooltipCountry);
+    node.innerHTML += `<p class=${classes.country} data-id="${type}Country">
+      ${country}
+    </p>`;
   }
 
   if (city) {
-    const tooltipCity = document.createElement('p');
-    tooltipCity.style.gridColumn = '3 / 4';
-    tooltipCity.style.margin = '0';
-    tooltipCity.textContent = city;
-    tooltipCity.setAttribute('data-id', 'tooltipCity');
-    tooltip.appendChild(tooltipCity);
+    node.innerHTML += `<p class=${classes.city} data-id="${type}City">
+      ${city}
+    </p>`;
   }
 
-  const tooltipValue = document.createElement('p');
-  tooltipValue.style.gridColumn = '2 / 4';
-  tooltipValue.style.margin = '0';
-  tooltipValue.textContent = `${new Intl.NumberFormat().format(
-    value
-  )} ${tooltipValueSuffix}`;
-  tooltipValue.setAttribute('data-id', 'tooltipValue');
-  tooltip.appendChild(tooltipValue);
-
-  return tooltip;
+  return node;
 };
 
 export const getTooltipScale = (

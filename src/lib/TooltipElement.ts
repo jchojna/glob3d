@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import {
   getPixelPosition,
-  getTooltip,
+  getResultNode,
   getTooltipScale,
 } from '../utils/helpers';
 
@@ -47,8 +47,9 @@ export default class Tooltip implements TooltipProperties {
     const { x, y, z } = coordinates;
     this.coordinates = new THREE.Vector3(x, y, z);
     this.distance = 0;
-    this.element = getTooltip(
+    this.element = getResultNode(
       id,
+      'tooltip',
       value,
       valueRank,
       valueSuffix,

@@ -25,7 +25,7 @@ export default class BarGlob3d extends Glob3d {
   #hoveredHexBar: HexResult | null;
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
-  #resultsManager: ResultsManager | null;
+  #results: HTMLDivElement[];
   #tooltipsManager: TooltipsManager;
   #tooltipActiveBackgroundColor: string;
   #valueSuffix: string;
@@ -75,7 +75,7 @@ export default class BarGlob3d extends Glob3d {
     this.#hoveredHexBar = null;
     this.#loaderManager = new LoaderManager(root);
     this.#raycaster = new THREE.Raycaster();
-    this.#resultsManager = null;
+    this.#results = [];
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#valueSuffix = valueSuffix;
     this.#tooltipsLimit = tooltipsLimit;
@@ -100,11 +100,11 @@ export default class BarGlob3d extends Glob3d {
       this.globeRadius,
       this.#highestBar
     ).data;
-    this.#resultsManager = new ResultsManager(this.root, this.#aggregatedData, {
+    this.#results = new ResultsManager(this.root, this.#aggregatedData, {
       tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
       valueSuffix: this.#valueSuffix,
-    });
-    console.log(this.#resultsManager);
+    }).results;
+    console.log(this.#results);
     this.#hexBars = this.#visualizeResult(this.#aggregatedData);
   }
 
