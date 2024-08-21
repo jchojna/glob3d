@@ -5,7 +5,7 @@ export default class Result {
 
   constructor(
     { id, country, city, value, valueRank }: HexData,
-    { tooltipActiveBackgroundColor, valueSuffix }: ResultOptions
+    { tooltipActiveBackgroundColor, valueSuffix }: ResultsOptions
   ) {
     this.#result = getResultNode(
       id,

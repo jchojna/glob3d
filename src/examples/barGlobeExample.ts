@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(() => {
       globe.onUpdate(data);
-    }, 1000);
+    }, 200);
 
     updateButton.addEventListener('click', () => {
       globe.onUpdate(data);

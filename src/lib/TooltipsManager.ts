@@ -11,11 +11,6 @@ type TooltipsOptions = {
   tooltipsLimit: number;
 };
 
-type TooltipColors = {
-  backgroundColor: string;
-  textColor: string;
-};
-
 export default class TooltipsManager {
   #root: HTMLElement;
   #globe: THREE.Mesh;
@@ -55,7 +50,7 @@ export default class TooltipsManager {
     this.#hoveredHexId = id;
   }
 
-  set activeTooltipColors({ backgroundColor, textColor }: TooltipColors) {
+  set activeTooltipColors({ backgroundColor, textColor }: ResultColors) {
     this.#options = {
       ...this.#options,
       tooltipActiveBackgroundColor: backgroundColor,
@@ -63,7 +58,6 @@ export default class TooltipsManager {
     };
   }
 
-  // TODO: refactor the method
   createTooltips(data: HexData[]): HTMLElement | undefined {
     if (!data.length) return;
     this.#tooltips = data.map(

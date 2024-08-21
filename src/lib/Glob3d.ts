@@ -30,11 +30,10 @@ export default class Glob3d {
   hexPadding: number;
   hexRes: number;
   mouse: THREE.Vector2;
-  root: HTMLElement;
   scene: THREE.Scene;
   sizes: { width: number; height: number };
 
-  constructor(root: HTMLElement, options: GlobeOptions = {}) {
+  constructor(public root: HTMLElement, options: GlobeOptions = {}) {
     const {
       globeColor = defaultOpts.globeColor,
       globeOpacity = defaultOpts.globeOpacity,
@@ -44,7 +43,6 @@ export default class Glob3d {
       hexRes = defaultOpts.hexRes,
     } = options;
 
-    this.root = root;
     this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.#createCanvas(this.root);

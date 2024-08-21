@@ -28,6 +28,7 @@ export default class BarGlob3d extends Glob3d {
   #results: HTMLDivElement[];
   #tooltipsManager: TooltipsManager;
   #tooltipActiveBackgroundColor: string;
+  #tooltipActiveTextColor: string;
   #valueSuffix: string;
   #tooltipsLimit: number | null;
 
@@ -77,6 +78,7 @@ export default class BarGlob3d extends Glob3d {
     this.#raycaster = new THREE.Raycaster();
     this.#results = [];
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
+    this.#tooltipActiveTextColor = tooltipActiveTextColor;
     this.#valueSuffix = valueSuffix;
     this.#tooltipsLimit = tooltipsLimit;
 
@@ -102,6 +104,7 @@ export default class BarGlob3d extends Glob3d {
     ).data;
     this.#results = new ResultsManager(this.root, this.#aggregatedData, {
       tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
+      tooltipActiveTextColor: this.#tooltipActiveTextColor,
       valueSuffix: this.#valueSuffix,
     }).results;
     console.log(this.#results);
