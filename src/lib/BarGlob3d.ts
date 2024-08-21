@@ -28,6 +28,7 @@ export default class BarGlob3d extends Glob3d {
   #resultsManager: ResultsManager | null;
   #tooltipsManager: TooltipsManager;
   #tooltipActiveBackgroundColor: string;
+  #valueSuffix: string;
   #tooltipsLimit: number | null;
 
   constructor(
@@ -49,7 +50,7 @@ export default class BarGlob3d extends Glob3d {
       tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
       tooltipsLimit,
-      tooltipValueSuffix,
+      valueSuffix,
     } = { ...defaultOpts, ...options };
 
     super(root, {
@@ -76,6 +77,7 @@ export default class BarGlob3d extends Glob3d {
     this.#raycaster = new THREE.Raycaster();
     this.#resultsManager = null;
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
+    this.#valueSuffix = valueSuffix;
     this.#tooltipsLimit = tooltipsLimit;
 
     this.#barTick();
@@ -84,7 +86,7 @@ export default class BarGlob3d extends Glob3d {
       tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
       tooltipsLimit: this.#tooltipsLimit,
-      tooltipValueSuffix,
+      valueSuffix,
     });
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
@@ -98,7 +100,10 @@ export default class BarGlob3d extends Glob3d {
       this.globeRadius,
       this.#highestBar
     ).data;
-    this.#resultsManager = new ResultsManager(this.root, this.#aggregatedData);
+    this.#resultsManager = new ResultsManager(this.root, this.#aggregatedData, {
+      tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
+      valueSuffix: this.#valueSuffix,
+    });
     console.log(this.#resultsManager);
     this.#hexBars = this.#visualizeResult(this.#aggregatedData);
   }

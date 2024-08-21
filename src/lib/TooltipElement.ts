@@ -28,7 +28,7 @@ export default class Tooltip implements TooltipProperties {
     options: {
       tooltipActiveBackgroundColor: string;
       tooltipActiveTextColor: string;
-      tooltipValueSuffix: string;
+      valueSuffix: string;
       valueRank: number;
       city?: string;
       country?: string;
@@ -41,7 +41,7 @@ export default class Tooltip implements TooltipProperties {
       mask,
       tooltipActiveBackgroundColor,
       tooltipActiveTextColor,
-      tooltipValueSuffix,
+      valueSuffix,
       valueRank,
     } = options;
     const { x, y, z } = coordinates;
@@ -51,7 +51,7 @@ export default class Tooltip implements TooltipProperties {
       id,
       value,
       valueRank,
-      tooltipValueSuffix,
+      valueSuffix,
       tooltipActiveBackgroundColor,
       country,
       city

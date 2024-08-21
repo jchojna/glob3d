@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     root.appendChild(updateButton);
     root.appendChild(colorButton);
 
-    const globe = new BarGlob3d(root, []);
+    const globe = new BarGlob3d(root, [], { valueSuffix: ' people' });
     globe.onLoading();
     // globe.onError();
 

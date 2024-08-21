@@ -60,7 +60,7 @@ type BarGlobeOptions = {
   tooltipActiveBackgroundColor?: string;
   tooltipActiveTextColor?: string;
   tooltipsLimit?: number;
-  tooltipValueSuffix?: string;
+  valueSuffix?: string;
 } & GlobeOptions;
 
 type GlobePosition = {

@@ -99,4 +99,4 @@ new BarGlob3d(container, data, options);
   - **`tooltipActiveBackgroundColor`** The background color of the tooltip when hovered or clicked.
   - **`tooltipActiveTextColor`** The text color of the tooltip when hovered or clicked.
   - **`tooltipsLimit`** The number of tooltips to display, starting from the ones closest to the camera.
-  - **`tooltipValueSuffix`** The suffix added to the value displayed in the tooltip.
+  - **`valueSuffix`** The suffix added to the value displayed in the tooltip.

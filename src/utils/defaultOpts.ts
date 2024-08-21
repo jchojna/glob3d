@@ -13,5 +13,5 @@ export default {
   tooltipActiveBackgroundColor: '#dd176d',
   tooltipActiveTextColor: '#fff',
   tooltipsLimit: 15,
-  tooltipValueSuffix: '',
+  valueSuffix: '',
 };

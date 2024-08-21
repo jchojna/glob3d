@@ -7,7 +7,7 @@ import Tooltip from './TooltipElement';
 type TooltipsOptions = {
   tooltipActiveBackgroundColor: string;
   tooltipActiveTextColor: string;
-  tooltipValueSuffix: string;
+  valueSuffix: string;
   tooltipsLimit: number;
 };
 
@@ -94,7 +94,7 @@ export default class TooltipsManager {
             tooltipActiveBackgroundColor:
               this.#options.tooltipActiveBackgroundColor,
             tooltipActiveTextColor: this.#options.tooltipActiveTextColor,
-            tooltipValueSuffix: this.#options.tooltipValueSuffix,
+            valueSuffix: this.#options.valueSuffix,
             valueRank,
           }
         );
