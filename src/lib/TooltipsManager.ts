@@ -2,52 +2,32 @@ import * as THREE from 'three';
 
 import classes from '../styles/tooltips.module.css';
 import { getXYZCoordinates } from '../utils/helpers';
+import ResultsManager from './ResultsManager';
 import Tooltip from './TooltipElement';
 
-type TooltipsOptions = {
-  tooltipActiveBackgroundColor: string;
-  tooltipActiveTextColor: string;
-  valueSuffix: string;
-  tooltipsLimit: number;
-};
-
-export default class TooltipsManager {
+export default class TooltipsManager extends ResultsManager {
   #root: HTMLElement;
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
-  #options: TooltipsOptions;
+  #options: ResultsOptions;
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement | null;
-  #clickedHexId: string | null;
-  #hoveredHexId: string | null;
 
   constructor(
     root: HTMLElement,
     globe: THREE.Mesh,
     camera: THREE.PerspectiveCamera,
-    options: TooltipsOptions
+    options: ResultsOptions
   ) {
+    super(root, [], options);
+
     this.#root = root;
     this.#globe = globe;
     this.#camera = camera;
     this.#options = options;
     this.#tooltips = [];
     this.#tooltipsContainer = null;
-    this.#clickedHexId = null;
-    this.#hoveredHexId = null;
     this.#tick();
-  }
-
-  get tooltips(): TooltipProperties[] {
-    return this.#tooltips;
-  }
-
-  set clickedHexId(id: string | null) {
-    this.#clickedHexId = id;
-  }
-
-  set hoveredHexId(id: string | null) {
-    this.#hoveredHexId = id;
   }
 
   set activeTooltipColors({ backgroundColor, textColor }: ResultColors) {
@@ -129,8 +109,8 @@ export default class TooltipsManager {
 
     sortedTooltips.forEach((tooltip, i) => {
       if (
-        tooltip.id === this.#hoveredHexId ||
-        tooltip.id === this.#clickedHexId
+        tooltip.id === this._hoveredHexId ||
+        tooltip.id === this._clickedHexId
       ) {
         tooltip.show(true);
       } else if (

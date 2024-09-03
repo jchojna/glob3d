@@ -7,7 +7,7 @@ export default class ResultsManager {
   protected _clickedHexId: string | null;
 
   constructor(
-    root: HTMLElement,
+    protected _root: HTMLElement,
     data: HexData[],
     protected _options: ResultsOptions
   ) {
@@ -20,7 +20,7 @@ export default class ResultsManager {
       tooltipActiveTextColor: _options.tooltipActiveTextColor,
       valueSuffix: _options.valueSuffix,
     });
-    this.#appendResults(root);
+    this.appendResults(_root);
   }
 
   get results(): HTMLDivElement[] {
@@ -51,7 +51,7 @@ export default class ResultsManager {
       });
   }
 
-  #appendResults(root: HTMLElement) {
+  protected appendResults(root: HTMLElement) {
     const resultsContainer = document.createElement('div');
     resultsContainer.className = classes.container;
     this._results.forEach((result) => {
