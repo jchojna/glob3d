@@ -16,11 +16,11 @@ export default class ResultsManager {
     this._clickedHexId = null;
 
     this.createResults(data, {
-      tooltipActiveBackgroundColor: _options.tooltipActiveBackgroundColor,
-      tooltipActiveTextColor: _options.tooltipActiveTextColor,
-      valueSuffix: _options.valueSuffix,
+      tooltipActiveBackgroundColor: this._options.tooltipActiveBackgroundColor,
+      tooltipActiveTextColor: this._options.tooltipActiveTextColor,
+      valueSuffix: this._options.valueSuffix,
     });
-    this.appendResults(_root);
+    this.appendResults(this._root);
   }
 
   get results(): HTMLDivElement[] {

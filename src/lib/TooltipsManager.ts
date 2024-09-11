@@ -6,10 +6,8 @@ import ResultsManager from './ResultsManager';
 import Tooltip from './TooltipElement';
 
 export default class TooltipsManager extends ResultsManager {
-  #root: HTMLElement;
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
-  #options: ResultsOptions;
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement | null;
 
@@ -21,18 +19,16 @@ export default class TooltipsManager extends ResultsManager {
   ) {
     super(root, [], options);
 
-    this.#root = root;
     this.#globe = globe;
     this.#camera = camera;
-    this.#options = options;
     this.#tooltips = [];
     this.#tooltipsContainer = null;
     this.#tick();
   }
 
   set activeTooltipColors({ backgroundColor, textColor }: ResultColors) {
-    this.#options = {
-      ...this.#options,
+    this._options = {
+      ...this._options,
       tooltipActiveBackgroundColor: backgroundColor,
       tooltipActiveTextColor: textColor,
     };
@@ -58,17 +54,17 @@ export default class TooltipsManager extends ResultsManager {
         return new Tooltip(
           id,
           coordinates,
-          { width: this.#root.clientWidth, height: this.#root.clientHeight },
-          this.#options.tooltipsLimit || data.length,
+          { width: this._root.clientWidth, height: this._root.clientHeight },
+          this._options.tooltipsLimit || data.length,
           value,
           {
             city,
             country,
             mask: this.#globe,
             tooltipActiveBackgroundColor:
-              this.#options.tooltipActiveBackgroundColor,
-            tooltipActiveTextColor: this.#options.tooltipActiveTextColor,
-            valueSuffix: this.#options.valueSuffix,
+              this._options.tooltipActiveBackgroundColor,
+            tooltipActiveTextColor: this._options.tooltipActiveTextColor,
+            valueSuffix: this._options.valueSuffix,
             valueRank,
           }
         );
@@ -78,14 +74,14 @@ export default class TooltipsManager extends ResultsManager {
     const tooltipsContainer = document.createElement('div');
     tooltipsContainer.className = classes.tooltips;
     tooltipsContainer.append(...tooltipsElements);
-    this.#root.style.position = 'relative';
-    this.#root.appendChild(tooltipsContainer);
+    this._root.style.position = 'relative';
+    this._root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
   }
 
   removeTooltips() {
     if (this.#tooltipsContainer) {
-      this.#root.removeChild(this.#tooltipsContainer);
+      this._root.removeChild(this.#tooltipsContainer);
       this.#tooltipsContainer = null;
     }
   }
@@ -105,7 +101,7 @@ export default class TooltipsManager extends ResultsManager {
     );
     const distances = sortedTooltips
       .map((tooltip) => tooltip.distance)
-      .slice(0, this.#options.tooltipsLimit || sortedTooltips.length);
+      .slice(0, this._options.tooltipsLimit || sortedTooltips.length);
 
     sortedTooltips.forEach((tooltip, i) => {
       if (
@@ -114,8 +110,8 @@ export default class TooltipsManager extends ResultsManager {
       ) {
         tooltip.show(true);
       } else if (
-        typeof this.#options.tooltipsLimit === 'number' &&
-        i < this.#options.tooltipsLimit
+        typeof this._options.tooltipsLimit === 'number' &&
+        i < this._options.tooltipsLimit
       ) {
         tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
         tooltip.show();
