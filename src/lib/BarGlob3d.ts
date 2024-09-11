@@ -8,7 +8,6 @@ import DataManager from './DataManager';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
 import ResultsManager from './ResultsManager';
-import TooltipsManager from './TooltipsManager';
 
 export default class BarGlob3d extends Glob3d {
   #aggregatedData: HexData[];
@@ -25,8 +24,7 @@ export default class BarGlob3d extends Glob3d {
   #hoveredHexBar: HexResult | null;
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
-  #results: HTMLDivElement[];
-  #tooltipsManager: TooltipsManager;
+  #resultsManager: ResultsManager;
   #tooltipActiveBackgroundColor: string;
   #tooltipActiveTextColor: string;
   #valueSuffix: string;
@@ -76,7 +74,6 @@ export default class BarGlob3d extends Glob3d {
     this.#hoveredHexBar = null;
     this.#loaderManager = new LoaderManager(root);
     this.#raycaster = new THREE.Raycaster();
-    this.#results = [];
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipActiveTextColor = tooltipActiveTextColor;
     this.#valueSuffix = valueSuffix;
@@ -84,11 +81,11 @@ export default class BarGlob3d extends Glob3d {
 
     this.#barTick();
     if (data !== null) this.#createHexBars(data);
-    this.#tooltipsManager = new TooltipsManager(root, this.globe, this.camera, {
+    this.#resultsManager = new ResultsManager(root, this.globe, this.camera, {
       tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
+      tooltipActiveTextColor: this.#tooltipActiveTextColor,
       tooltipsLimit: this.#tooltipsLimit,
-      valueSuffix,
+      valueSuffix: this.#valueSuffix,
     });
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
@@ -102,12 +99,7 @@ export default class BarGlob3d extends Glob3d {
       this.globeRadius,
       this.#highestBar
     ).data;
-    this.#results = new ResultsManager(this.root, this.#aggregatedData, {
-      tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-      tooltipActiveTextColor: this.#tooltipActiveTextColor,
-      valueSuffix: this.#valueSuffix,
-    }).results;
-    console.log(this.#results);
+    this.#resultsManager.onDataLoad(this.#aggregatedData);
     this.#hexBars = this.#visualizeResult(this.#aggregatedData);
   }
 
@@ -193,7 +185,7 @@ export default class BarGlob3d extends Glob3d {
 
           this.#hoveredHexBar = hoveredHexBar;
           this.#hoveredHexId = hoveredHexId;
-          this.#tooltipsManager.hoveredHexId = hoveredHexId;
+          this.#resultsManager.hoveredHexId = hoveredHexId;
         }
       } else {
         this.#hoveredHexBar &&
@@ -201,7 +193,7 @@ export default class BarGlob3d extends Glob3d {
           this.#unhighlightHex(this.#hoveredHexBar);
         this.#hoveredHexBar = null;
         this.#hoveredHexId = null;
-        this.#tooltipsManager.hoveredHexId = null;
+        this.#resultsManager.hoveredHexId = null;
       }
     }
     this.#globePosition = this.#getGlobePosition();
@@ -215,12 +207,12 @@ export default class BarGlob3d extends Glob3d {
       if (this.#hoveredHexId) {
         this.#clickedHexBar && this.#unhighlightHex(this.#clickedHexBar);
         this.#clickedHexBar = this.#hoveredHexBar;
-        this.#tooltipsManager.clickedHexId = this.#hoveredHexId;
+        this.#resultsManager.clickedHexId = this.#hoveredHexId;
         this.#highlightHex(this.#clickedHexBar);
       } else {
         this.#unhighlightHex(this.#clickedHexBar);
         this.#clickedHexBar = null;
-        this.#tooltipsManager.clickedHexId = null;
+        this.#resultsManager.clickedHexId = null;
       }
     });
   }
@@ -232,34 +224,34 @@ export default class BarGlob3d extends Glob3d {
 
   setActiveColor(color: string) {
     this.#barActiveColor = color;
-    this.#tooltipsManager.activeTooltipColors = {
+    this.#resultsManager.activeTooltipColors = {
       backgroundColor: color,
       textColor: '#fff',
     };
-    this.#tooltipsManager.removeTooltips();
-    this.#tooltipsManager.createTooltips(this.#aggregatedData);
+    this.#resultsManager.removeTooltips();
+    this.#resultsManager.createTooltips(this.#aggregatedData);
   }
 
   onLoading() {
     this.#loaderManager.showLoader();
     this.#removeHexBars();
-    this.#tooltipsManager.removeTooltips();
+    this.#resultsManager.removeTooltips();
     this.fadeOutHexes();
   }
 
   onUpdate(data: GlobeData[]) {
     this.#loaderManager.hideLoader();
     this.#removeHexBars();
-    this.#tooltipsManager.removeTooltips();
+    this.#resultsManager.removeTooltips();
     this.#createHexBars(data);
-    this.#tooltipsManager.createTooltips(this.#aggregatedData);
+    this.#resultsManager.createTooltips(this.#aggregatedData);
     this.fadeInHexes();
   }
 
   onError() {
     this.#loaderManager.showError();
     this.#removeHexBars();
-    this.#tooltipsManager.removeTooltips();
+    this.#resultsManager.removeTooltips();
     this.fadeOutHexes();
   }
 }
