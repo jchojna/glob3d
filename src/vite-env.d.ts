@@ -64,8 +64,8 @@ type BarGlobeOptions = {
 } & GlobeOptions;
 
 type ResultsOptions = {
-  tooltipActiveBackgroundColor: string;
-  tooltipActiveTextColor: string;
+  activeBackgroundColor: string;
+  activeTextColor: string;
   valueSuffix: string;
   tooltipsLimit?: number;
 };

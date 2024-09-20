@@ -82,8 +82,8 @@ export default class BarGlob3d extends Glob3d {
     this.#barTick();
     if (data !== null) this.#createHexBars(data);
     this.#resultsManager = new ResultsManager(root, this.globe, this.camera, {
-      tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-      tooltipActiveTextColor: this.#tooltipActiveTextColor,
+      activeBackgroundColor: this.#tooltipActiveBackgroundColor,
+      activeTextColor: this.#tooltipActiveTextColor,
       tooltipsLimit: this.#tooltipsLimit,
       valueSuffix: this.#valueSuffix,
     });
@@ -99,7 +99,6 @@ export default class BarGlob3d extends Glob3d {
       this.globeRadius,
       this.#highestBar
     ).data;
-    this.#resultsManager.onDataLoad(this.#aggregatedData);
     this.#hexBars = this.#visualizeResult(this.#aggregatedData);
   }
 
@@ -224,12 +223,11 @@ export default class BarGlob3d extends Glob3d {
 
   setActiveColor(color: string) {
     this.#barActiveColor = color;
-    this.#resultsManager.activeTooltipColors = {
+    this.#resultsManager.activeColors = {
       backgroundColor: color,
       textColor: '#fff',
     };
-    this.#resultsManager.removeTooltips();
-    this.#resultsManager.createTooltips(this.#aggregatedData);
+    this.#resultsManager.onUpdate(this.#aggregatedData);
   }
 
   onLoading() {
@@ -242,9 +240,8 @@ export default class BarGlob3d extends Glob3d {
   onUpdate(data: GlobeData[]) {
     this.#loaderManager.hideLoader();
     this.#removeHexBars();
-    this.#resultsManager.removeTooltips();
     this.#createHexBars(data);
-    this.#resultsManager.createTooltips(this.#aggregatedData);
+    this.#resultsManager.onUpdate(this.#aggregatedData);
     this.fadeInHexes();
   }
 

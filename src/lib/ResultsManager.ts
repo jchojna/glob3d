@@ -6,65 +6,59 @@ import Result from './Result';
 import Tooltip from './TooltipElement';
 
 export default class ResultsManager {
+  #root: HTMLElement;
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
+  #options: ResultsOptions;
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement | null;
-  protected _results: HTMLDivElement[];
-  protected _hoveredHexId: string | null;
-  protected _clickedHexId: string | null;
+  #results: HTMLDivElement[];
+  #hoveredHexId: string | null;
+  #clickedHexId: string | null;
 
   constructor(
-    protected _root: HTMLElement,
+    root: HTMLElement,
     globe: THREE.Mesh,
     camera: THREE.PerspectiveCamera,
-    protected _options: ResultsOptions
+    options: ResultsOptions
   ) {
+    this.#root = root;
     this.#globe = globe;
     this.#camera = camera;
+    this.#options = options;
     this.#tooltips = [];
     this.#tooltipsContainer = null;
-    this._results = [];
-    this._hoveredHexId = null;
-    this._clickedHexId = null;
+    this.#results = [];
+    this.#hoveredHexId = null;
+    this.#clickedHexId = null;
     this.#tick();
   }
 
-  get results(): HTMLDivElement[] {
-    return this._results;
-  }
-
   set clickedHexId(id: string | null) {
-    this._clickedHexId = id;
+    this.#clickedHexId = id;
   }
 
   set hoveredHexId(id: string | null) {
-    this._hoveredHexId = id;
+    this.#hoveredHexId = id;
   }
 
-  set activeResultColors({ backgroundColor, textColor }: ResultColors) {
-    this._options = {
-      ...this._options,
-      tooltipActiveBackgroundColor: backgroundColor,
-      tooltipActiveTextColor: textColor,
+  set activeColors({ backgroundColor, textColor }: ResultColors) {
+    this.#options = {
+      ...this.#options,
+      activeBackgroundColor: backgroundColor,
+      activeTextColor: textColor,
     };
   }
 
-  set activeTooltipColors({ backgroundColor, textColor }: ResultColors) {
-    this._options = {
-      ...this._options,
-      tooltipActiveBackgroundColor: backgroundColor,
-      tooltipActiveTextColor: textColor,
-    };
-  }
-
-  onDataLoad(data: HexData[]) {
-    this.createResults(data, this._options);
-    this.appendResults(this._root);
+  onUpdate(data: HexData[]) {
+    this.removeTooltips();
+    this.createResults(data, this.#options);
+    this.createTooltips(data);
+    this.appendResults(this.#root);
   }
 
   protected createResults(data: HexData[], options: ResultsOptions) {
-    this._results = data
+    this.#results = data
       .sort((a, b) => a.valueRank - b.valueRank)
       .map((hexData: HexData) => {
         return new Result(hexData, options).result;
@@ -74,7 +68,7 @@ export default class ResultsManager {
   protected appendResults(root: HTMLElement) {
     const resultsContainer = document.createElement('div');
     resultsContainer.className = classes.container;
-    this._results.forEach((result) => {
+    this.#results.forEach((result) => {
       if (result) resultsContainer.appendChild(result);
     });
     root.appendChild(resultsContainer);
@@ -100,17 +94,16 @@ export default class ResultsManager {
         return new Tooltip(
           id,
           coordinates,
-          { width: this._root.clientWidth, height: this._root.clientHeight },
-          this._options.tooltipsLimit || data.length,
+          { width: this.#root.clientWidth, height: this.#root.clientHeight },
+          this.#options.tooltipsLimit || data.length,
           value,
           {
             city,
             country,
             mask: this.#globe,
-            tooltipActiveBackgroundColor:
-              this._options.tooltipActiveBackgroundColor,
-            tooltipActiveTextColor: this._options.tooltipActiveTextColor,
-            valueSuffix: this._options.valueSuffix,
+            tooltipActiveBackgroundColor: this.#options.activeBackgroundColor,
+            tooltipActiveTextColor: this.#options.activeTextColor,
+            valueSuffix: this.#options.valueSuffix,
             valueRank,
           }
         );
@@ -120,14 +113,14 @@ export default class ResultsManager {
     const tooltipsContainer = document.createElement('div');
     tooltipsContainer.className = classes.tooltips;
     tooltipsContainer.append(...tooltipsElements);
-    this._root.style.position = 'relative';
-    this._root.appendChild(tooltipsContainer);
+    this.#root.style.position = 'relative';
+    this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
   }
 
   removeTooltips() {
     if (this.#tooltipsContainer) {
-      this._root.removeChild(this.#tooltipsContainer);
+      this.#root.removeChild(this.#tooltipsContainer);
       this.#tooltipsContainer = null;
     }
   }
@@ -147,17 +140,17 @@ export default class ResultsManager {
     );
     const distances = sortedTooltips
       .map((tooltip) => tooltip.distance)
-      .slice(0, this._options.tooltipsLimit || sortedTooltips.length);
+      .slice(0, this.#options.tooltipsLimit || sortedTooltips.length);
 
     sortedTooltips.forEach((tooltip, i) => {
       if (
-        tooltip.id === this._hoveredHexId ||
-        tooltip.id === this._clickedHexId
+        tooltip.id === this.#hoveredHexId ||
+        tooltip.id === this.#clickedHexId
       ) {
         tooltip.show(true);
       } else if (
-        typeof this._options.tooltipsLimit === 'number' &&
-        i < this._options.tooltipsLimit
+        typeof this.#options.tooltipsLimit === 'number' &&
+        i < this.#options.tooltipsLimit
       ) {
         tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
         tooltip.show();

@@ -5,7 +5,10 @@ export default class Result {
 
   constructor(
     { id, country, city, value, valueRank }: HexData,
-    { tooltipActiveBackgroundColor, valueSuffix }: ResultsOptions
+    {
+      activeBackgroundColor: tooltipActiveBackgroundColor,
+      valueSuffix,
+    }: ResultsOptions
   ) {
     this.#result = getResultNode(
       id,
