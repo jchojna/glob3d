@@ -1,0 +1,12 @@
+body {
+  background: #201a7e;
+  height: 100vh;
+  margin: 0px;
+}
+
+#root {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
