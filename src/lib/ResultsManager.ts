@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import classes from '../styles/results.module.css';
 import { getXYZCoordinates } from '../utils/helpers';
 import Result from './Result';
-import Tooltip from './TooltipElement';
+import Tooltip from './Tooltip';
 
 export default class ResultsManager {
   #root: HTMLElement;
