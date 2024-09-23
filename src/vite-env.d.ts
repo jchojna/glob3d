@@ -89,8 +89,8 @@ interface TooltipProperties {
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string | undefined;
-  tooltipActiveTextColor: string | undefined;
+  activeBackgroundColor: string | undefined;
+  activeTextColor: string | undefined;
   tooltipsLimit: number;
   handleCameraUpdate: (camera: THREE.Camera) => void;
   handleMasking: (camera: THREE.Camera) => void;
@@ -101,6 +101,7 @@ interface TooltipProperties {
     minDistance: number,
     maxDistance: number
   ) => void;
+  makeActive: () => void;
   updateTooltipPosition: () => void;
 }
 

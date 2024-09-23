@@ -12,7 +12,7 @@ export default class ResultsManager {
   #options: ResultsOptions;
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement;
-  #results: HTMLDivElement[];
+  #results: Result[];
   #resultsContainer: HTMLElement;
   #hoveredHexId: string | null;
   #clickedHexId: string | null;
@@ -56,22 +56,16 @@ export default class ResultsManager {
     };
   }
 
-  set results(elements: HTMLDivElement[]) {
-    this.#results = elements;
-  }
-
-  #createResults(data: HexData[], options: ResultsOptions) {
+  #createResults(data: HexData[], options: ResultsOptions): Result[] {
     return data
       .sort((a, b) => a.valueRank - b.valueRank)
-      .map((hexData: HexData) => {
-        return new Result(hexData, options).result;
-      });
+      .map((hexData: HexData) => new Result(hexData, options));
   }
 
-  #appendResults(root: HTMLElement, results: HTMLDivElement[]) {
+  #appendResults(root: HTMLElement, results: Result[]) {
     this.#resultsContainer.className = classes.container;
     results.forEach((result) => {
-      if (result) this.#resultsContainer.appendChild(result);
+      if (result) this.#resultsContainer.appendChild(result.element);
     });
     root.appendChild(this.#resultsContainer);
   }
@@ -102,8 +96,8 @@ export default class ResultsManager {
             city,
             country,
             mask: this.#globe,
-            tooltipActiveBackgroundColor: this.#options.activeBackgroundColor,
-            tooltipActiveTextColor: this.#options.activeTextColor,
+            activeBackgroundColor: this.#options.activeBackgroundColor,
+            activeTextColor: this.#options.activeTextColor,
             valueSuffix: this.#options.valueSuffix,
             valueRank,
           }
@@ -141,19 +135,28 @@ export default class ResultsManager {
 
     sortedTooltips.forEach((tooltip, i) => {
       if (
-        tooltip.id === this.#hoveredHexId ||
-        tooltip.id === this.#clickedHexId
-      ) {
-        tooltip.show(true);
-      } else if (
         typeof this.#options.tooltipsLimit === 'number' &&
         i < this.#options.tooltipsLimit
       ) {
         tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
-        tooltip.show();
       } else {
         tooltip.hide();
       }
+    });
+  }
+
+  #updateHighlightedResults(objectTypes: (Result[] | Tooltip[])[]) {
+    objectTypes.forEach((type) => {
+      type.forEach((object) => {
+        if (
+          object.id === this.#hoveredHexId ||
+          object.id === this.#clickedHexId
+        ) {
+          object.makeActive();
+        } else {
+          object.show();
+        }
+      });
     });
   }
 
@@ -173,6 +176,7 @@ export default class ResultsManager {
   #tick() {
     this.#updateCameraForTooltips();
     this.#updateTooltipsOrder();
+    this.#updateHighlightedResults([this.#results, this.#tooltips]);
 
     requestAnimationFrame(() => this.#tick());
   }

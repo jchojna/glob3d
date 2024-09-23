@@ -1,28 +1,46 @@
 import { getResultNode } from '../utils/helpers';
 
 export default class Result {
-  #result: HTMLDivElement;
+  #element: HTMLDivElement;
+  id: string;
+  activeBackgroundColor: string | undefined;
+  activeTextColor: string | undefined;
 
   constructor(
     { id, country, city, value, valueRank }: HexData,
-    {
-      activeBackgroundColor: tooltipActiveBackgroundColor,
-      valueSuffix,
-    }: ResultsOptions
+    { activeBackgroundColor, activeTextColor, valueSuffix }: ResultsOptions
   ) {
-    this.#result = getResultNode(
+    this.#element = getResultNode(
       id,
       'score',
       value,
       valueRank,
       valueSuffix,
-      tooltipActiveBackgroundColor,
+      activeBackgroundColor,
       country,
       city
     );
+    this.id = id;
+    this.activeBackgroundColor = activeBackgroundColor;
+    this.activeTextColor = activeTextColor;
   }
 
-  get result() {
-    return this.#result;
+  get element() {
+    return this.#element;
+  }
+
+  show() {
+    this.element.style.backgroundColor = '#fff';
+    this.element.style.color = '#000';
+    this.element.style.opacity = '1';
+  }
+
+  makeActive() {
+    if (this.activeBackgroundColor) {
+      this.element.style.backgroundColor = this.activeBackgroundColor;
+    }
+    if (this.activeTextColor) {
+      this.element.style.color = this.activeTextColor;
+    }
   }
 }

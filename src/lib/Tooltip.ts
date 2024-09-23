@@ -15,8 +15,8 @@ export default class Tooltip implements TooltipProperties {
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
   sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string | undefined;
-  tooltipActiveTextColor: string | undefined;
+  activeBackgroundColor: string | undefined;
+  activeTextColor: string | undefined;
   tooltipsLimit: number;
 
   constructor(
@@ -26,8 +26,8 @@ export default class Tooltip implements TooltipProperties {
     tooltipsLimit: number,
     value: number,
     options: {
-      tooltipActiveBackgroundColor: string;
-      tooltipActiveTextColor: string;
+      activeBackgroundColor: string;
+      activeTextColor: string;
       valueSuffix: string;
       valueRank: number;
       city?: string;
@@ -39,8 +39,8 @@ export default class Tooltip implements TooltipProperties {
       city,
       country,
       mask,
-      tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
+      activeBackgroundColor,
+      activeTextColor,
       valueSuffix,
       valueRank,
     } = options;
@@ -53,7 +53,7 @@ export default class Tooltip implements TooltipProperties {
       value,
       valueRank,
       valueSuffix,
-      tooltipActiveBackgroundColor,
+      activeBackgroundColor,
       country,
       city
     );
@@ -62,8 +62,8 @@ export default class Tooltip implements TooltipProperties {
     this.point = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster();
     this.sizes = sizes;
-    this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
-    this.tooltipActiveTextColor = tooltipActiveTextColor;
+    this.activeBackgroundColor = activeBackgroundColor;
+    this.activeTextColor = activeTextColor;
     this.tooltipsLimit = tooltipsLimit;
   }
 
@@ -89,25 +89,25 @@ export default class Tooltip implements TooltipProperties {
     this.element.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
   }
 
-  show(onTop = false) {
+  show() {
     this.element.style.backgroundColor = '#fff';
     this.element.style.color = '#000';
     this.element.style.opacity = '1';
-
-    if (onTop) {
-      this.element.style.zIndex = String(this.tooltipsLimit + 1);
-      if (this.tooltipActiveBackgroundColor) {
-        this.element.style.backgroundColor = this.tooltipActiveBackgroundColor;
-      }
-      if (this.tooltipActiveTextColor) {
-        this.element.style.color = this.tooltipActiveTextColor;
-      }
-    }
   }
 
   hide() {
     this.element.style.opacity = '0';
     this.element.style.transform = `${this.element.style.transform} scale(0)`;
+  }
+
+  makeActive() {
+    this.element.style.zIndex = String(this.tooltipsLimit + 1);
+    if (this.activeBackgroundColor) {
+      this.element.style.backgroundColor = this.activeBackgroundColor;
+    }
+    if (this.activeTextColor) {
+      this.element.style.color = this.activeTextColor;
+    }
   }
 
   handleCameraUpdate(camera: THREE.Camera) {
