@@ -1,5 +1,7 @@
 import BarGlob3d from '../lib/BarGlob3d';
 
+import './styles.css';
+
 const data = [
   {
     country: 'Poland',

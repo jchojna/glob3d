@@ -233,7 +233,7 @@ export default class BarGlob3d extends Glob3d {
   onLoading() {
     this.#loaderManager.showLoader();
     this.#removeHexBars();
-    this.#resultsManager.removeTooltips();
+    this.#resultsManager.cleanContainers();
     this.fadeOutHexes();
   }
 
@@ -248,7 +248,7 @@ export default class BarGlob3d extends Glob3d {
   onError() {
     this.#loaderManager.showError();
     this.#removeHexBars();
-    this.#resultsManager.removeTooltips();
+    this.#resultsManager.cleanContainers();
     this.fadeOutHexes();
   }
 }

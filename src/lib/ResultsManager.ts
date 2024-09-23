@@ -11,8 +11,9 @@ export default class ResultsManager {
   #camera: THREE.PerspectiveCamera;
   #options: ResultsOptions;
   #tooltips: TooltipProperties[];
-  #tooltipsContainer: HTMLElement | null;
+  #tooltipsContainer: HTMLElement;
   #results: HTMLDivElement[];
+  #resultsContainer: HTMLElement;
   #hoveredHexId: string | null;
   #clickedHexId: string | null;
 
@@ -27,8 +28,9 @@ export default class ResultsManager {
     this.#camera = camera;
     this.#options = options;
     this.#tooltips = [];
-    this.#tooltipsContainer = null;
+    this.#tooltipsContainer = document.createElement('div');
     this.#results = [];
+    this.#resultsContainer = document.createElement('div');
     this.#hoveredHexId = null;
     this.#clickedHexId = null;
     this.#tick();
@@ -36,6 +38,10 @@ export default class ResultsManager {
 
   set clickedHexId(id: string | null) {
     this.#clickedHexId = id;
+  }
+
+  get clickedHexId() {
+    return this.#clickedHexId;
   }
 
   set hoveredHexId(id: string | null) {
@@ -50,33 +56,28 @@ export default class ResultsManager {
     };
   }
 
-  onUpdate(data: HexData[]) {
-    this.removeTooltips();
-    this.createResults(data, this.#options);
-    this.createTooltips(data);
-    this.appendResults(this.#root);
+  set results(elements: HTMLDivElement[]) {
+    this.#results = elements;
   }
 
-  protected createResults(data: HexData[], options: ResultsOptions) {
-    this.#results = data
+  #createResults(data: HexData[], options: ResultsOptions) {
+    return data
       .sort((a, b) => a.valueRank - b.valueRank)
       .map((hexData: HexData) => {
         return new Result(hexData, options).result;
       });
   }
 
-  protected appendResults(root: HTMLElement) {
-    const resultsContainer = document.createElement('div');
-    resultsContainer.className = classes.container;
-    this.#results.forEach((result) => {
-      if (result) resultsContainer.appendChild(result);
+  #appendResults(root: HTMLElement, results: HTMLDivElement[]) {
+    this.#resultsContainer.className = classes.container;
+    results.forEach((result) => {
+      if (result) this.#resultsContainer.appendChild(result);
     });
-    root.appendChild(resultsContainer);
+    root.appendChild(this.#resultsContainer);
   }
 
-  createTooltips(data: HexData[]): HTMLElement | undefined {
-    if (!data.length) return;
-    this.#tooltips = data.map(
+  #createTooltips(data: HexData[]): TooltipProperties[] {
+    return data.map(
       ({
         id,
         center,
@@ -109,20 +110,16 @@ export default class ResultsManager {
         );
       }
     );
-    const tooltipsElements = this.#tooltips.map((tooltip) => tooltip.element);
-    const tooltipsContainer = document.createElement('div');
-    tooltipsContainer.className = classes.tooltips;
-    tooltipsContainer.append(...tooltipsElements);
-    this.#root.style.position = 'relative';
-    this.#root.appendChild(tooltipsContainer);
-    this.#tooltipsContainer = tooltipsContainer;
   }
 
-  removeTooltips() {
-    if (this.#tooltipsContainer) {
-      this.#root.removeChild(this.#tooltipsContainer);
-      this.#tooltipsContainer = null;
-    }
+  #appendTooltips(root: HTMLElement, tooltips: TooltipProperties[]) {
+    this.#tooltipsContainer.className = classes.tooltips;
+    root.style.position = 'relative';
+    root.style.overflow = 'hidden';
+    tooltips.forEach((tooltip) => {
+      if (tooltip) this.#tooltipsContainer.appendChild(tooltip.element);
+    });
+    root.appendChild(this.#tooltipsContainer);
   }
 
   // update tooltips reference points distances to the camera
@@ -158,6 +155,19 @@ export default class ResultsManager {
         tooltip.hide();
       }
     });
+  }
+
+  cleanContainers() {
+    this.#resultsContainer.innerHTML = '';
+    this.#tooltipsContainer.innerHTML = '';
+  }
+
+  onUpdate(data: HexData[]) {
+    this.cleanContainers();
+    this.#results = this.#createResults(data, this.#options);
+    this.#appendResults(this.#root, this.#results);
+    this.#tooltips = this.#createTooltips(data);
+    this.#appendTooltips(this.#root, this.#tooltips);
   }
 
   #tick() {
