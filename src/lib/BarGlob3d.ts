@@ -202,7 +202,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   #registerClickEvent() {
-    window.addEventListener('click', () => {
+    this._canvas.addEventListener('click', () => {
       if (this.#hoveredHexId) {
         this.#clickedHexBar && this.#unhighlightHex(this.#clickedHexBar);
         this.#clickedHexBar = this.#hoveredHexBar;

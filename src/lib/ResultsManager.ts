@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 import classes from '../styles/results.module.css';
-import { getXYZCoordinates } from '../utils/helpers';
 import Result from './Result';
 import Tooltip from './Tooltip';
 
@@ -10,7 +9,7 @@ export default class ResultsManager {
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
   #options: ResultsOptions;
-  #tooltips: TooltipProperties[];
+  #tooltips: Tooltip[];
   #tooltipsContainer: HTMLElement;
   #results: Result[];
   #resultsContainer: HTMLElement;
@@ -40,12 +39,12 @@ export default class ResultsManager {
     this.#clickedHexId = id;
   }
 
-  get clickedHexId() {
-    return this.#clickedHexId;
-  }
-
   set hoveredHexId(id: string | null) {
     this.#hoveredHexId = id;
+  }
+
+  get clickedHexId() {
+    return this.#clickedHexId;
   }
 
   set activeColors({ backgroundColor, textColor }: ResultColors) {
@@ -59,51 +58,28 @@ export default class ResultsManager {
   #createResults(data: HexData[], options: ResultsOptions): Result[] {
     return data
       .sort((a, b) => a.valueRank - b.valueRank)
-      .map((hexData: HexData) => new Result(hexData, options));
+      .map((hexData: HexData) => new Result(hexData, options, this));
   }
 
   #appendResults(root: HTMLElement, results: Result[]) {
     this.#resultsContainer.className = classes.container;
     results.forEach((result) => {
-      if (result) this.#resultsContainer.appendChild(result.element);
+      if (result) this.#resultsContainer.appendChild(result.resultElement);
     });
     root.appendChild(this.#resultsContainer);
   }
 
-  #createTooltips(data: HexData[]): TooltipProperties[] {
-    return data.map(
-      ({
-        id,
-        center,
-        country,
-        city,
-        value,
-        valueRank,
-        offsetFromCenter,
-      }: HexData) => {
-        const coordinates = getXYZCoordinates(
-          center[0],
-          center[1],
-          offsetFromCenter
-        );
-        return new Tooltip(
-          id,
-          coordinates,
-          { width: this.#root.clientWidth, height: this.#root.clientHeight },
-          this.#options.tooltipsLimit || data.length,
-          value,
-          {
-            city,
-            country,
-            mask: this.#globe,
-            activeBackgroundColor: this.#options.activeBackgroundColor,
-            activeTextColor: this.#options.activeTextColor,
-            valueSuffix: this.#options.valueSuffix,
-            valueRank,
-          }
-        );
-      }
-    );
+  #createTooltips(data: HexData[]): Tooltip[] {
+    return data.map((hexData: HexData) => {
+      return new Tooltip(hexData, this.#options, this, {
+        mask: this.#globe,
+        sizes: {
+          width: this.#root.clientWidth,
+          height: this.#root.clientHeight,
+        },
+        tooltipsLimit: this.#options.tooltipsLimit || data.length,
+      });
+    });
   }
 
   #appendTooltips(root: HTMLElement, tooltips: TooltipProperties[]) {

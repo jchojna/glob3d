@@ -4,9 +4,18 @@ import {
   getPixelPosition,
   getResultNode,
   getTooltipScale,
+  getXYZCoordinates,
 } from '../utils/helpers';
+import Result from './Result';
+import ResultsManager from './ResultsManager';
 
-export default class Tooltip implements TooltipProperties {
+type TooltipProperties = {
+  mask?: THREE.Mesh;
+  sizes: { width: number; height: number };
+  tooltipsLimit: number;
+};
+
+export default class Tooltip extends Result {
   coordinates: THREE.Vector3;
   distance: number;
   element: HTMLElement;
@@ -20,31 +29,23 @@ export default class Tooltip implements TooltipProperties {
   tooltipsLimit: number;
 
   constructor(
-    id: string,
-    coordinates: { x: number; y: number; z: number },
-    sizes: { width: number; height: number },
-    tooltipsLimit: number,
-    value: number,
-    options: {
-      activeBackgroundColor: string;
-      activeTextColor: string;
-      valueSuffix: string;
-      valueRank: number;
-      city?: string;
-      country?: string;
-      mask?: THREE.Mesh;
-    }
+    hexData: HexData,
+    { activeBackgroundColor, activeTextColor, valueSuffix }: ResultsOptions,
+    resultsManager: ResultsManager,
+    { mask, sizes, tooltipsLimit }: TooltipProperties
   ) {
-    const {
-      city,
-      country,
-      mask,
-      activeBackgroundColor,
-      activeTextColor,
-      valueSuffix,
-      valueRank,
-    } = options;
-    const { x, y, z } = coordinates;
+    super(
+      hexData,
+      { activeBackgroundColor, activeTextColor, valueSuffix },
+      resultsManager
+    );
+    const { id, center, value, valueRank, country, city, offsetFromCenter } =
+      hexData;
+    const { x, y, z } = getXYZCoordinates(
+      center[0],
+      center[1],
+      offsetFromCenter
+    );
     this.coordinates = new THREE.Vector3(x, y, z);
     this.distance = 0;
     this.element = getResultNode(
@@ -65,6 +66,13 @@ export default class Tooltip implements TooltipProperties {
     this.activeBackgroundColor = activeBackgroundColor;
     this.activeTextColor = activeTextColor;
     this.tooltipsLimit = tooltipsLimit;
+    this.#bindEvents(resultsManager, id);
+  }
+
+  #bindEvents(resultsManager: ResultsManager, id: string) {
+    this.element.addEventListener('click', () => {
+      resultsManager.clickedHexId = id;
+    });
   }
 
   updateOrder(index: number, minDistance: number, maxDistance: number) {

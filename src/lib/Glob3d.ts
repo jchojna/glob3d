@@ -11,10 +11,9 @@ import defaultOpts from '../utils/defaultOpts';
 import { getH3Indexes, getHexBin, getNewGeoJson } from '../utils/helpers';
 
 export default class Glob3d {
-  // private fields
   #aspectRatio: number;
   #bufferGeometryUtils;
-  #canvas: HTMLElement;
+  protected _canvas: HTMLElement;
   #controls: OrbitControls;
   #renderer: THREE.WebGLRenderer;
   #textureLoader: THREE.TextureLoader;
@@ -45,11 +44,11 @@ export default class Glob3d {
 
     this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
-    this.#canvas = this.#createCanvas(this.root);
+    this._canvas = this.#createCanvas(this.root);
     this.#textureLoader = new THREE.TextureLoader();
     this.#renderer = new THREE.WebGLRenderer({
       alpha: true,
-      canvas: this.#canvas,
+      canvas: this._canvas,
       antialias: true,
     });
 
@@ -84,7 +83,7 @@ export default class Glob3d {
     this.camera.position.y = 240;
     this.scene.add(this.camera);
 
-    this.#controls = new OrbitControls(this.camera, this.#canvas);
+    this.#controls = new OrbitControls(this.camera, this._canvas);
     this.#controls.autoRotate = true;
     this.#controls.autoRotateSpeed = 0.1;
     this.#controls.enableDamping = true;
