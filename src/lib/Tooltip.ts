@@ -95,16 +95,6 @@ export default class Tooltip extends Result {
     this.element.style.transform = `${this.element.style.transform} scale(0)`;
   }
 
-  makeActive() {
-    this.element.style.zIndex = String(this.tooltipsLimit + 1);
-    if (this.activeBackgroundColor) {
-      this.element.style.backgroundColor = this.activeBackgroundColor;
-    }
-    if (this.activeTextColor) {
-      this.element.style.color = this.activeTextColor;
-    }
-  }
-
   handleCameraUpdate(camera: THREE.Camera) {
     this.distance = this.coordinates.distanceTo(camera.position);
     this.point = this.coordinates.clone().project(camera);

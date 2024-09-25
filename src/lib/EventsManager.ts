@@ -51,10 +51,10 @@ export default class EventsManager {
     this.#barActiveOpacity = barActiveOpacity;
     this.activeBackgroundColor = activeBackgroundColor;
     this.activeTextColor = activeTextColor;
-    this.#bindClickEvent();
+    this.#bindWindowClickEvent();
   }
 
-  #bindClickEvent() {
+  #bindWindowClickEvent() {
     window.addEventListener('click', () => {
       if (this.#hoveredItemId) {
         this.clickedItemId = this.#hoveredItemId;
@@ -72,11 +72,15 @@ export default class EventsManager {
   set results(results: Results) {
     this.#results = results;
     console.log('set results', this.#results);
+
+    this.#results && this.#bindResultNodesEvents(this.#results);
   }
 
   set tooltips(tooltips: Tooltips) {
     this.#tooltips = tooltips;
     console.log('set tooltips', this.#tooltips);
+
+    this.#tooltips && this.#bindTooltipNodesEvents(this.#tooltips);
   }
 
   set clickedItemId(id: string | null) {
@@ -89,11 +93,11 @@ export default class EventsManager {
       this.#highlightHex(
         this.#hexBars?.find((hexBar) => hexBar.uuid === this.#clickedItemId)
       );
-    } else {
-      this.#unhighlightHex(
-        this.#hexBars?.find((hexBar) => hexBar.uuid === lastClickedItemId)
-      );
     }
+
+    this.#unhighlightHex(
+      this.#hexBars?.find((hexBar) => hexBar.uuid === lastClickedItemId)
+    );
   }
 
   set hoveredItemId(id: string | null) {
@@ -129,6 +133,30 @@ export default class EventsManager {
     this.#barActiveColor = color;
   }
 
+  #bindResultNodesEvents(nodes: Result[]) {
+    nodes.forEach((node) => {
+      node.resultElement.addEventListener('mouseenter', () => {
+        this.hoveredItemId = node.id;
+      });
+
+      node.resultElement.addEventListener('mouseleave', () => {
+        this.hoveredItemId = null;
+      });
+    });
+  }
+
+  #bindTooltipNodesEvents(nodes: Tooltip[]) {
+    nodes.forEach((node) => {
+      node.element.addEventListener('mouseenter', () => {
+        this.hoveredItemId = node.id;
+      });
+
+      node.element.addEventListener('mouseleave', () => {
+        this.hoveredItemId = null;
+      });
+    });
+  }
+
   #highlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.#barActiveColor);
@@ -140,19 +168,4 @@ export default class EventsManager {
     object.material.color.set(this.#barColor);
     object.material.opacity = this.#barOpacity;
   }
-
-  // #updateHighlightedResults(objectTypes: (Result[] | Tooltip[])[]) {
-  //   objectTypes.forEach((type) => {
-  //     type.forEach((object) => {
-  //       if (
-  //         object.id === this.#hoveredHexId ||
-  //         object.id === this.#clickedHexId
-  //       ) {
-  //         object.makeActive();
-  //       } else {
-  //         object.show();
-  //       }
-  //     });
-  //   });
-  // }
 }

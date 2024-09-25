@@ -28,18 +28,4 @@ export default class Result {
   get resultElement() {
     return this.#element;
   }
-
-  show() {
-    this.#element.style.backgroundColor = '#fff';
-    this.#element.style.color = '#000';
-  }
-
-  makeActive() {
-    if (this.activeBackgroundColor) {
-      this.#element.style.backgroundColor = this.activeBackgroundColor;
-    }
-    if (this.activeTextColor) {
-      this.#element.style.color = this.activeTextColor;
-    }
-  }
 }
