@@ -18,7 +18,6 @@ export default class BarGlob3d extends Glob3d {
   #aggregatedData: HexData[];
   #barColor: string;
   #barOpacity: number;
-  // #clickedHexBar: HexResult | null;
   #globePosition: GlobePosition;
   #hexBars: HexResult[];
   #hexBarsGroup: THREE.Object3D | THREE.Group;
@@ -66,7 +65,6 @@ export default class BarGlob3d extends Glob3d {
     this.#aggregatedData = [];
     this.#barColor = barColor;
     this.#barOpacity = barOpacity;
-    // this.#clickedHexBar = null;
     this.#globePosition = this.#getGlobePosition();
     this.#hexBars = [];
     this.#hexBarsGroup = new THREE.Group();
@@ -93,7 +91,6 @@ export default class BarGlob3d extends Glob3d {
       tooltipsLimit: this.#tooltipsLimit,
       valueSuffix: this.#valueSuffix,
     });
-    // this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
 
@@ -163,40 +160,14 @@ export default class BarGlob3d extends Glob3d {
       const hoveredHexBar = getHoveredHexBar(intersects, this.globe.uuid);
 
       if (hoveredHexBar && this.#lastHoveredHexBar === null) {
-        console.log('update');
         this.#lastHoveredHexBar = hoveredHexBar;
         this.#eventsManager.hoveredItemId = hoveredHexBar.uuid;
       }
 
       if (hoveredHexBar === null && this.#lastHoveredHexBar) {
-        console.log('update');
         this.#lastHoveredHexBar = null;
         this.#eventsManager.hoveredItemId = null;
       }
-
-      // on hexBar mouse over
-      // if (hoveredHexBar) {
-      //   const hoveredHexId = hoveredHexBar.uuid;
-
-      //   // on mouse over
-      //   if (this.#hoveredHexId !== hoveredHexId) {
-      //     this.#hoveredHexBar &&
-      //       this.#hoveredHexBar !== this.#clickedHexBar &&
-      //       this.#unhighlightHex(this.#hoveredHexBar);
-      //     this.#highlightHex(hoveredHexBar);
-
-      //     this.#hoveredHexBar = hoveredHexBar;
-      //     this.#hoveredHexId = hoveredHexId;
-      //     this.#resultsManager.hoveredHexId = hoveredHexId;
-      //   }
-      // } else {
-      //   this.#hoveredHexBar &&
-      //     this.#hoveredHexBar !== this.#clickedHexBar &&
-      //     this.#unhighlightHex(this.#hoveredHexBar);
-      //   this.#hoveredHexBar = null;
-      //   this.#hoveredHexId = null;
-      //   this.#resultsManager.hoveredHexId = null;
-      // }
     }
 
     this.#globePosition = this.#getGlobePosition();
@@ -205,33 +176,18 @@ export default class BarGlob3d extends Glob3d {
     return window.requestAnimationFrame(() => this.#barTick());
   }
 
-  // #registerClickEvent() {
-  //   this._canvas.addEventListener('click', () => {
-  //     if (this.#hoveredHexBar) {
-  //       this.#clickedHexBar && this.#unhighlightHex(this.#clickedHexBar);
-  //       this.#clickedHexBar = this.#hoveredHexBar;
-  //       // this.#resultsManager.clickedHexId = this.#hoveredHexId;
-  //       this.#highlightHex(this.#clickedHexBar);
-  //     } else {
-  //       this.#unhighlightHex(this.#clickedHexBar);
-  //       this.#clickedHexBar = null;
-  //       this.#resultsManager.clickedHexId = null;
-  //     }
-  //   });
-  // }
-
   #removeHexBars() {
     this.#hexBarsGroup.clear();
     this.#hexBars = [];
   }
 
   setActiveColor(color: string) {
-    // this.#barActiveColor = color;
     this.#resultsManager.activeColors = {
       backgroundColor: color,
       textColor: '#fff',
     };
     this.#resultsManager.onUpdate(this.#aggregatedData, this.#eventsManager);
+    this.#eventsManager.barActiveColor = color;
   }
 
   onLoading() {

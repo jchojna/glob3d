@@ -38,6 +38,17 @@ export default class EventsManager {
     this.#barOpacity = barOpacity;
     this.#barActiveColor = barActiveColor;
     this.#barActiveOpacity = barActiveOpacity;
+    this.#bindClickEvent();
+  }
+
+  #bindClickEvent() {
+    window.addEventListener('click', () => {
+      if (this.#hoveredItemId) {
+        this.clickedItemId = this.#hoveredItemId;
+      } else {
+        this.clickedItemId = null;
+      }
+    });
   }
 
   set hexBars(hexBars: HexBars) {
@@ -56,12 +67,24 @@ export default class EventsManager {
   }
 
   set clickedItemId(id: string | null) {
+    const lastClickedItemId = this.#clickedItemId;
     this.#clickedItemId = id;
+
     console.log('set clicked item id', this.#clickedItemId);
+
+    if (this.#clickedItemId) {
+      this.#highlightHex(
+        this.#hexBars?.find((hexBar) => hexBar.uuid === this.#clickedItemId)
+      );
+    } else {
+      this.#unhighlightHex(
+        this.#hexBars?.find((hexBar) => hexBar.uuid === lastClickedItemId)
+      );
+    }
   }
 
   set hoveredItemId(id: string | null) {
-    const lastHoveredItem = this.#hoveredItemId;
+    const lastHoveredItemId = this.#hoveredItemId;
     this.#hoveredItemId = id;
 
     console.log('set hovered item id', this.#hoveredItemId);
@@ -72,7 +95,11 @@ export default class EventsManager {
       );
     } else {
       this.#unhighlightHex(
-        this.#hexBars?.find((hexBar) => hexBar.uuid === lastHoveredItem)
+        this.#hexBars?.find(
+          (hexBar) =>
+            hexBar.uuid === lastHoveredItemId &&
+            lastHoveredItemId !== this.#clickedItemId
+        )
       );
     }
   }
@@ -83,6 +110,10 @@ export default class EventsManager {
 
   get hoveredItemId() {
     return this.#hoveredItemId;
+  }
+
+  set barActiveColor(color: string) {
+    this.#barActiveColor = color;
   }
 
   #highlightHex(object: HexResult | null) {
