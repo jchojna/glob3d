@@ -10,6 +10,8 @@ type Theme = {
   barOpacity: number;
   barActiveColor: string;
   barActiveOpacity: number;
+  activeBackgroundColor: string;
+  activeTextColor: string;
 };
 
 export default class EventsManager {
@@ -22,9 +24,18 @@ export default class EventsManager {
   #barOpacity: number;
   #barActiveColor: string;
   #barActiveOpacity: number;
+  activeBackgroundColor: string;
+  activeTextColor: string;
 
   constructor(
-    { barColor, barOpacity, barActiveColor, barActiveOpacity }: Theme,
+    {
+      barColor,
+      barOpacity,
+      barActiveColor,
+      barActiveOpacity,
+      activeBackgroundColor,
+      activeTextColor,
+    }: Theme,
     hexBars?: HexBars,
     results?: Results,
     tooltips?: Tooltips
@@ -38,6 +49,8 @@ export default class EventsManager {
     this.#barOpacity = barOpacity;
     this.#barActiveColor = barActiveColor;
     this.#barActiveOpacity = barActiveOpacity;
+    this.activeBackgroundColor = activeBackgroundColor;
+    this.activeTextColor = activeTextColor;
     this.#bindClickEvent();
   }
 
@@ -127,4 +140,19 @@ export default class EventsManager {
     object.material.color.set(this.#barColor);
     object.material.opacity = this.#barOpacity;
   }
+
+  // #updateHighlightedResults(objectTypes: (Result[] | Tooltip[])[]) {
+  //   objectTypes.forEach((type) => {
+  //     type.forEach((object) => {
+  //       if (
+  //         object.id === this.#hoveredHexId ||
+  //         object.id === this.#clickedHexId
+  //       ) {
+  //         object.makeActive();
+  //       } else {
+  //         object.show();
+  //       }
+  //     });
+  //   });
+  // }
 }

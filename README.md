@@ -96,7 +96,7 @@ new BarGlob3d(container, data, options);
   - **`barActiveColor`** The color of the hexagonal prisms when hovered or clicked.
   - **`barActiveOpacity`** The opacity of the hexagonal prisms when hovered or clicked, value between 0 and 1.
   - **`highestBar`** The height of the highest hexagonal prism in relation to the globe diameter, value between 0 and 1.
-  - **`tooltipActiveBackgroundColor`** The background color of the tooltip when hovered or clicked.
-  - **`tooltipActiveTextColor`** The text color of the tooltip when hovered or clicked.
+  - **`activeBackgroundColor`** The background color of the tooltip when hovered or clicked.
+  - **`activeTextColor`** The text color of the tooltip when hovered or clicked.
   - **`tooltipsLimit`** The number of tooltips to display, starting from the ones closest to the camera.
   - **`valueSuffix`** The suffix added to the value displayed in the tooltip.

@@ -57,8 +57,8 @@ type BarGlobeOptions = {
   barActiveColor?: string;
   barActiveOpacity?: number;
   highestBar?: number;
-  tooltipActiveBackgroundColor?: string;
-  tooltipActiveTextColor?: string;
+  activeBackgroundColor?: string;
+  activeTextColor?: string;
   tooltipsLimit?: number;
   valueSuffix?: string;
 } & GlobeOptions;

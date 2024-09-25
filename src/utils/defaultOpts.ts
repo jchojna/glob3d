@@ -10,8 +10,8 @@ export default {
   hexPadding: 0.2,
   hexRes: 3,
   highestBar: 0.5,
-  tooltipActiveBackgroundColor: '#dd176d',
-  tooltipActiveTextColor: '#fff',
+  activeBackgroundColor: '#dd176d',
+  activeTextColor: '#fff',
   tooltipsLimit: 15,
   valueSuffix: '',
 };

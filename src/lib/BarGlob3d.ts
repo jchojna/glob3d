@@ -26,8 +26,8 @@ export default class BarGlob3d extends Glob3d {
   #loaderManager: LoaderManager;
   #raycaster: THREE.Raycaster;
   #resultsManager: ResultsManager;
-  #tooltipActiveBackgroundColor: string;
-  #tooltipActiveTextColor: string;
+  #activeBackgroundColor: string;
+  #activeTextColor: string;
   #valueSuffix: string;
   #tooltipsLimit: number | null;
   #eventsManager: EventsManager;
@@ -48,8 +48,8 @@ export default class BarGlob3d extends Glob3d {
       hexPadding,
       hexRes,
       highestBar,
-      tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
+      activeBackgroundColor,
+      activeTextColor,
       tooltipsLimit,
       valueSuffix,
     } = { ...defaultOpts, ...options };
@@ -72,8 +72,8 @@ export default class BarGlob3d extends Glob3d {
     this.#lastHoveredHexBar = null;
     this.#loaderManager = new LoaderManager(root);
     this.#raycaster = new THREE.Raycaster();
-    this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
-    this.#tooltipActiveTextColor = tooltipActiveTextColor;
+    this.#activeBackgroundColor = activeBackgroundColor;
+    this.#activeTextColor = activeTextColor;
     this.#valueSuffix = valueSuffix;
     this.#tooltipsLimit = tooltipsLimit;
     this.#eventsManager = new EventsManager({
@@ -81,13 +81,15 @@ export default class BarGlob3d extends Glob3d {
       barOpacity,
       barActiveColor,
       barActiveOpacity,
+      activeBackgroundColor,
+      activeTextColor,
     });
 
     this.#barTick();
     if (data !== null) this.#createHexBars(data);
     this.#resultsManager = new ResultsManager(root, this.globe, this.camera, {
-      activeBackgroundColor: this.#tooltipActiveBackgroundColor,
-      activeTextColor: this.#tooltipActiveTextColor,
+      activeBackgroundColor: this.#activeBackgroundColor,
+      activeTextColor: this.#activeTextColor,
       tooltipsLimit: this.#tooltipsLimit,
       valueSuffix: this.#valueSuffix,
     });
@@ -182,12 +184,10 @@ export default class BarGlob3d extends Glob3d {
   }
 
   setActiveColor(color: string) {
-    this.#resultsManager.activeColors = {
-      backgroundColor: color,
-      textColor: '#fff',
-    };
-    this.#resultsManager.onUpdate(this.#aggregatedData, this.#eventsManager);
     this.#eventsManager.barActiveColor = color;
+    this.#eventsManager.activeBackgroundColor = color;
+    this.#eventsManager.activeTextColor = '#fff';
+    this.#resultsManager.onUpdate(this.#aggregatedData, this.#eventsManager);
   }
 
   onLoading() {

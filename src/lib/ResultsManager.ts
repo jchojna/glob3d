@@ -14,8 +14,6 @@ export default class ResultsManager {
   #tooltipsContainer: HTMLElement;
   #results: Result[];
   #resultsContainer: HTMLElement;
-  #hoveredHexId: string | null;
-  #clickedHexId: string | null;
 
   constructor(
     root: HTMLElement,
@@ -31,29 +29,7 @@ export default class ResultsManager {
     this.#tooltipsContainer = document.createElement('div');
     this.#results = [];
     this.#resultsContainer = document.createElement('div');
-    this.#hoveredHexId = null;
-    this.#clickedHexId = null;
     this.#tick();
-  }
-
-  set clickedHexId(id: string | null) {
-    this.#clickedHexId = id;
-  }
-
-  set hoveredHexId(id: string | null) {
-    this.#hoveredHexId = id;
-  }
-
-  get clickedHexId() {
-    return this.#clickedHexId;
-  }
-
-  set activeColors({ backgroundColor, textColor }: ResultColors) {
-    this.#options = {
-      ...this.#options,
-      activeBackgroundColor: backgroundColor,
-      activeTextColor: textColor,
-    };
   }
 
   #createResults(data: HexData[], options: ResultsOptions): Result[] {
@@ -122,21 +98,6 @@ export default class ResultsManager {
     });
   }
 
-  #updateHighlightedResults(objectTypes: (Result[] | Tooltip[])[]) {
-    objectTypes.forEach((type) => {
-      type.forEach((object) => {
-        if (
-          object.id === this.#hoveredHexId ||
-          object.id === this.#clickedHexId
-        ) {
-          object.makeActive();
-        } else {
-          object.show();
-        }
-      });
-    });
-  }
-
   cleanContainers() {
     this.#resultsContainer.innerHTML = '';
     this.#tooltipsContainer.innerHTML = '';
@@ -144,10 +105,18 @@ export default class ResultsManager {
 
   onUpdate(data: HexData[], eventsManager: EventsManager) {
     this.cleanContainers();
+
+    this.#options = {
+      ...this.#options,
+      activeBackgroundColor: eventsManager.activeBackgroundColor,
+      activeTextColor: eventsManager.activeTextColor,
+    };
+
     this.#results = this.#createResults(data, this.#options);
     this.#appendResults(this.#root, this.#results);
     this.#tooltips = this.#createTooltips(data);
     this.#appendTooltips(this.#root, this.#tooltips);
+
     eventsManager.results = this.#results;
     eventsManager.tooltips = this.#tooltips;
   }
@@ -155,7 +124,6 @@ export default class ResultsManager {
   #tick() {
     this.#updateCameraForTooltips();
     this.#updateTooltipsOrder();
-    this.#updateHighlightedResults([this.#results, this.#tooltips]);
 
     requestAnimationFrame(() => this.#tick());
   }
