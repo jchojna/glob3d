@@ -35,7 +35,7 @@ export default class ResultsManager {
   #createResults(data: HexData[], options: ResultsOptions): Result[] {
     return data
       .sort((a, b) => a.valueRank - b.valueRank)
-      .map((hexData: HexData) => new Result(hexData, options, this));
+      .map((hexData: HexData) => new Result(hexData, options));
   }
 
   #appendResults(root: HTMLElement, results: Result[]) {
@@ -48,7 +48,7 @@ export default class ResultsManager {
 
   #createTooltips(data: HexData[]): Tooltip[] {
     return data.map((hexData: HexData) => {
-      return new Tooltip(hexData, this.#options, this, {
+      return new Tooltip(hexData, this.#options, {
         mask: this.#globe,
         sizes: {
           width: this.#root.clientWidth,

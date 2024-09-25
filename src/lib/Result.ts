@@ -1,5 +1,4 @@
 import { getResultNode } from '../utils/helpers';
-import ResultsManager from './ResultsManager';
 
 export default class Result {
   #element: HTMLDivElement;
@@ -9,8 +8,7 @@ export default class Result {
 
   constructor(
     { id, country, city, value, valueRank }: HexData,
-    { activeBackgroundColor, activeTextColor, valueSuffix }: ResultsOptions,
-    resultsManager: ResultsManager
+    { activeBackgroundColor, activeTextColor, valueSuffix }: ResultsOptions
   ) {
     this.#element = getResultNode(
       id,
@@ -25,17 +23,10 @@ export default class Result {
     this.id = id;
     this.activeBackgroundColor = activeBackgroundColor;
     this.activeTextColor = activeTextColor;
-    this.#bindEvents(resultsManager, id);
   }
 
   get resultElement() {
     return this.#element;
-  }
-
-  #bindEvents(resultsManager: ResultsManager, id: string) {
-    this.#element.addEventListener('click', () => {
-      resultsManager.clickedHexId = id;
-    });
   }
 
   show() {

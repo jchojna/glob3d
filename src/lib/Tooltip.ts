@@ -7,7 +7,6 @@ import {
   getXYZCoordinates,
 } from '../utils/helpers';
 import Result from './Result';
-import ResultsManager from './ResultsManager';
 
 type TooltipProperties = {
   mask?: THREE.Mesh;
@@ -31,14 +30,9 @@ export default class Tooltip extends Result {
   constructor(
     hexData: HexData,
     { activeBackgroundColor, activeTextColor, valueSuffix }: ResultsOptions,
-    resultsManager: ResultsManager,
     { mask, sizes, tooltipsLimit }: TooltipProperties
   ) {
-    super(
-      hexData,
-      { activeBackgroundColor, activeTextColor, valueSuffix },
-      resultsManager
-    );
+    super(hexData, { activeBackgroundColor, activeTextColor, valueSuffix });
     const { id, center, value, valueRank, country, city, offsetFromCenter } =
       hexData;
     const { x, y, z } = getXYZCoordinates(
@@ -66,13 +60,6 @@ export default class Tooltip extends Result {
     this.activeBackgroundColor = activeBackgroundColor;
     this.activeTextColor = activeTextColor;
     this.tooltipsLimit = tooltipsLimit;
-    this.#bindEvents(resultsManager, id);
-  }
-
-  #bindEvents(resultsManager: ResultsManager, id: string) {
-    this.element.addEventListener('click', () => {
-      resultsManager.clickedHexId = id;
-    });
   }
 
   updateOrder(index: number, minDistance: number, maxDistance: number) {
