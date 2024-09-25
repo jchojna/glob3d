@@ -154,3 +154,15 @@ export const getPixelPosition = (
     y: ((point.y - 1) / 2) * height * -1,
   };
 };
+
+export const getHoveredHexBar = (
+  intersects: THREE.Intersection[],
+  globeId: string
+): HexResult | null => {
+  if (intersects.length === 0) return null;
+  const intersect = intersects.sort(
+    (a: { distance: number }, b: { distance: number }) =>
+      a.distance - b.distance
+  )[0].object;
+  return intersect.uuid === globeId ? null : intersect;
+};

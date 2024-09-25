@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 import classes from '../styles/results.module.css';
+import EventsManager from './EventsManager';
 import Result from './Result';
 import Tooltip from './Tooltip';
 
@@ -141,12 +142,14 @@ export default class ResultsManager {
     this.#tooltipsContainer.innerHTML = '';
   }
 
-  onUpdate(data: HexData[]) {
+  onUpdate(data: HexData[], eventsManager: EventsManager) {
     this.cleanContainers();
     this.#results = this.#createResults(data, this.#options);
     this.#appendResults(this.#root, this.#results);
     this.#tooltips = this.#createTooltips(data);
     this.#appendTooltips(this.#root, this.#tooltips);
+    eventsManager.results = this.#results;
+    eventsManager.tooltips = this.#tooltips;
   }
 
   #tick() {
