@@ -23,7 +23,7 @@ An [npm package](https://www.npmjs.com/package/glob3d) for creating interactive 
 - [Repo](https://github.com/jchojna/glob3d)
 - [Demo](https://jchojna.github.io/glob3d-app/)
 - [NPM](https://www.npmjs.com/package/glob3d)
-- [My website](https://jakubchojna.pl/)
+- [My website](https://jchojna.github.io/)
 
 ## Technologies
 
