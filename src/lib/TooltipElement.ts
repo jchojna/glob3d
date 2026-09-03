@@ -18,6 +18,9 @@ export default class Tooltip implements TooltipProperties {
   tooltipActiveBackgroundColor: string | undefined;
   tooltipActiveTextColor: string | undefined;
   tooltipsLimit: number;
+  #posX = 0;
+  #posY = 0;
+  #scale = 1;
 
   constructor(
     id: string,
@@ -66,17 +69,17 @@ export default class Tooltip implements TooltipProperties {
     this.tooltipsLimit = tooltipsLimit;
   }
 
+  #applyTransform() {
+    this.element.style.transform = `translate(${this.#posX}px, ${
+      this.#posY
+    }px) scale(${this.#scale})`;
+  }
+
   updateOrder(index: number, minDistance: number, maxDistance: number) {
     this.element.style.zIndex = String(this.tooltipsLimit - index);
     if (!this.distance) return;
-    const tooltipScale = getTooltipScale(
-      this.distance,
-      minDistance,
-      maxDistance
-    );
-    this.element.style.transform = `
-      ${this.element.style.transform} scale(${tooltipScale})
-    `;
+    this.#scale = getTooltipScale(this.distance, minDistance, maxDistance);
+    this.#applyTransform();
   }
 
   updateTooltipPosition() {
@@ -85,7 +88,9 @@ export default class Tooltip implements TooltipProperties {
       this.sizes.width,
       this.sizes.height
     );
-    this.element.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+    this.#posX = pxPosition.x;
+    this.#posY = pxPosition.y;
+    this.#applyTransform();
   }
 
   show(onTop = false) {
@@ -106,7 +111,6 @@ export default class Tooltip implements TooltipProperties {
 
   hide() {
     this.element.style.opacity = '0';
-    this.element.style.transform = `${this.element.style.transform} scale(0)`;
   }
 
   handleCameraUpdate(camera: THREE.Camera) {

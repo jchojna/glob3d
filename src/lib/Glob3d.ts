@@ -17,6 +17,7 @@ export default class Glob3d {
   #canvas: HTMLElement;
   #controls: OrbitControls;
   #renderer: THREE.WebGLRenderer;
+  #resizeObserver!: ResizeObserver;
   #textureLoader: THREE.TextureLoader;
 
   // public fields
@@ -45,6 +46,8 @@ export default class Glob3d {
     } = options;
 
     this.root = root;
+    this.root.style.position = 'relative';
+    this.root.style.overflow = 'hidden';
     this.#aspectRatio = root.clientWidth / root.clientHeight;
     this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.#createCanvas(this.root);
@@ -103,6 +106,10 @@ export default class Glob3d {
 
   #createCanvas(root: HTMLElement) {
     const canvas = document.createElement('canvas');
+    canvas.style.display = 'block';
+    canvas.style.position = 'absolute';
+    canvas.style.left = '0';
+    canvas.style.top = '0';
     canvas.style.outline = 'none';
     canvas.style.userSelect = 'none';
     root.appendChild(canvas);
@@ -196,16 +203,24 @@ export default class Glob3d {
     });
   }
 
+  #handleResize() {
+    const width = this.root.clientWidth;
+    const height = this.root.clientHeight;
+    if (width === 0 || height === 0) return;
+    if (width === this.sizes.width && height === this.sizes.height) return;
+
+    this.sizes.width = width;
+    this.sizes.height = height;
+    this.#aspectRatio = width / height;
+    this.camera.aspect = this.#aspectRatio;
+    this.camera.updateProjectionMatrix();
+    this.#renderer.setSize(width, height);
+    this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
   #registerResizeEvent() {
-    window.addEventListener('resize', () => {
-      this.sizes.width = this.root.clientWidth;
-      this.sizes.height = this.root.clientHeight;
-      this.#aspectRatio = this.sizes.width / this.sizes.height;
-      this.camera.aspect = this.#aspectRatio;
-      this.camera.updateProjectionMatrix();
-      this.#renderer.setSize(this.sizes.width, this.sizes.height);
-      this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    });
+    this.#resizeObserver = new ResizeObserver(() => this.#handleResize());
+    this.#resizeObserver.observe(this.root);
   }
 
   #tick(): number {

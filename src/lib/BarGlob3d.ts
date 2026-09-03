@@ -77,12 +77,18 @@ export default class BarGlob3d extends Glob3d {
 
     this.#barTick();
     if (data !== null) this.#createHexBars(data);
-    this.#tooltipsManager = new TooltipsManager(root, this.globe, this.camera, {
-      tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
-      tooltipsLimit: this.#tooltipsLimit,
-      tooltipValueSuffix,
-    });
+    this.#tooltipsManager = new TooltipsManager(
+      root,
+      this.globe,
+      this.camera,
+      this.sizes,
+      {
+        tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
+        tooltipActiveTextColor,
+        tooltipsLimit: this.#tooltipsLimit,
+        tooltipValueSuffix,
+      }
+    );
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
