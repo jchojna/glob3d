@@ -32,7 +32,6 @@ export default class Glob3d {
   camera: THREE.PerspectiveCamera;
   globe: THREE.Mesh;
   globeColor: string;
-  globeOpacity: number;
   globeRadius: number;
   hexGlobe: THREE.Mesh | null;
   hexOpacity: number;
@@ -46,7 +45,6 @@ export default class Glob3d {
   constructor(root: HTMLElement, options: GlobeOptions = {}) {
     const {
       globeColor = defaultOpts.globeColor,
-      globeOpacity = defaultOpts.globeOpacity,
       globeRadius = defaultOpts.globeRadius,
       hexOpacity = defaultOpts.hexOpacity,
       hexPadding = defaultOpts.hexPadding,
@@ -75,7 +73,6 @@ export default class Glob3d {
     });
 
     this.globeColor = globeColor;
-    this.globeOpacity = globeOpacity;
     this.globeRadius = globeRadius;
     this.hexGlobe = null;
     this.hexOpacity = hexOpacity;
@@ -90,11 +87,9 @@ export default class Glob3d {
 
     // solid globe
     this.globe = new THREE.Mesh(
-      new THREE.SphereGeometry(this.globeRadius, 36, 36),
+      new THREE.SphereGeometry(this.globeRadius, 48, 48),
       new THREE.MeshBasicMaterial({
         color: this.globeColor,
-        transparent: true,
-        opacity: this.globeOpacity,
       })
     );
     this.scene.add(this.globe);
@@ -193,12 +188,6 @@ export default class Glob3d {
   setGlobeColor(color: string) {
     this.globeColor = color;
     (this.globe.material as THREE.MeshBasicMaterial).color.set(color);
-    this.requestRender();
-  }
-
-  setGlobeOpacity(opacity: number) {
-    this.globeOpacity = opacity;
-    (this.globe.material as THREE.MeshBasicMaterial).opacity = opacity;
     this.requestRender();
   }
 

@@ -68,7 +68,6 @@ new Glob3d(container, options);
 - **`container`:** A DOM element where the globe will be rendered.
 - **`options`:** (optional) An object with the following properties:
   - **`globeColor`:** The color of the globe (water areas, gaps between hexagons).
-  - **`globeOpacity`:** The opacity of the globe, value between 0 and 1.
   - **`globeRadius`:** The radius of the globe.
   - **`hexPadding`:** The hexagon's padding, value between 0 and 1.
   - **`hexRes`:** The resolution of hexagons, integer between 1 and 5.

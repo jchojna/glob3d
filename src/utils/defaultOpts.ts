@@ -4,7 +4,6 @@ export default {
   barActiveColor: '#dd176d',
   barActiveOpacity: 0.9,
   globeColor: '#1a166e',
-  globeOpacity: 0.85,
   globeRadius: 100,
   hexOpacity: 1,
   hexPadding: 0.2,

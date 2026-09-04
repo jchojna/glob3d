@@ -45,7 +45,6 @@ interface GlobeDataWithOffsets extends GlobeData {
 
 type GlobeOptions = {
   globeColor?: string;
-  globeOpacity?: number;
   globeRadius?: number;
   hexOpacity?: number;
   hexPadding?: number;
@@ -93,5 +92,3 @@ interface TooltipProperties {
   ) => void;
   updateTooltipPosition: () => void;
 }
-
-type HexResult = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
