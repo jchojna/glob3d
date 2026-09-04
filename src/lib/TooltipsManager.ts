@@ -21,6 +21,7 @@ export default class TooltipsManager {
   #globe: THREE.Mesh;
   #camera: THREE.PerspectiveCamera;
   #options: TooltipsOptions;
+  #sizes: { width: number; height: number };
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement | null;
   #clickedHexId: string | null;
@@ -30,11 +31,13 @@ export default class TooltipsManager {
     root: HTMLElement,
     globe: THREE.Mesh,
     camera: THREE.PerspectiveCamera,
+    sizes: { width: number; height: number },
     options: TooltipsOptions
   ) {
     this.#root = root;
     this.#globe = globe;
     this.#camera = camera;
+    this.#sizes = sizes;
     this.#options = options;
     this.#tooltips = [];
     this.#tooltipsContainer = null;
@@ -80,7 +83,7 @@ export default class TooltipsManager {
         return new Tooltip(
           id,
           coordinates,
-          { width: this.#root.clientWidth, height: this.#root.clientHeight },
+          this.#sizes,
           this.#options.tooltipsLimit || data.length,
           value,
           {
@@ -100,7 +103,6 @@ export default class TooltipsManager {
     const tooltipsContainer = document.createElement('div');
     tooltipsContainer.style.cssText = tooltipsStyles;
     tooltipsContainer.append(...tooltipsElements);
-    this.#root.style.position = 'relative';
     this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
   }
@@ -151,7 +153,14 @@ export default class TooltipsManager {
     });
   }
 
+  #syncOverlaySize() {
+    if (!this.#tooltipsContainer) return;
+    this.#tooltipsContainer.style.width = `${this.#sizes.width}px`;
+    this.#tooltipsContainer.style.height = `${this.#sizes.height}px`;
+  }
+
   #tick() {
+    this.#syncOverlaySize();
     this.#updateCameraForTooltips();
     this.#updateTooltipsOrder();
 

@@ -11,6 +11,7 @@ export default class Tooltip implements TooltipProperties {
   distance: number;
   element: HTMLElement;
   id: string;
+  isVisible = false;
   mask: THREE.Mesh | undefined;
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;
@@ -18,6 +19,9 @@ export default class Tooltip implements TooltipProperties {
   tooltipActiveBackgroundColor: string | undefined;
   tooltipActiveTextColor: string | undefined;
   tooltipsLimit: number;
+  #posX = 0;
+  #posY = 0;
+  #scale = 1;
 
   constructor(
     id: string,
@@ -64,19 +68,27 @@ export default class Tooltip implements TooltipProperties {
     this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.tooltipActiveTextColor = tooltipActiveTextColor;
     this.tooltipsLimit = tooltipsLimit;
+    this.#applyVisibility();
+  }
+
+  #applyTransform() {
+    this.element.style.transform = `translate(${this.#posX}px, ${
+      this.#posY
+    }px) scale(${this.#scale})`;
+  }
+
+  #applyVisibility() {
+    this.element.style.opacity = this.isVisible ? '1' : '0';
+    if (!this.isVisible) {
+      this.#scale = 0;
+    }
   }
 
   updateOrder(index: number, minDistance: number, maxDistance: number) {
     this.element.style.zIndex = String(this.tooltipsLimit - index);
     if (!this.distance) return;
-    const tooltipScale = getTooltipScale(
-      this.distance,
-      minDistance,
-      maxDistance
-    );
-    this.element.style.transform = `
-      ${this.element.style.transform} scale(${tooltipScale})
-    `;
+    this.#scale = getTooltipScale(this.distance, minDistance, maxDistance);
+    this.#applyTransform();
   }
 
   updateTooltipPosition() {
@@ -85,13 +97,16 @@ export default class Tooltip implements TooltipProperties {
       this.sizes.width,
       this.sizes.height
     );
-    this.element.style.transform = `translate(${pxPosition.x}px, ${pxPosition.y}px)`;
+    this.#posX = pxPosition.x;
+    this.#posY = pxPosition.y;
+    this.#applyTransform();
   }
 
   show(onTop = false) {
+    this.isVisible = true;
     this.element.style.backgroundColor = '#fff';
     this.element.style.color = '#000';
-    this.element.style.opacity = '1';
+    this.#applyVisibility();
 
     if (onTop) {
       this.element.style.zIndex = String(this.tooltipsLimit + 1);
@@ -105,8 +120,8 @@ export default class Tooltip implements TooltipProperties {
   }
 
   hide() {
-    this.element.style.opacity = '0';
-    this.element.style.transform = `${this.element.style.transform} scale(0)`;
+    this.isVisible = false;
+    this.#applyVisibility();
   }
 
   handleCameraUpdate(camera: THREE.Camera) {
@@ -128,10 +143,7 @@ export default class Tooltip implements TooltipProperties {
       intersectObjects[0].distance <
         this.coordinates.distanceTo(camera.position);
 
-    if (isBehindGlobe) {
-      this.hide();
-    } else {
-      this.show();
-    }
+    this.isVisible = !isBehindGlobe;
+    this.#applyVisibility();
   }
 }
