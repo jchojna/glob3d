@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 
 import defaultOpts from '../utils/defaultOpts';
-import { getNewGeoJson, getPixelPosition } from '../utils/helpers';
+import { getNewGeoJson } from '../utils/helpers';
 import DataManager from './DataManager';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
@@ -22,7 +22,10 @@ export default class BarGlob3d extends Glob3d {
   #highestBar: number;
   #hoveredHexId: string | null;
   #hoveredHexBar: HexResult | null;
+  #intersections: THREE.Intersection[];
   #loaderManager: LoaderManager;
+  #pickableObjects: THREE.Object3D[];
+  #projectedGlobePosition: THREE.Vector3;
   #raycaster: THREE.Raycaster;
   #tooltipsManager: TooltipsManager;
   #tooltipActiveBackgroundColor: string;
@@ -64,18 +67,21 @@ export default class BarGlob3d extends Glob3d {
     this.#barActiveColor = barActiveColor;
     this.#barActiveOpacity = barActiveOpacity;
     this.#clickedHexBar = null;
-    this.#globePosition = this.#getGlobePosition();
+    this.#globePosition = { x: 0, y: 0 };
+    this.#projectedGlobePosition = new THREE.Vector3();
+    this.#updateGlobePosition();
     this.#hexBars = [];
     this.#hexBarsGroup = new THREE.Group();
     this.#highestBar = highestBar;
     this.#hoveredHexId = null;
     this.#hoveredHexBar = null;
+    this.#intersections = [];
     this.#loaderManager = new LoaderManager(root);
+    this.#pickableObjects = [this.globe];
     this.#raycaster = new THREE.Raycaster();
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipsLimit = tooltipsLimit;
 
-    this.#barTick();
     if (data !== null) this.#createHexBars(data);
     this.#tooltipsManager = new TooltipsManager(
       root,
@@ -89,6 +95,7 @@ export default class BarGlob3d extends Glob3d {
         tooltipValueSuffix,
       }
     );
+    this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.#registerClickEvent();
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
@@ -133,46 +140,55 @@ export default class BarGlob3d extends Glob3d {
       id: hexBars[i].uuid,
     }));
     hexBars.forEach((hex: HexResult) => this.#hexBarsGroup.add(hex));
+    this.#pickableObjects.push(...hexBars);
     if (typeof this.#tooltipsLimit != 'number')
       this.#tooltipsLimit = hexBars.length;
     this.scene.add(this.#hexBarsGroup);
     return hexBars;
   }
 
-  #getGlobePosition() {
-    return getPixelPosition(
-      this.globe.position.clone().project(this.camera),
-      this.sizes.width,
-      this.sizes.height
-    );
+  #updateGlobePosition() {
+    this.#projectedGlobePosition.copy(this.globe.position).project(this.camera);
+    this.#globePosition.x =
+      ((this.#projectedGlobePosition.x + 1) / 2) * this.sizes.width;
+    this.#globePosition.y =
+      ((this.#projectedGlobePosition.y - 1) / 2) * this.sizes.height * -1;
   }
 
   #highlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.#barActiveColor);
     object.material.opacity = this.#barActiveOpacity;
+    this.requestRender();
   }
 
   #unhighlightHex(object: HexResult | null) {
     if (!object) return;
     object.material.color.set(this.#barColor);
     object.material.opacity = this.#barOpacity;
+    this.requestRender();
   }
 
-  #barTick(): number {
-    if (this.#hexBars.length > 0) {
+  protected override onFrame({
+    cameraChanged,
+    layoutChanged,
+    pointerChanged,
+  }: {
+    cameraChanged: boolean;
+    layoutChanged: boolean;
+    pointerChanged: boolean;
+  }) {
+    if ((cameraChanged || pointerChanged) && this.#hexBars.length > 0) {
       this.#raycaster.setFromCamera(this.mouse, this.camera);
-
-      const intersects = this.#raycaster.intersectObjects([
-        this.globe,
-        ...this.#hexBars,
-      ]);
+      this.#intersections.length = 0;
+      this.#raycaster.intersectObjects(
+        this.#pickableObjects,
+        false,
+        this.#intersections
+      );
       const hoveredHexBar =
-        intersects.length > 0 &&
-        (intersects.sort(
-          (a: { distance: number }, b: { distance: number }) =>
-            a.distance - b.distance
-        )[0].object as HexResult);
+        this.#intersections.length > 0 &&
+        (this.#intersections[0].object as HexResult);
 
       if (hoveredHexBar && hoveredHexBar.uuid !== this.globe.uuid) {
         const hoveredHexId = hoveredHexBar.uuid;
@@ -197,30 +213,45 @@ export default class BarGlob3d extends Glob3d {
         this.#tooltipsManager.hoveredHexId = null;
       }
     }
-    this.#globePosition = this.#getGlobePosition();
-    this.#loaderManager.updateLoaderPosition(this.#globePosition);
 
-    return window.requestAnimationFrame(() => this.#barTick());
+    if (cameraChanged || layoutChanged) {
+      this.#updateGlobePosition();
+      this.#loaderManager.updateLoaderPosition(this.#globePosition);
+    }
+    this.#tooltipsManager.update({ cameraChanged, layoutChanged });
   }
 
   #registerClickEvent() {
-    window.addEventListener('click', () => {
-      if (this.#hoveredHexId) {
-        this.#clickedHexBar && this.#unhighlightHex(this.#clickedHexBar);
-        this.#clickedHexBar = this.#hoveredHexBar;
-        this.#tooltipsManager.clickedHexId = this.#hoveredHexId;
-        this.#highlightHex(this.#clickedHexBar);
-      } else {
-        this.#unhighlightHex(this.#clickedHexBar);
-        this.#clickedHexBar = null;
-        this.#tooltipsManager.clickedHexId = null;
-      }
-    });
+    window.addEventListener('click', this.#handleClick);
   }
 
+  #handleClick = () => {
+    if (this.#hoveredHexId) {
+      this.#clickedHexBar && this.#unhighlightHex(this.#clickedHexBar);
+      this.#clickedHexBar = this.#hoveredHexBar;
+      this.#tooltipsManager.clickedHexId = this.#hoveredHexId;
+      this.#highlightHex(this.#clickedHexBar);
+    } else {
+      this.#unhighlightHex(this.#clickedHexBar);
+      this.#clickedHexBar = null;
+      this.#tooltipsManager.clickedHexId = null;
+    }
+    this.requestRender();
+  };
+
   #removeHexBars() {
+    this.#hexBars.forEach((hexBar) => {
+      hexBar.geometry.dispose();
+      hexBar.material.dispose();
+    });
     this.#hexBarsGroup.clear();
     this.#hexBars = [];
+    this.#pickableObjects.length = 1;
+    this.#intersections.length = 0;
+    this.#hoveredHexBar = null;
+    this.#hoveredHexId = null;
+    this.#clickedHexBar = null;
+    this.requestRender();
   }
 
   setActiveColor(color: string) {
@@ -254,5 +285,12 @@ export default class BarGlob3d extends Glob3d {
     this.#removeHexBars();
     this.#tooltipsManager.removeTooltips();
     this.fadeOutHexes();
+  }
+
+  protected override onDestroy() {
+    window.removeEventListener('click', this.#handleClick);
+    this.#removeHexBars();
+    this.#tooltipsManager.destroy();
+    this.#loaderManager.destroy();
   }
 }

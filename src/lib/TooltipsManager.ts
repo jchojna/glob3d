@@ -25,6 +25,7 @@ export default class TooltipsManager {
   #tooltips: TooltipProperties[];
   #tooltipsContainer: HTMLElement | null;
   #clickedHexId: string | null;
+  #dirty: boolean;
   #hoveredHexId: string | null;
 
   constructor(
@@ -42,8 +43,8 @@ export default class TooltipsManager {
     this.#tooltips = [];
     this.#tooltipsContainer = null;
     this.#clickedHexId = null;
+    this.#dirty = true;
     this.#hoveredHexId = null;
-    this.#tick();
   }
 
   get tooltips(): TooltipProperties[] {
@@ -51,11 +52,15 @@ export default class TooltipsManager {
   }
 
   set clickedHexId(id: string | null) {
+    if (this.#clickedHexId === id) return;
     this.#clickedHexId = id;
+    this.#dirty = true;
   }
 
   set hoveredHexId(id: string | null) {
+    if (this.#hoveredHexId === id) return;
     this.#hoveredHexId = id;
+    this.#dirty = true;
   }
 
   set activeTooltipColors({ backgroundColor, textColor }: TooltipColors) {
@@ -64,6 +69,7 @@ export default class TooltipsManager {
       tooltipActiveBackgroundColor: backgroundColor,
       tooltipActiveTextColor: textColor,
     };
+    this.#dirty = true;
   }
 
   // TODO: refactor the method
@@ -105,13 +111,16 @@ export default class TooltipsManager {
     tooltipsContainer.append(...tooltipsElements);
     this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
+    this.#dirty = true;
   }
 
   removeTooltips() {
-    if (this.#tooltipsContainer) {
-      this.#root.removeChild(this.#tooltipsContainer);
-      this.#tooltipsContainer = null;
-    }
+    this.#tooltipsContainer?.remove();
+    this.#tooltipsContainer = null;
+    this.#tooltips = [];
+    this.#clickedHexId = null;
+    this.#hoveredHexId = null;
+    this.#dirty = false;
   }
 
   #getValueRank(value: number, values: number[]): number {
@@ -131,9 +140,13 @@ export default class TooltipsManager {
     const sortedTooltips = this.#tooltips.sort(
       (a, b) => a.distance - b.distance
     );
-    const distances = sortedTooltips
-      .map((tooltip) => tooltip.distance)
-      .slice(0, this.#options.tooltipsLimit || sortedTooltips.length);
+    const limit = this.#options.tooltipsLimit || sortedTooltips.length;
+    let minDistance = Infinity;
+    let maxDistance = -Infinity;
+    for (let i = 0; i < Math.min(limit, sortedTooltips.length); i += 1) {
+      minDistance = Math.min(minDistance, sortedTooltips[i].distance);
+      maxDistance = Math.max(maxDistance, sortedTooltips[i].distance);
+    }
 
     sortedTooltips.forEach((tooltip, i) => {
       if (
@@ -145,7 +158,7 @@ export default class TooltipsManager {
         typeof this.#options.tooltipsLimit === 'number' &&
         i < this.#options.tooltipsLimit
       ) {
-        tooltip.updateOrder(i, Math.min(...distances), Math.max(...distances));
+        tooltip.updateOrder(i, minDistance, maxDistance);
         tooltip.show();
       } else {
         tooltip.hide();
@@ -159,11 +172,25 @@ export default class TooltipsManager {
     this.#tooltipsContainer.style.height = `${this.#sizes.height}px`;
   }
 
-  #tick() {
-    this.#syncOverlaySize();
-    this.#updateCameraForTooltips();
-    this.#updateTooltipsOrder();
+  update({
+    cameraChanged,
+    layoutChanged,
+  }: {
+    cameraChanged: boolean;
+    layoutChanged: boolean;
+  }) {
+    if (layoutChanged) this.#syncOverlaySize();
+    if (cameraChanged || layoutChanged) {
+      this.#updateCameraForTooltips();
+      this.#dirty = true;
+    }
+    if (this.#dirty) {
+      this.#updateTooltipsOrder();
+      this.#dirty = false;
+    }
+  }
 
-    requestAnimationFrame(() => this.#tick());
+  destroy() {
+    this.removeTooltips();
   }
 }

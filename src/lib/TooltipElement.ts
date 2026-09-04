@@ -1,10 +1,6 @@
 import * as THREE from 'three';
 
-import {
-  getPixelPosition,
-  getTooltip,
-  getTooltipScale,
-} from '../utils/helpers';
+import { getTooltip, getTooltipScale } from '../utils/helpers';
 
 export default class Tooltip implements TooltipProperties {
   coordinates: THREE.Vector3;
@@ -22,6 +18,8 @@ export default class Tooltip implements TooltipProperties {
   #posX = 0;
   #posY = 0;
   #scale = 1;
+  #intersections: THREE.Intersection[] = [];
+  #raycastPoint = new THREE.Vector2();
 
   constructor(
     id: string,
@@ -92,13 +90,8 @@ export default class Tooltip implements TooltipProperties {
   }
 
   updateTooltipPosition() {
-    const pxPosition = getPixelPosition(
-      this.point,
-      this.sizes.width,
-      this.sizes.height
-    );
-    this.#posX = pxPosition.x;
-    this.#posY = pxPosition.y;
+    this.#posX = ((this.point.x + 1) / 2) * this.sizes.width;
+    this.#posY = ((this.point.y - 1) / 2) * this.sizes.height * -1;
     this.#applyTransform();
   }
 
@@ -126,22 +119,20 @@ export default class Tooltip implements TooltipProperties {
 
   handleCameraUpdate(camera: THREE.Camera) {
     this.distance = this.coordinates.distanceTo(camera.position);
-    this.point = this.coordinates.clone().project(camera);
+    this.point.copy(this.coordinates).project(camera);
     this.updateTooltipPosition();
     this.handleMasking(camera);
   }
 
   handleMasking(camera: THREE.Camera) {
     if (!this.mask) return;
-    this.raycaster.setFromCamera(
-      new THREE.Vector2(this.point.x, this.point.y),
-      camera
-    );
-    const intersectObjects = this.raycaster.intersectObject(this.mask);
+    this.#raycastPoint.set(this.point.x, this.point.y);
+    this.raycaster.setFromCamera(this.#raycastPoint, camera);
+    this.#intersections.length = 0;
+    this.raycaster.intersectObject(this.mask, false, this.#intersections);
     const isBehindGlobe =
-      intersectObjects.length > 0 &&
-      intersectObjects[0].distance <
-        this.coordinates.distanceTo(camera.position);
+      this.#intersections.length > 0 &&
+      this.#intersections[0].distance < this.distance;
 
     this.isVisible = !isBehindGlobe;
     this.#applyVisibility();

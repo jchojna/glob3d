@@ -1,5 +1,4 @@
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
-import * as THREE from 'three';
 
 // Get H3 indexes for all hexagons in Polygon or MultiPolygon
 export const getH3Indexes = (
@@ -171,16 +170,4 @@ export const getTooltipScale = (
     ? 1
     : ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 +
         0.5;
-};
-
-// get pixel position from normalized device coordinates
-export const getPixelPosition = (
-  point: THREE.Vector3,
-  width: number,
-  height: number
-) => {
-  return {
-    x: ((point.x + 1) / 2) * width,
-    y: ((point.y - 1) / 2) * height * -1,
-  };
 };
