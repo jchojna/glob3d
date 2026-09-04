@@ -74,6 +74,7 @@ interface TooltipProperties {
   distance: number;
   element: HTMLElement;
   id: string;
+  isVisible: boolean;
   mask: THREE.Mesh | undefined;
   point: THREE.Vector3;
   raycaster: THREE.Raycaster;

@@ -103,7 +103,7 @@ export const getTooltip = (
   // delay transition to prevent initial animation
   setTimeout(() => {
     tooltip.style.transition =
-      'background-color 0.2s, color 0.2s, opacity 0.2s';
+      'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
   }, 10);
 
   if (id) tooltip.id = `tooltip-${id}`;
