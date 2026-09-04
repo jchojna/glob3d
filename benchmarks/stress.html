@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glob3d rendering stress benchmark</title>
+    <style>
+      :root {
+        color: #f6f4ff;
+        background: #0d0b24;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        height: 100vh;
+        margin: 0;
+      }
+
+      #globe {
+        min-width: 0;
+      }
+
+      aside {
+        box-sizing: border-box;
+        overflow: auto;
+        padding: 20px;
+        background: #17133c;
+      }
+
+      h1 {
+        margin-top: 0;
+        font: 600 18px system-ui, sans-serif;
+      }
+
+      p {
+        font: 14px/1.45 system-ui, sans-serif;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      [data-status='complete'] {
+        color: #6ee7a7;
+      }
+
+      [data-status='failed'] {
+        color: #ff8c8c;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="globe"></main>
+    <aside>
+      <h1>Glob3d stress benchmark</h1>
+      <p id="status">Preparing benchmark…</p>
+      <pre id="result"></pre>
+    </aside>
+    <script type="module" src="./stress.ts"></script>
+  </body>
+</html>

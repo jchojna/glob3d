@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-04",
+  "command": "npm run benchmark:stress",
+  "environment": {
+    "runtime": "Cursor 3.18.25 / Chrome 144.0.7559.236 / Electron 40.10.3",
+    "viewport": {
+      "width": 2237,
+      "height": 1289,
+      "devicePixelRatio": 1
+    },
+    "hexRes": 3,
+    "updateRuns": 5,
+    "sampleFrames": 180,
+    "tooltipLimit": 15
+  },
+  "priorLocalReferences": {
+    "landConstructionHexRes3Ms": 465,
+    "landConstructionHexRes4Ms": 2000,
+    "barDrawCallRelationship": "approximately N + 2",
+    "update500BarsMs": 78
+  },
+  "results": {
+    "small": {
+      "requestedDataPoints": 100,
+      "startupMs": 710.7,
+      "updateMeanMs": 15.2,
+      "updateMaxMs": 26.4,
+      "fps": 47.23,
+      "frameTimeMeanMs": 21.17,
+      "frameTimeP95Ms": 39.4,
+      "drawCalls": 202,
+      "triangles": 93604,
+      "pickingTotalMs": 47.7,
+      "pickingMeanPerFrameMs": 0.26,
+      "tooltipTotalMs": 1210.4,
+      "tooltipMeanPerItemMs": 0.07,
+      "tooltipDomCount": 100,
+      "heapBeforeBytes": 111791369,
+      "heapAfterBytes": 82497013,
+      "heapGrowthBytes": -29294356,
+      "rendererGeometries": 502,
+      "rendererTextures": 1
+    },
+    "medium": {
+      "requestedDataPoints": 500,
+      "startupMs": 826.9,
+      "updateMeanMs": 64.06,
+      "updateMaxMs": 81.9,
+      "fps": 15.11,
+      "frameTimeMeanMs": 66.18,
+      "frameTimeP95Ms": 100.8,
+      "drawCalls": 1002,
+      "triangles": 111924,
+      "pickingTotalMs": 78.7,
+      "pickingMeanPerFrameMs": 0.44,
+      "tooltipTotalMs": 5150.7,
+      "tooltipMeanPerItemMs": 0.06,
+      "tooltipDomCount": 500,
+      "heapBeforeBytes": 111020922,
+      "heapAfterBytes": 68488406,
+      "heapGrowthBytes": -42532516,
+      "rendererGeometries": 2502,
+      "rendererTextures": 1
+    },
+    "large": {
+      "requestedDataPoints": 1000,
+      "startupMs": 1161.5,
+      "updateMeanMs": 292.24,
+      "updateMaxMs": 687.9,
+      "fps": 12.56,
+      "frameTimeMeanMs": 79.65,
+      "frameTimeP95Ms": 119.3,
+      "drawCalls": 2002,
+      "triangles": 134972,
+      "pickingTotalMs": 98.9,
+      "pickingMeanPerFrameMs": 0.55,
+      "tooltipTotalMs": 7984.8,
+      "tooltipMeanPerItemMs": 0.04,
+      "tooltipDomCount": 1000,
+      "heapBeforeBytes": 132783224,
+      "heapAfterBytes": 146828271,
+      "heapGrowthBytes": 14045047,
+      "rendererGeometries": 5002,
+      "rendererTextures": 1
+    }
+  },
+  "notes": [
+    "Heap values are raw performance.memory snapshots and can decrease when garbage collection occurs.",
+    "Renderer geometry counts scale with every repeated update, showing retained GPU resources.",
+    "Current Three.js transparent DoubleSide bars render in two passes, so measured draw calls are approximately 2N + 2."
+  ]
+}
