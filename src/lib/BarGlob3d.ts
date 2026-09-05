@@ -94,7 +94,7 @@ export default class BarGlob3d extends Glob3d {
     if (data !== null) this.#createHexBars(data);
     this.#tooltipsManager = new TooltipsManager(
       root,
-      this.globe,
+      this.globeRadius,
       this.camera,
       this.sizes,
       {
@@ -374,8 +374,6 @@ export default class BarGlob3d extends Glob3d {
       backgroundColor: color,
       textColor: '#fff',
     };
-    this.#tooltipsManager.removeTooltips();
-    this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.#updateBarDepthColors();
     this.requestRender();
   }

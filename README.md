@@ -69,8 +69,8 @@ new Glob3d(container, options);
 - **`options`:** (optional) An object with the following properties:
   - **`globeColor`:** The color of the globe (water areas, gaps between hexagons).
   - **`globeRadius`:** The radius of the globe.
-  - **`hexPadding`:** The hexagon's padding, value between 0 and 1.
-  - **`hexRes`:** The resolution of hexagons, integer between 1 and 5.
+  - **`dotPadding`:** The land-dot padding, value between 0 and 1.
+  - **`dotRes`:** The H3 resolution of land dots, integer between 1 and 5.
 
 ### 2. Creating a globe with hexagonal prisms
 

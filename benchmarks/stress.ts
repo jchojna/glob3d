@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 import BarGlob3d from '../src/lib/BarGlob3d';
-import Tooltip from '../src/lib/TooltipElement';
+import TooltipsManager from '../src/lib/TooltipsManager';
 
 const SCENARIOS = {
   small: 100,
@@ -299,7 +299,7 @@ function buildSuiteReport(scenarioReports: Record<Scenario, ScenarioReport>) {
     ),
     notes: [
       'Land dots and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.',
-      'Transparent DoubleSide materials can still issue two passes, so the measured call count is a small constant rather than 1.',
+      'Tooltip overlay DOM is virtualized to tooltipsLimit plus hovered or clicked extras.',
       'Repeated onUpdate disposes replaced bar GPU resources; geometriesAfterUpdates should match the final geometry count.',
       'destroy() cancels the animation loop and removes the canvas and tooltip DOM before the next scenario.',
       'Heap values are raw performance.memory snapshots and can decrease when garbage collection occurs.',
@@ -327,7 +327,7 @@ function compactResult(report: ScenarioReport) {
     pickingTotalMs: report.picking.totalMs,
     pickingMeanPerFrameMs: report.picking.meanMs,
     tooltipTotalMs: report.tooltips.update.totalMs,
-    tooltipMeanPerItemMs: report.tooltips.update.meanMs,
+    tooltipMeanPerFrameMs: report.tooltips.update.meanMs,
     tooltipDomCount: report.tooltips.domCount,
     heapBeforeBytes: report.memory.heapBeforeBytes,
     heapAfterBytes: report.memory.heapAfterBytes,
@@ -380,10 +380,10 @@ function instrumentPicking() {
 }
 
 function instrumentTooltips() {
-  const originalHandleCameraUpdate = Tooltip.prototype.handleCameraUpdate;
-  Tooltip.prototype.handleCameraUpdate = function (...args) {
+  const originalUpdate = TooltipsManager.prototype.update;
+  TooltipsManager.prototype.update = function (...args) {
     const started = performance.now();
-    const value = originalHandleCameraUpdate.apply(this, args);
+    const value = originalUpdate.apply(this, args);
     recordDuration(measurements.tooltip, performance.now() - started);
     return value;
   };

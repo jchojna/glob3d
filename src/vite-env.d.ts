@@ -69,26 +69,11 @@ type GlobePosition = {
 };
 
 interface TooltipProperties {
+  id: string;
   coordinates: THREE.Vector3;
   distance: number;
-  element: HTMLElement;
-  id: string;
-  isVisible: boolean;
-  mask: THREE.Mesh | undefined;
-  point: THREE.Vector3;
-  raycaster: THREE.Raycaster;
-  sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string | undefined;
-  tooltipActiveTextColor: string | undefined;
-  tooltipsLimit: number;
-  handleCameraUpdate: (camera: THREE.Camera) => void;
-  handleMasking: (camera: THREE.Camera) => void;
-  hide: () => void;
-  show: (onTop?: boolean) => void;
-  updateOrder: (
-    index: number,
-    minDistance: number,
-    maxDistance: number
-  ) => void;
-  updateTooltipPosition: () => void;
+  value: number;
+  valueRank: number;
+  city?: string;
+  country?: string;
 }

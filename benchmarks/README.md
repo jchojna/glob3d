@@ -54,8 +54,8 @@ geometry improvements stay visible.
   between scenarios.
 - Picking time wraps the per-frame bar/globe raycast.
 - Tooltip time wraps projection, position, and globe-occlusion work.
-- Tooltip DOM count still tracks every created tooltip element, including
-  hidden ones.
+- Tooltip DOM count tracks the virtualized overlay: the visible limit plus any
+  hovered or clicked extras, not every bar.
 - Heap before/after repeated updates is reported where Chromium exposes
   `performance.memory`.
 

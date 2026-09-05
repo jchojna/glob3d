@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 
-import { getXYZCoordinates } from '../utils/helpers';
-import { tooltipsStyles } from '../utils/styles';
+import { getTooltipScale, getXYZCoordinates } from '../utils/helpers';
+import { ensureTooltipStyles, tooltipsStyles } from '../utils/styles';
+import {
+  getValueRanks,
+  isPointOccludedBySphere,
+  selectVisibleTooltipIndices,
+} from '../utils/tooltipMath';
 import Tooltip from './TooltipElement';
 
 type TooltipsOptions = {
   tooltipActiveBackgroundColor: string;
   tooltipActiveTextColor: string;
   tooltipValueSuffix: string;
-  tooltipsLimit: number;
+  tooltipsLimit: number | null;
 };
 
 type TooltipColors = {
@@ -16,39 +21,68 @@ type TooltipColors = {
   textColor: string;
 };
 
+type TooltipModel = {
+  id: string;
+  coordinates: THREE.Vector3;
+  distance: number;
+  value: number;
+  valueRank: number;
+  city?: string;
+  country?: string;
+};
+
+const _projected = new THREE.Vector3();
+
 export default class TooltipsManager {
   #root: HTMLElement;
-  #globe: THREE.Mesh;
+  #globeRadius: number;
   #camera: THREE.PerspectiveCamera;
   #options: TooltipsOptions;
   #sizes: { width: number; height: number };
-  #tooltips: TooltipProperties[];
+  #models: TooltipModel[];
+  #distances: Float64Array;
+  #indexById: Map<string, number>;
+  #views: Map<string, Tooltip>;
+  #pool: Tooltip[];
   #tooltipsContainer: HTMLElement | null;
   #clickedHexId: string | null;
-  #dirty: boolean;
   #hoveredHexId: string | null;
+  #dirty: boolean;
+  #overlayWidth: number;
+  #overlayHeight: number;
 
   constructor(
     root: HTMLElement,
-    globe: THREE.Mesh,
+    globeRadius: number,
     camera: THREE.PerspectiveCamera,
     sizes: { width: number; height: number },
     options: TooltipsOptions
   ) {
     this.#root = root;
-    this.#globe = globe;
+    this.#globeRadius = globeRadius;
     this.#camera = camera;
     this.#sizes = sizes;
     this.#options = options;
-    this.#tooltips = [];
+    this.#models = [];
+    this.#distances = new Float64Array(0);
+    this.#indexById = new Map();
+    this.#views = new Map();
+    this.#pool = [];
     this.#tooltipsContainer = null;
     this.#clickedHexId = null;
-    this.#dirty = true;
     this.#hoveredHexId = null;
+    this.#dirty = true;
+    this.#overlayWidth = 0;
+    this.#overlayHeight = 0;
+    ensureTooltipStyles();
   }
 
-  get tooltips(): TooltipProperties[] {
-    return this.#tooltips;
+  get models(): TooltipModel[] {
+    return this.#models;
+  }
+
+  get tooltipCount(): number {
+    return this.#views.size;
   }
 
   set clickedHexId(id: string | null) {
@@ -72,102 +106,167 @@ export default class TooltipsManager {
     this.#dirty = true;
   }
 
-  // TODO: refactor the method
   createTooltips(data: HexData[]): HTMLElement | undefined {
+    this.removeTooltips();
     if (!data.length) return;
-    this.#tooltips = data.map(
-      ({ id, center, country, city, value, offsetFromCenter }: HexData) => {
-        const valueRank = this.#getValueRank(
-          value,
-          data.map((hex) => hex.value)
-        );
-        const coordinates = getXYZCoordinates(
-          center[0],
-          center[1],
-          offsetFromCenter
-        );
-        return new Tooltip(
-          id,
-          coordinates,
-          this.#sizes,
-          this.#options.tooltipsLimit || data.length,
-          value,
-          {
-            city,
-            country,
-            mask: this.#globe,
-            tooltipActiveBackgroundColor:
-              this.#options.tooltipActiveBackgroundColor,
-            tooltipActiveTextColor: this.#options.tooltipActiveTextColor,
-            tooltipValueSuffix: this.#options.tooltipValueSuffix,
-            valueRank,
-          }
-        );
-      }
-    );
-    const tooltipsElements = this.#tooltips.map((tooltip) => tooltip.element);
+
+    const ranks = getValueRanks(data.map((hex) => hex.value));
+    this.#models = data.map((hex, index) => {
+      const { x, y, z } = getXYZCoordinates(
+        hex.center[0],
+        hex.center[1],
+        hex.offsetFromCenter
+      );
+      return {
+        id: hex.id,
+        coordinates: new THREE.Vector3(x, y, z),
+        distance: 0,
+        value: hex.value,
+        valueRank: ranks[index],
+        city: hex.city,
+        country: hex.country,
+      };
+    });
+    this.#distances = new Float64Array(data.length);
+    this.#models.forEach((model, index) => {
+      this.#indexById.set(model.id, index);
+    });
+
     const tooltipsContainer = document.createElement('div');
     tooltipsContainer.style.cssText = tooltipsStyles;
-    tooltipsContainer.append(...tooltipsElements);
     this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
     this.#dirty = true;
+    return tooltipsContainer;
   }
 
   removeTooltips() {
+    this.#views.forEach((view) => view.element.remove());
+    this.#views.clear();
+    this.#pool = [];
     this.#tooltipsContainer?.remove();
     this.#tooltipsContainer = null;
-    this.#tooltips = [];
+    this.#models = [];
+    this.#distances = new Float64Array(0);
+    this.#indexById.clear();
     this.#clickedHexId = null;
     this.#hoveredHexId = null;
     this.#dirty = false;
+    this.#overlayWidth = 0;
+    this.#overlayHeight = 0;
   }
 
-  #getValueRank(value: number, values: number[]): number {
-    return values.filter((val: number) => val > value).length + 1;
+  #getIndex(id: string | null): number | null {
+    if (id === null) return null;
+    const index = this.#indexById.get(id);
+    return index === undefined ? null : index;
   }
 
-  // update tooltips reference points distances to the camera
-  #updateCameraForTooltips() {
-    if (!this.#tooltips) return;
-    this.#tooltips.forEach((tooltip) =>
-      tooltip.handleCameraUpdate(this.#camera)
-    );
-  }
-
-  #updateTooltipsOrder() {
-    if (!this.#tooltips) return;
-    const sortedTooltips = this.#tooltips.sort(
-      (a, b) => a.distance - b.distance
-    );
-    const limit = this.#options.tooltipsLimit || sortedTooltips.length;
-    let minDistance = Infinity;
-    let maxDistance = -Infinity;
-    for (let i = 0; i < Math.min(limit, sortedTooltips.length); i += 1) {
-      minDistance = Math.min(minDistance, sortedTooltips[i].distance);
-      maxDistance = Math.max(maxDistance, sortedTooltips[i].distance);
+  #updateDistances() {
+    const cameraPosition = this.#camera.position;
+    for (let i = 0; i < this.#models.length; i += 1) {
+      const distance = this.#models[i].coordinates.distanceTo(cameraPosition);
+      this.#distances[i] = distance;
+      this.#models[i].distance = distance;
     }
+  }
 
-    sortedTooltips.forEach((tooltip, i) => {
-      if (
-        tooltip.id === this.#hoveredHexId ||
-        tooltip.id === this.#clickedHexId
-      ) {
-        tooltip.show(true);
-      } else if (
-        typeof this.#options.tooltipsLimit === 'number' &&
-        i < this.#options.tooltipsLimit
-      ) {
-        tooltip.updateOrder(i, minDistance, maxDistance);
-        tooltip.show();
-      } else {
-        tooltip.hide();
-      }
+  #acquireView(model: TooltipModel): Tooltip {
+    const view = this.#pool.pop() ?? new Tooltip();
+    view.bind({
+      id: model.id,
+      value: model.value,
+      valueRank: model.valueRank,
+      city: model.city,
+      country: model.country,
+      tooltipValueSuffix: this.#options.tooltipValueSuffix,
+      accentColor: this.#options.tooltipActiveBackgroundColor,
+    });
+    this.#tooltipsContainer?.appendChild(view.element);
+    this.#views.set(model.id, view);
+    return view;
+  }
+
+  #releaseView(id: string, view: Tooltip) {
+    view.hide();
+    view.element.remove();
+    view.id = null;
+    this.#views.delete(id);
+    this.#pool.push(view);
+  }
+
+  #syncVisibleViews() {
+    if (!this.#tooltipsContainer || !this.#models.length) return;
+
+    const limit =
+      typeof this.#options.tooltipsLimit === 'number'
+        ? this.#options.tooltipsLimit
+        : this.#models.length;
+    const selection = selectVisibleTooltipIndices(this.#distances, limit, [
+      this.#getIndex(this.#hoveredHexId),
+      this.#getIndex(this.#clickedHexId),
+    ]);
+    const selectedIds = new Set(
+      selection.items.map((item) => this.#models[item.index].id)
+    );
+
+    this.#views.forEach((view, id) => {
+      if (!selectedIds.has(id)) this.#releaseView(id, view);
+    });
+
+    const cameraPosition = this.#camera.position;
+    const { minDistance, maxDistance } = selection;
+
+    selection.items.forEach((item) => {
+      const model = this.#models[item.index];
+      const view = this.#views.get(model.id) ?? this.#acquireView(model);
+      const isHovered = model.id === this.#hoveredHexId;
+      const isClicked = model.id === this.#clickedHexId;
+      const isActive = isHovered || isClicked;
+      const occluded = isPointOccludedBySphere(
+        model.coordinates,
+        cameraPosition,
+        this.#globeRadius
+      );
+      const visible = isActive || (item.inLimit && !occluded);
+
+      _projected.copy(model.coordinates).project(this.#camera);
+      const posX = ((_projected.x + 1) / 2) * this.#sizes.width;
+      const posY = ((_projected.y - 1) / 2) * this.#sizes.height * -1;
+      const scale =
+        visible && minDistance <= maxDistance
+          ? getTooltipScale(model.distance, minDistance, maxDistance)
+          : 0;
+      const zIndex = isClicked
+        ? limit + 2
+        : isHovered
+        ? limit + 1
+        : Math.max(limit - item.order, 0);
+
+      view.apply({
+        posX,
+        posY,
+        scale,
+        zIndex,
+        visible,
+        active: isActive,
+        accentColor: this.#options.tooltipActiveBackgroundColor,
+        activeBackgroundColor: this.#options.tooltipActiveBackgroundColor,
+        activeTextColor: this.#options.tooltipActiveTextColor,
+      });
     });
   }
 
   #syncOverlaySize() {
     if (!this.#tooltipsContainer) return;
+    if (
+      this.#overlayWidth === this.#sizes.width &&
+      this.#overlayHeight === this.#sizes.height
+    ) {
+      return;
+    }
+    this.#overlayWidth = this.#sizes.width;
+    this.#overlayHeight = this.#sizes.height;
     this.#tooltipsContainer.style.width = `${this.#sizes.width}px`;
     this.#tooltipsContainer.style.height = `${this.#sizes.height}px`;
   }
@@ -180,12 +279,10 @@ export default class TooltipsManager {
     layoutChanged: boolean;
   }) {
     if (layoutChanged) this.#syncOverlaySize();
-    if (cameraChanged || layoutChanged) {
-      this.#updateCameraForTooltips();
-      this.#dirty = true;
-    }
+    if (cameraChanged || layoutChanged) this.#dirty = true;
     if (this.#dirty) {
-      this.#updateTooltipsOrder();
+      this.#updateDistances();
+      this.#syncVisibleViews();
       this.#dirty = false;
     }
   }

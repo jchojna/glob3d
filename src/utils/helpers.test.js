@@ -176,24 +176,28 @@ describe('getTooltip', () => {
 
   it('returns tooltip without country and city', () => {
     const tooltipHtml = getTooltip(...params);
-    const document = new DOMParser().parseFromString(tooltipHtml, 'text/html');
-    const tooltipValue = document.querySelector('[data-id=tooltipValue]');
-    const tooltipRank = document.querySelector('[data-id=tooltipRank]');
-    const tooltipCountry = document.querySelector('[data-id=tooltipCountry]');
-    const tooltipCity = document.querySelector('[data-id=tooltipCity]');
+    const tooltipValue = tooltipHtml.querySelector('[data-id=tooltipValue]');
+    const tooltipRank = tooltipHtml.querySelector('[data-id=tooltipRank]');
+    const tooltipCountry = tooltipHtml.querySelector(
+      '[data-id=tooltipCountry]'
+    );
+    const tooltipCity = tooltipHtml.querySelector('[data-id=tooltipCity]');
 
     expect(tooltipValue.textContent).toBe('14 people');
     expect(tooltipRank.textContent).toBe('4');
-    expect(tooltipRank.style.color).toBe('orange');
+    expect(tooltipHtml.style.getPropertyValue('--tooltip-accent')).toBe(
+      'orange'
+    );
     expect(tooltipCountry).toBe(null);
     expect(tooltipCity).toBe(null);
   });
 
   it('returns tooltip with country and without city', () => {
     const tooltipHtml = getTooltip(...params, 'United States');
-    const document = new DOMParser().parseFromString(tooltipHtml, 'text/html');
-    const tooltipCountry = document.querySelector('[data-id=tooltipCountry]');
-    const tooltipCity = document.querySelector('[data-id=tooltipCity]');
+    const tooltipCountry = tooltipHtml.querySelector(
+      '[data-id=tooltipCountry]'
+    );
+    const tooltipCity = tooltipHtml.querySelector('[data-id=tooltipCity]');
 
     expect(tooltipCountry.textContent).toBe('United States');
     expect(tooltipCity).toBe(null);
@@ -201,9 +205,10 @@ describe('getTooltip', () => {
 
   it('returns tooltip with city and without country', () => {
     const tooltipHtml = getTooltip(...params, undefined, 'New York');
-    const document = new DOMParser().parseFromString(tooltipHtml, 'text/html');
-    const tooltipCountry = document.querySelector('[data-id=tooltipCountry]');
-    const tooltipCity = document.querySelector('[data-id=tooltipCity]');
+    const tooltipCountry = tooltipHtml.querySelector(
+      '[data-id=tooltipCountry]'
+    );
+    const tooltipCity = tooltipHtml.querySelector('[data-id=tooltipCity]');
 
     expect(tooltipCountry).toBe(null);
     expect(tooltipCity.textContent).toBe('New York');
@@ -211,9 +216,10 @@ describe('getTooltip', () => {
 
   it('returns tooltip with country and city specified', () => {
     const tooltipHtml = getTooltip(...params, 'USA', 'New York');
-    const document = new DOMParser().parseFromString(tooltipHtml, 'text/html');
-    const tooltipCountry = document.querySelector('[data-id=tooltipCountry]');
-    const tooltipCity = document.querySelector('[data-id=tooltipCity]');
+    const tooltipCountry = tooltipHtml.querySelector(
+      '[data-id=tooltipCountry]'
+    );
+    const tooltipCity = tooltipHtml.querySelector('[data-id=tooltipCity]');
 
     expect(tooltipCountry.textContent).toBe('USA');
     expect(tooltipCity.textContent).toBe('New York');
