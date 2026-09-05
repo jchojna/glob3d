@@ -1,20 +1,29 @@
 import * as THREE from 'three';
-// @ts-expect-error missing types
-import { ConicPolygonGeometry } from 'three-conic-polygon-geometry';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 // @ts-expect-error missing types
 import world from 'world-map-geojson';
 
 import matcap from '../assets/textures/matcap_1.png';
 import defaultOpts from '../utils/defaultOpts';
-import { getH3Indexes, getHexBin, getNewGeoJson } from '../utils/helpers';
+import {
+  getH3Indexes,
+  getHexBin,
+  getNewGeoJson,
+  getXYZCoordinates,
+} from '../utils/helpers';
+
+const _center = new THREE.Vector3();
+const _localX = new THREE.Vector3();
+const _localY = new THREE.Vector3();
+const _localZ = new THREE.Vector3();
+const _matrix = new THREE.Matrix4();
+const _vertex = new THREE.Vector3();
+const _worldUp = new THREE.Vector3(0, 1, 0);
 
 export default class Glob3d {
   // private fields
   #animationFrameId: number | null;
   #aspectRatio: number;
-  #bufferGeometryUtils;
   #canvas: HTMLElement;
   #controls: OrbitControls;
   #destroyed: boolean;
@@ -33,10 +42,10 @@ export default class Glob3d {
   globe: THREE.Mesh;
   globeColor: string;
   globeRadius: number;
-  hexGlobe: THREE.Mesh | null;
-  hexOpacity: number;
-  hexPadding: number;
-  hexRes: number;
+  dotGlobe: THREE.InstancedMesh | null;
+  dotOpacity: number;
+  dotPadding: number;
+  dotRes: number;
   mouse: THREE.Vector2;
   root: HTMLElement;
   scene: THREE.Scene;
@@ -46,9 +55,9 @@ export default class Glob3d {
     const {
       globeColor = defaultOpts.globeColor,
       globeRadius = defaultOpts.globeRadius,
-      hexOpacity = defaultOpts.hexOpacity,
-      hexPadding = defaultOpts.hexPadding,
-      hexRes = defaultOpts.hexRes,
+      dotOpacity = defaultOpts.dotOpacity,
+      dotPadding = defaultOpts.dotPadding,
+      dotRes = defaultOpts.dotRes,
     } = options;
 
     this.root = root;
@@ -56,7 +65,6 @@ export default class Glob3d {
     this.root.style.overflow = 'hidden';
     this.#animationFrameId = null;
     this.#aspectRatio = root.clientWidth / root.clientHeight;
-    this.#bufferGeometryUtils = BufferGeometryUtils;
     this.#canvas = this.#createCanvas(this.root);
     this.#destroyed = false;
     this.#frameDirty = true;
@@ -74,10 +82,10 @@ export default class Glob3d {
 
     this.globeColor = globeColor;
     this.globeRadius = globeRadius;
-    this.hexGlobe = null;
-    this.hexOpacity = hexOpacity;
-    this.hexPadding = Math.max(0, Math.min(hexPadding, 1));
-    this.hexRes = Math.max(1, Math.min(hexRes, 5));
+    this.dotGlobe = null;
+    this.dotOpacity = dotOpacity;
+    this.dotPadding = Math.max(0, Math.min(dotPadding, 1));
+    this.dotRes = Math.max(1, Math.min(dotRes, 5));
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
     this.sizes = {
@@ -109,7 +117,7 @@ export default class Glob3d {
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.render(this.scene, this.camera);
 
-    this.#createHexGlobe();
+    this.#createDotGlobe();
     this.#registerMouseMoveEvent();
     this.#registerResizeEvent();
     this.#animationFrameId = window.requestAnimationFrame(this.#tick);
@@ -127,62 +135,89 @@ export default class Glob3d {
     return canvas;
   }
 
-  #createHexGlobe() {
-    const h3Indexes = getH3Indexes(world.features, this.hexRes);
+  #createDotGlobe() {
+    const h3Indexes = getH3Indexes(world.features, this.dotRes);
     const material = new THREE.MeshMatcapMaterial({
-      opacity: this.hexOpacity,
+      opacity: this.dotOpacity,
       transparent: true,
     });
     // TODO: should it be possible to set other matcap textures?
     material.matcap = this.#textureLoader.load(matcap);
-    const hexBins = h3Indexes.map((index) => getHexBin(index));
-    this.hexGlobe = new THREE.Mesh(
-      this.#updateHexGlobeGeometry(hexBins),
-      material
+    const dotBins = h3Indexes.map((index) => getHexBin(index));
+    this.dotGlobe = new THREE.InstancedMesh(
+      new THREE.CircleGeometry(1, 24),
+      material,
+      dotBins.length
     );
-    this.scene.add(this.hexGlobe);
+    this.#updateDotGlobeInstances(dotBins);
+    this.scene.add(this.dotGlobe);
     this.requestRender();
   }
 
-  #getHexOffsetFromGlobe(radius: number, hexRes: number) {
-    return radius * (Math.pow(5, 5) - Math.pow(hexRes, 5)) * 0.000001;
+  #getDotOffsetFromGlobe(radius: number, dotRes: number) {
+    return radius * (Math.pow(5, 5) - Math.pow(dotRes, 5)) * 0.000001;
   }
 
-  #updateHexGlobeGeometry(hexBins: HexBin[]) {
-    if (!hexBins.length) return new THREE.BufferGeometry();
+  #updateDotGlobeInstances(dotBins: HexBin[]) {
+    const dotGlobe = this.dotGlobe;
+    if (!dotGlobe || !dotBins.length) return;
 
-    const geometries = hexBins.map((hex: HexBin) => {
-      const geoJson = getNewGeoJson(hex, this.hexPadding);
-      const offset = this.#getHexOffsetFromGlobe(this.globeRadius, this.hexRes);
-      return new ConicPolygonGeometry(
-        [geoJson], // GeoJson polygon coordinates
-        this.globeRadius + offset, // bottom height
-        this.globeRadius + offset, // top height
-        true, // closed bottom
-        true, // closed top
-        false // include sides
-      );
+    const offset = this.#getDotOffsetFromGlobe(this.globeRadius, this.dotRes);
+    dotBins.forEach((dot, index) => {
+      dotGlobe.setMatrixAt(index, this.#setCircleMatrix(dot, offset));
     });
-    const mergedGeometry =
-      this.#bufferGeometryUtils.mergeGeometries(geometries) ??
-      new THREE.BufferGeometry();
-    geometries.forEach((geometry) => geometry.dispose());
-    return mergedGeometry;
+    dotGlobe.instanceMatrix.needsUpdate = true;
+    dotGlobe.computeBoundingSphere();
   }
 
-  #updateHexOpacity(opacity: number) {
-    if (this.hexGlobe) {
-      (this.hexGlobe.material as THREE.Material).opacity = opacity;
+  #setCircleMatrix(dot: HexBin, offset: number) {
+    const center = getXYZCoordinates(
+      dot.center[0],
+      dot.center[1],
+      this.globeRadius
+    );
+    _center.set(center.x, center.y, center.z);
+    _localZ.copy(_center).normalize();
+
+    const paddedVertices = getNewGeoJson(dot, this.dotPadding);
+    let radius = 0;
+    for (let i = 0; i < paddedVertices.length; i += 1) {
+      const [lng, lat] = paddedVertices[i];
+      const vertex = getXYZCoordinates(lat, lng, this.globeRadius);
+      _vertex.set(vertex.x, vertex.y, vertex.z).sub(_center);
+      _vertex.addScaledVector(_localZ, -_vertex.dot(_localZ));
+      radius += _vertex.length();
+      if (i === 0) _localX.copy(_vertex);
+    }
+    radius = paddedVertices.length > 0 ? radius / paddedVertices.length : 0;
+    if (radius < 1e-4) radius = 1e-4;
+    if (_localX.lengthSq() < 1e-8) {
+      _localX.crossVectors(_localZ, _worldUp);
+      if (_localX.lengthSq() < 1e-8) _localX.set(1, 0, 0);
+    }
+    _localX.normalize();
+    _localY.crossVectors(_localZ, _localX).normalize();
+
+    _center.addScaledVector(_localZ, offset);
+    _matrix.makeBasis(_localX, _localY, _localZ);
+    _matrix.scale(_vertex.set(radius, radius, 1));
+    _matrix.setPosition(_center);
+    return _matrix;
+  }
+
+  #updateDotOpacity(opacity: number) {
+    if (this.dotGlobe) {
+      (this.dotGlobe.material as THREE.Material).opacity = opacity;
       this.requestRender();
     }
   }
 
-  fadeOutHexes() {
-    this.#updateHexOpacity(0.3);
+  fadeOutDots() {
+    this.#updateDotOpacity(0.3);
   }
 
-  fadeInHexes() {
-    this.#updateHexOpacity(1);
+  fadeInDots() {
+    this.#updateDotOpacity(1);
   }
 
   setGlobeColor(color: string) {

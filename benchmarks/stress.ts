@@ -66,7 +66,7 @@ async function run() {
 
   const constructionStarted = performance.now();
   const globe = new BarGlob3d(root, [], {
-    hexRes,
+    dotRes: hexRes,
     tooltipsLimit: tooltipLimit,
   });
   const constructionMs = performance.now() - constructionStarted;

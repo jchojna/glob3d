@@ -46,9 +46,9 @@ interface GlobeDataWithOffsets extends GlobeData {
 type GlobeOptions = {
   globeColor?: string;
   globeRadius?: number;
-  hexOpacity?: number;
-  hexPadding?: number;
-  hexRes?: number;
+  dotOpacity?: number;
+  dotPadding?: number;
+  dotRes?: number;
 };
 
 type BarGlobeOptions = {
