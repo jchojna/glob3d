@@ -3,7 +3,7 @@
   "description": "A 3D globe visualization library based on Three.js",
   "author": "Jakub Chojna",
   "license": "MIT",
-  "version": "0.9.1",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/jchojna/glob3d.git"

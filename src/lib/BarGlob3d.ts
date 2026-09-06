@@ -21,9 +21,7 @@ export default class BarGlob3d extends Glob3d {
   #aggregatedData: HexData[];
   #barBasePositions: Float32Array | null;
   #barFarColor: THREE.Color;
-  #barOpacity: number;
   #barActiveColor: string;
-  #barActiveOpacity: number;
   #clickedHexIndex: number | null;
   #globePosition: GlobePosition;
   #hexBars: THREE.InstancedMesh | null;
@@ -31,7 +29,6 @@ export default class BarGlob3d extends Glob3d {
   #highestBar: number;
   #hoveredHexId: string | null;
   #hoveredHexIndex: number | null;
-  #instanceOpacities: THREE.InstancedBufferAttribute | null;
   #intersections: THREE.Intersection[];
   #loaderManager: LoaderManager;
   #pickableObjects: THREE.Object3D[];
@@ -47,9 +44,7 @@ export default class BarGlob3d extends Glob3d {
     options: BarGlobeOptions = {}
   ) {
     const {
-      barOpacity,
       barActiveColor,
-      barActiveOpacity,
       globeColor,
       globeRadius,
       dotPadding,
@@ -71,9 +66,7 @@ export default class BarGlob3d extends Glob3d {
     this.#aggregatedData = [];
     this.#barBasePositions = null;
     this.#barFarColor = new THREE.Color(globeColor);
-    this.#barOpacity = barOpacity;
     this.#barActiveColor = barActiveColor;
-    this.#barActiveOpacity = barActiveOpacity;
     this.#clickedHexIndex = null;
     this.#globePosition = { x: 0, y: 0 };
     this.#projectedGlobePosition = new THREE.Vector3();
@@ -83,7 +76,6 @@ export default class BarGlob3d extends Glob3d {
     this.#highestBar = highestBar;
     this.#hoveredHexId = null;
     this.#hoveredHexIndex = null;
-    this.#instanceOpacities = null;
     this.#intersections = [];
     this.#loaderManager = new LoaderManager(root);
     this.#pickableObjects = [this.globe];
@@ -204,13 +196,8 @@ export default class BarGlob3d extends Glob3d {
 
   #visualizeResult(aggregatedData: HexData[]) {
     const count = aggregatedData.length;
-    const opacities = new Float32Array(count);
-    const geometry = this.#createBarGeometry();
-    const opacityAttribute = new THREE.InstancedBufferAttribute(opacities, 1);
-    geometry.setAttribute('instanceOpacity', opacityAttribute);
-
     const hexBars = new THREE.InstancedMesh(
-      geometry,
+      this.#createBarGeometry(),
       this.#createBarMaterial(),
       count
     );
@@ -218,7 +205,6 @@ export default class BarGlob3d extends Glob3d {
     aggregatedData.forEach((hexData, index) => {
       const matrix = this.#setBarMatrix(hexData);
       hexBars.setMatrixAt(index, matrix);
-      opacities[index] = this.#barOpacity;
       const offset = index * 3;
       barBasePositions[offset] = matrix.elements[12];
       barBasePositions[offset + 1] = matrix.elements[13];
@@ -234,7 +220,6 @@ export default class BarGlob3d extends Glob3d {
     this.#hexBars = hexBars;
     this.#barBasePositions = barBasePositions;
     this.#updateBarDepthColors();
-    this.#instanceOpacities = opacityAttribute;
     this.#hexBarsGroup.add(hexBars);
     this.#pickableObjects.push(hexBars);
     if (typeof this.#tooltipsLimit != 'number') this.#tooltipsLimit = count;
@@ -249,21 +234,8 @@ export default class BarGlob3d extends Glob3d {
       ((this.#projectedGlobePosition.y - 1) / 2) * this.sizes.height * -1;
   }
 
-  #highlightHex(index: number | null) {
-    this.#setBarAppearance(index, true);
-  }
-
-  #unhighlightHex(index: number | null) {
-    this.#setBarAppearance(index, false);
-  }
-
-  #setBarAppearance(index: number | null, active: boolean) {
-    if (index === null || !this.#hexBars || !this.#instanceOpacities) return;
-    this.#instanceOpacities.setX(
-      index,
-      active ? this.#barActiveOpacity : this.#barOpacity
-    );
-    this.#instanceOpacities.needsUpdate = true;
+  #refreshBarAppearance() {
+    if (!this.#hexBars) return;
     this.#updateBarDepthColors();
     this.requestRender();
   }
@@ -295,22 +267,19 @@ export default class BarGlob3d extends Glob3d {
         const hoveredHexId = String(hoveredHexIndex);
 
         if (this.#hoveredHexId !== hoveredHexId) {
-          const previousHoveredIndex = this.#hoveredHexIndex;
           this.#hoveredHexIndex = hoveredHexIndex;
           this.#hoveredHexId = hoveredHexId;
           this.#tooltipsManager.hoveredHexId = hoveredHexId;
-          previousHoveredIndex !== null &&
-            previousHoveredIndex !== this.#clickedHexIndex &&
-            this.#unhighlightHex(previousHoveredIndex);
-          this.#highlightHex(hoveredHexIndex);
+          this.#refreshBarAppearance();
         }
       } else if (this.#hoveredHexIndex !== null) {
         const previousHoveredIndex = this.#hoveredHexIndex;
         this.#hoveredHexIndex = null;
         this.#hoveredHexId = null;
         this.#tooltipsManager.hoveredHexId = null;
-        previousHoveredIndex !== this.#clickedHexIndex &&
-          this.#unhighlightHex(previousHoveredIndex);
+        if (previousHoveredIndex !== this.#clickedHexIndex) {
+          this.#refreshBarAppearance();
+        }
       }
     }
 
@@ -328,20 +297,13 @@ export default class BarGlob3d extends Glob3d {
 
   #handleClick = () => {
     if (this.#hoveredHexId !== null && this.#hoveredHexIndex !== null) {
-      const previousClickedIndex = this.#clickedHexIndex;
       this.#clickedHexIndex = this.#hoveredHexIndex;
       this.#tooltipsManager.clickedHexId = this.#hoveredHexId;
-      previousClickedIndex !== null &&
-        previousClickedIndex !== this.#clickedHexIndex &&
-        this.#unhighlightHex(previousClickedIndex);
-      this.#highlightHex(this.#clickedHexIndex);
     } else {
-      const previousClickedIndex = this.#clickedHexIndex;
       this.#clickedHexIndex = null;
       this.#tooltipsManager.clickedHexId = null;
-      this.#unhighlightHex(previousClickedIndex);
     }
-    this.requestRender();
+    this.#refreshBarAppearance();
   };
 
   #removeHexBars() {
@@ -352,7 +314,6 @@ export default class BarGlob3d extends Glob3d {
       this.#hexBars.dispose();
       this.#hexBars = null;
     }
-    this.#instanceOpacities = null;
     this.#barBasePositions = null;
     this.#pickableObjects.length = 1;
     this.#intersections.length = 0;

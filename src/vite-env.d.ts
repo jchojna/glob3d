@@ -53,9 +53,7 @@ type GlobeOptions = {
 
 type BarGlobeOptions = {
   barColor?: string;
-  barOpacity?: number;
   barActiveColor?: string;
-  barActiveOpacity?: number;
   highestBar?: number;
   tooltipActiveBackgroundColor?: string;
   tooltipActiveTextColor?: string;

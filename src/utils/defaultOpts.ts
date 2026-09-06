@@ -1,8 +1,6 @@
 export default {
   barColor: '#dd176d',
-  barOpacity: 0.6,
   barActiveColor: '#dd176d',
-  barActiveOpacity: 0.9,
   globeColor: '#1a166e',
   globeRadius: 100,
   dotOpacity: 1,
