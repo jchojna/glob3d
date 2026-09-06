@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+import type { BarGlobeOptions, GlobeData } from '../types';
 import defaultOpts from '../utils/defaultOpts';
 import { getNewGeoJson, getXYZCoordinates } from '../utils/helpers';
 import DataManager from './DataManager';
@@ -49,6 +50,7 @@ export default class BarGlob3d extends Glob3d {
       globeRadius,
       landCellPadding,
       landCellRes,
+      autoRotate,
       highestBar,
       tooltipsLimit,
       tooltipValueSuffix,
@@ -59,6 +61,7 @@ export default class BarGlob3d extends Glob3d {
       globeRadius,
       landCellPadding,
       landCellRes,
+      autoRotate,
     });
 
     this.#aggregatedData = [];
@@ -336,7 +339,7 @@ export default class BarGlob3d extends Glob3d {
     this.requestRender();
   }
 
-  setActiveColor(color: string) {
+  setBarActiveColor(color: string) {
     this.#barActiveColor = color;
     this.#tooltipsManager.accentColor = color;
     this.#updateBarDepthColors();

@@ -26,36 +26,6 @@ type GeojsonFeature = {
   };
 };
 
-interface GlobeData {
-  country: string;
-  city: string;
-  coordinates: {
-    lon: number;
-    lat: number;
-  };
-  value: number;
-}
-
-interface GlobeDataWithOffsets extends GlobeData {
-  offsetFromCenter: number;
-}
-
-type GlobeOptions = {
-  globeColor?: string;
-  globeRadius?: number;
-  landCellOpacity?: number;
-  landCellPadding?: number;
-  landCellRes?: number;
-};
-
-type BarGlobeOptions = {
-  barColor?: string;
-  barActiveColor?: string;
-  highestBar?: number;
-  tooltipsLimit?: number;
-  tooltipValueSuffix?: string;
-} & GlobeOptions;
-
 type GlobePosition = {
   x: number;
   y: number;

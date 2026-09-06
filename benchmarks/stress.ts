@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import BarGlob3d from '../src/lib/BarGlob3d';
 import TooltipsManager from '../src/lib/TooltipsManager';
+import type { GlobeData } from '../src/types';
 
 const SCENARIOS = {
   small: 100,

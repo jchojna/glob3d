@@ -1,5 +1,11 @@
 import { latLngToCell } from 'h3-js';
+
+import type { GlobeData } from '../types';
 import { getLandCell } from '../utils/helpers';
+
+type GlobeDataWithOffsets = GlobeData & {
+  offsetFromCenter: number;
+};
 
 export default class DataManager {
   #dataWithOffsets: GlobeDataWithOffsets[];

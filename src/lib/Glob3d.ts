@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import world from 'world-map-geojson';
 
 import matcap from '../assets/textures/matcap_1.png';
+import type { GlobeOptions } from '../types';
 import defaultOpts from '../utils/defaultOpts';
 import {
   getH3Indexes,
@@ -43,7 +44,6 @@ export default class Glob3d {
   globeColor: string;
   globeRadius: number;
   landCellGlobe: THREE.InstancedMesh | null;
-  landCellOpacity: number;
   landCellPadding: number;
   landCellRes: number;
   mouse: THREE.Vector2;
@@ -55,9 +55,9 @@ export default class Glob3d {
     const {
       globeColor = defaultOpts.globeColor,
       globeRadius = defaultOpts.globeRadius,
-      landCellOpacity = defaultOpts.landCellOpacity,
       landCellPadding = defaultOpts.landCellPadding,
       landCellRes = defaultOpts.landCellRes,
+      autoRotate = defaultOpts.autoRotate,
     } = options;
 
     this.root = root;
@@ -83,7 +83,6 @@ export default class Glob3d {
     this.globeColor = globeColor;
     this.globeRadius = globeRadius;
     this.landCellGlobe = null;
-    this.landCellOpacity = landCellOpacity;
     this.landCellPadding = Math.max(0, Math.min(landCellPadding, 1));
     this.landCellRes = Math.max(1, Math.min(landCellRes, 5));
     this.mouse = new THREE.Vector2();
@@ -109,7 +108,7 @@ export default class Glob3d {
     this.scene.add(this.camera);
 
     this.#controls = new OrbitControls(this.camera, this.#canvas);
-    this.#controls.autoRotate = true;
+    this.#controls.autoRotate = autoRotate;
     this.#controls.autoRotateSpeed = 0.1;
     this.#controls.enableDamping = true;
 
@@ -138,7 +137,7 @@ export default class Glob3d {
   #createLandCellGlobe() {
     const h3Indexes = getH3Indexes(world.features, this.landCellRes);
     const material = new THREE.MeshMatcapMaterial({
-      opacity: this.landCellOpacity,
+      opacity: 1,
       transparent: true,
     });
     // TODO: should it be possible to set other matcap textures?

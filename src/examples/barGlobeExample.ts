@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
       globe.onUpdate(data);
     });
     colorButton.addEventListener('click', () => {
-      globe.setActiveColor('blue');
+      globe.setBarActiveColor('blue');
     });
   }
 });

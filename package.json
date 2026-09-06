@@ -11,11 +11,13 @@
   "type": "module",
   "main": "./dist/glob3d.umd.cjs",
   "module": "./dist/glob3d.js",
+  "types": "./dist/glob3d.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/glob3d.d.ts",
       "import": "./dist/glob3d.js",
       "require": "./dist/glob3d.umd.cjs"
     }
@@ -23,7 +25,7 @@
   "scripts": {
     "dev": "vite",
     "benchmark:stress": "vite --host 127.0.0.1",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && cp types/glob3d.d.ts dist/glob3d.d.ts",
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "type-check": "tsc --noEmit",
