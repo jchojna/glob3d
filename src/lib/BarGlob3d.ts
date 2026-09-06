@@ -15,11 +15,11 @@ const _localZ = new THREE.Vector3();
 const _matrix = new THREE.Matrix4();
 const _vertex = new THREE.Vector3();
 const _worldUp = new THREE.Vector3(0, 1, 0);
-const _nearColor = new THREE.Color(0xffffff);
 
 export default class BarGlob3d extends Glob3d {
   #aggregatedData: BarData[];
   #barBasePositions: Float32Array | null;
+  #barNearColor: THREE.Color;
   #barFarColor: THREE.Color;
   #barActiveColor: string;
   #clickedBarIndex: number | null;
@@ -44,6 +44,7 @@ export default class BarGlob3d extends Glob3d {
   ) {
     const {
       barActiveColor,
+      barColor,
       globeColor,
       globeRadius,
       landCellPadding,
@@ -62,6 +63,7 @@ export default class BarGlob3d extends Glob3d {
 
     this.#aggregatedData = [];
     this.#barBasePositions = null;
+    this.#barNearColor = new THREE.Color(barColor);
     this.#barFarColor = new THREE.Color(globeColor);
     this.#barActiveColor = barActiveColor;
     this.#clickedBarIndex = null;
@@ -141,7 +143,9 @@ export default class BarGlob3d extends Glob3d {
           0,
           1
         );
-        _color.copy(_nearColor).lerp(this.#barFarColor, depth * (2 - depth));
+        _color
+          .copy(this.#barNearColor)
+          .lerp(this.#barFarColor, depth * (2 - depth));
       }
       this.#bars.setColorAt(index, _color);
     }
@@ -324,6 +328,12 @@ export default class BarGlob3d extends Glob3d {
     this.#barFarColor.set(color);
     this.#tooltipsManager.globeColor = color;
     this.#updateBarDepthColors();
+  }
+
+  setBarColor(color: string) {
+    this.#barNearColor.set(color);
+    this.#updateBarDepthColors();
+    this.requestRender();
   }
 
   setActiveColor(color: string) {
