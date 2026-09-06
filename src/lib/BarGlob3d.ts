@@ -35,7 +35,6 @@ export default class BarGlob3d extends Glob3d {
   #projectedGlobePosition: THREE.Vector3;
   #raycaster: THREE.Raycaster;
   #tooltipsManager: TooltipsManager;
-  #tooltipActiveBackgroundColor: string;
   #tooltipsLimit: number | null;
 
   constructor(
@@ -47,11 +46,9 @@ export default class BarGlob3d extends Glob3d {
       barActiveColor,
       globeColor,
       globeRadius,
-      dotPadding,
-      dotRes,
+      landCellPadding,
+      landCellRes,
       highestBar,
-      tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
       tooltipsLimit,
       tooltipValueSuffix,
     } = { ...defaultOpts, ...options };
@@ -59,8 +56,8 @@ export default class BarGlob3d extends Glob3d {
     super(root, {
       globeColor,
       globeRadius,
-      dotPadding,
-      dotRes,
+      landCellPadding,
+      landCellRes,
     });
 
     this.#aggregatedData = [];
@@ -80,7 +77,6 @@ export default class BarGlob3d extends Glob3d {
     this.#loaderManager = new LoaderManager(root);
     this.#pickableObjects = [this.globe];
     this.#raycaster = new THREE.Raycaster();
-    this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipsLimit = tooltipsLimit;
 
     if (data !== null) this.#createBars(data);
@@ -90,8 +86,7 @@ export default class BarGlob3d extends Glob3d {
       this.camera,
       this.sizes,
       {
-        tooltipActiveBackgroundColor: this.#tooltipActiveBackgroundColor,
-        tooltipActiveTextColor,
+        accentColor: this.#barActiveColor,
         tooltipsLimit: this.#tooltipsLimit,
         tooltipValueSuffix,
       }
@@ -105,7 +100,7 @@ export default class BarGlob3d extends Glob3d {
     if (!data.length) return;
     this.#aggregatedData = new DataManager(
       data,
-      this.dotRes,
+      this.landCellRes,
       this.globeRadius,
       this.#highestBar
     ).data;
@@ -164,7 +159,7 @@ export default class BarGlob3d extends Glob3d {
     _center.set(center.x, center.y, center.z);
     _localY.copy(_center).normalize();
 
-    const paddedVertices = getNewGeoJson(bar, this.dotPadding);
+    const paddedVertices = getNewGeoJson(bar, this.landCellPadding);
     const [firstLng, firstLat] = paddedVertices[0];
     const firstVertex = getXYZCoordinates(firstLat, firstLng, this.globeRadius);
     _localZ.set(firstVertex.x, firstVertex.y, firstVertex.z).sub(_center);
@@ -331,10 +326,7 @@ export default class BarGlob3d extends Glob3d {
 
   setActiveColor(color: string) {
     this.#barActiveColor = color;
-    this.#tooltipsManager.activeTooltipColors = {
-      backgroundColor: color,
-      textColor: '#fff',
-    };
+    this.#tooltipsManager.accentColor = color;
     this.#updateBarDepthColors();
     this.requestRender();
   }
@@ -343,7 +335,7 @@ export default class BarGlob3d extends Glob3d {
     this.#loaderManager.showLoader();
     this.#removeBars();
     this.#tooltipsManager.removeTooltips();
-    this.fadeOutDots();
+    this.fadeOutLandCells();
   }
 
   onUpdate(data: GlobeData[]) {
@@ -352,14 +344,14 @@ export default class BarGlob3d extends Glob3d {
     this.#tooltipsManager.removeTooltips();
     this.#createBars(data);
     this.#tooltipsManager.createTooltips(this.#aggregatedData);
-    this.fadeInDots();
+    this.fadeInLandCells();
   }
 
   onError() {
     this.#loaderManager.showError();
     this.#removeBars();
     this.#tooltipsManager.removeTooltips();
-    this.fadeOutDots();
+    this.fadeOutLandCells();
   }
 
   protected override onDestroy() {

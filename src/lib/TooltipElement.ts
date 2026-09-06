@@ -8,8 +8,6 @@ export type TooltipViewState = {
   visible: boolean;
   active: boolean;
   accentColor: string;
-  activeBackgroundColor: string;
-  activeTextColor: string;
 };
 
 export type TooltipContent = {
@@ -32,8 +30,6 @@ export default class Tooltip {
   #visible = false;
   #active = false;
   #accentColor = '';
-  #activeBackgroundColor = '';
-  #activeTextColor = '';
 
   constructor() {
     this.element = createTooltipElement();
@@ -53,8 +49,6 @@ export default class Tooltip {
     visible,
     active,
     accentColor,
-    activeBackgroundColor,
-    activeTextColor,
   }: TooltipViewState) {
     if (this.#posX !== posX || this.#posY !== posY || this.#scale !== scale) {
       this.#posX = posX;
@@ -82,19 +76,6 @@ export default class Tooltip {
       this.#accentColor = accentColor;
       this.element.style.setProperty('--tooltip-accent', accentColor);
     }
-
-    if (this.#activeBackgroundColor !== activeBackgroundColor) {
-      this.#activeBackgroundColor = activeBackgroundColor;
-      this.element.style.setProperty(
-        '--tooltip-active-bg',
-        activeBackgroundColor
-      );
-    }
-
-    if (this.#activeTextColor !== activeTextColor) {
-      this.#activeTextColor = activeTextColor;
-      this.element.style.setProperty('--tooltip-active-fg', activeTextColor);
-    }
   }
 
   hide() {
@@ -106,8 +87,6 @@ export default class Tooltip {
       visible: false,
       active: false,
       accentColor: this.#accentColor,
-      activeBackgroundColor: this.#activeBackgroundColor,
-      activeTextColor: this.#activeTextColor,
     });
   }
 }

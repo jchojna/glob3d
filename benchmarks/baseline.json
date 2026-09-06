@@ -10,7 +10,7 @@
       "height": 1289,
       "devicePixelRatio": 1
     },
-    "dotRes": 3,
+    "landCellRes": 3,
     "updateRuns": 5,
     "sampleFrames": 180,
     "tooltipLimit": 15
@@ -141,7 +141,7 @@
     }
   },
   "notes": [
-    "Land dots and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.",
+    "Land cells and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.",
     "Tooltip overlay DOM is virtualized to tooltipsLimit plus hovered or clicked extras.",
     "Repeated onUpdate disposes replaced bar GPU resources; geometriesAfterUpdates should match the final geometry count.",
     "destroy() cancels the animation loop and removes the canvas and tooltip DOM before the next scenario.",

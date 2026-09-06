@@ -43,17 +43,15 @@ interface GlobeDataWithOffsets extends GlobeData {
 type GlobeOptions = {
   globeColor?: string;
   globeRadius?: number;
-  dotOpacity?: number;
-  dotPadding?: number;
-  dotRes?: number;
+  landCellOpacity?: number;
+  landCellPadding?: number;
+  landCellRes?: number;
 };
 
 type BarGlobeOptions = {
   barColor?: string;
   barActiveColor?: string;
   highestBar?: number;
-  tooltipActiveBackgroundColor?: string;
-  tooltipActiveTextColor?: string;
   tooltipsLimit?: number;
   tooltipValueSuffix?: string;
 } & GlobeOptions;

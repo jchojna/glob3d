@@ -79,12 +79,7 @@ const selectedScenarios: Scenario[] = runAll
 const maxDatumCount = Math.max(
   ...selectedScenarios.map((name) => SCENARIOS[name])
 );
-const dotRes = readIntegerParam(
-  params.has('dotRes') ? 'dotRes' : 'hexRes',
-  3,
-  1,
-  5
-);
+const landCellRes = readIntegerParam('landCellRes', 3, 1, 5);
 const sampleFrames = readIntegerParam('frames', 180, 30, 1200);
 const updateRuns = readIntegerParam('updates', 5, 1, 20);
 const settleFrames = readIntegerParam('settle', 30, 1, 300);
@@ -135,7 +130,7 @@ async function runScenario(scenario: Scenario) {
 
   const constructionStarted = performance.now();
   const globe = new BarGlob3d(root, [], {
-    dotRes,
+    landCellRes,
     tooltipsLimit: tooltipLimit,
   });
   const constructionMs = performance.now() - constructionStarted;
@@ -231,7 +226,7 @@ function buildScenarioReport({
       name: scenario,
       requestedDataPoints: datumCount,
       aggregatedBars: instancing.barInstances,
-      dotRes,
+      landCellRes,
       tooltipLimit,
       updateRuns,
       sampleFrames,
@@ -288,7 +283,7 @@ function buildSuiteReport(scenarioReports: Record<Scenario, ScenarioReport>) {
     environment: {
       runtime: first.environment.userAgent,
       viewport: first.environment.viewport,
-      dotRes,
+      landCellRes,
       updateRuns,
       sampleFrames,
       tooltipLimit,
@@ -298,7 +293,7 @@ function buildSuiteReport(scenarioReports: Record<Scenario, ScenarioReport>) {
       SCENARIO_NAMES.map((name) => [name, compactResult(scenarioReports[name])])
     ),
     notes: [
-      'Land dots and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.',
+      'Land cells and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.',
       'Tooltip overlay DOM is virtualized to tooltipsLimit plus hovered or clicked extras.',
       'Repeated onUpdate disposes replaced bar GPU resources; geometriesAfterUpdates should match the final geometry count.',
       'destroy() cancels the animation loop and removes the canvas and tooltip DOM before the next scenario.',
@@ -345,7 +340,7 @@ function collectInstancingStats(globe: BarGlob3d) {
   let instancedMeshes = 0;
   let instances = 0;
   let barInstances = 0;
-  const landInstances = globe.dotGlobe?.count ?? 0;
+  const landInstances = globe.landCellGlobe?.count ?? 0;
 
   globe.scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
@@ -353,7 +348,7 @@ function collectInstancingStats(globe: BarGlob3d) {
     if (!(object instanceof THREE.InstancedMesh)) return;
     instancedMeshes += 1;
     instances += object.count;
-    if (object !== globe.dotGlobe) barInstances += object.count;
+    if (object !== globe.landCellGlobe) barInstances += object.count;
   });
 
   return { meshes, instancedMeshes, instances, landInstances, barInstances };

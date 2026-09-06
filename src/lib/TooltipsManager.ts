@@ -10,15 +10,9 @@ import {
 import Tooltip from './TooltipElement';
 
 type TooltipsOptions = {
-  tooltipActiveBackgroundColor: string;
-  tooltipActiveTextColor: string;
+  accentColor: string;
   tooltipValueSuffix: string;
   tooltipsLimit: number | null;
-};
-
-type TooltipColors = {
-  backgroundColor: string;
-  textColor: string;
 };
 
 type TooltipModel = {
@@ -97,11 +91,11 @@ export default class TooltipsManager {
     this.#dirty = true;
   }
 
-  set activeTooltipColors({ backgroundColor, textColor }: TooltipColors) {
+  set accentColor(color: string) {
+    if (this.#options.accentColor === color) return;
     this.#options = {
       ...this.#options,
-      tooltipActiveBackgroundColor: backgroundColor,
-      tooltipActiveTextColor: textColor,
+      accentColor: color,
     };
     this.#dirty = true;
   }
@@ -180,7 +174,7 @@ export default class TooltipsManager {
       city: model.city,
       country: model.country,
       tooltipValueSuffix: this.#options.tooltipValueSuffix,
-      accentColor: this.#options.tooltipActiveBackgroundColor,
+      accentColor: this.#options.accentColor,
     });
     this.#tooltipsContainer?.appendChild(view.element);
     this.#views.set(model.id, view);
@@ -250,9 +244,7 @@ export default class TooltipsManager {
         zIndex,
         visible,
         active: isActive,
-        accentColor: this.#options.tooltipActiveBackgroundColor,
-        activeBackgroundColor: this.#options.tooltipActiveBackgroundColor,
-        activeTextColor: this.#options.tooltipActiveTextColor,
+        accentColor: this.#options.accentColor,
       });
     });
   }

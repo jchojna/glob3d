@@ -42,10 +42,10 @@ export default class Glob3d {
   globe: THREE.Mesh;
   globeColor: string;
   globeRadius: number;
-  dotGlobe: THREE.InstancedMesh | null;
-  dotOpacity: number;
-  dotPadding: number;
-  dotRes: number;
+  landCellGlobe: THREE.InstancedMesh | null;
+  landCellOpacity: number;
+  landCellPadding: number;
+  landCellRes: number;
   mouse: THREE.Vector2;
   root: HTMLElement;
   scene: THREE.Scene;
@@ -55,9 +55,9 @@ export default class Glob3d {
     const {
       globeColor = defaultOpts.globeColor,
       globeRadius = defaultOpts.globeRadius,
-      dotOpacity = defaultOpts.dotOpacity,
-      dotPadding = defaultOpts.dotPadding,
-      dotRes = defaultOpts.dotRes,
+      landCellOpacity = defaultOpts.landCellOpacity,
+      landCellPadding = defaultOpts.landCellPadding,
+      landCellRes = defaultOpts.landCellRes,
     } = options;
 
     this.root = root;
@@ -82,10 +82,10 @@ export default class Glob3d {
 
     this.globeColor = globeColor;
     this.globeRadius = globeRadius;
-    this.dotGlobe = null;
-    this.dotOpacity = dotOpacity;
-    this.dotPadding = Math.max(0, Math.min(dotPadding, 1));
-    this.dotRes = Math.max(1, Math.min(dotRes, 5));
+    this.landCellGlobe = null;
+    this.landCellOpacity = landCellOpacity;
+    this.landCellPadding = Math.max(0, Math.min(landCellPadding, 1));
+    this.landCellRes = Math.max(1, Math.min(landCellRes, 5));
     this.mouse = new THREE.Vector2();
     this.scene = new THREE.Scene();
     this.sizes = {
@@ -117,7 +117,7 @@ export default class Glob3d {
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.render(this.scene, this.camera);
 
-    this.#createDotGlobe();
+    this.#createLandCellGlobe();
     this.#registerMouseMoveEvent();
     this.#registerResizeEvent();
     this.#animationFrameId = window.requestAnimationFrame(this.#tick);
@@ -135,51 +135,54 @@ export default class Glob3d {
     return canvas;
   }
 
-  #createDotGlobe() {
-    const h3Indexes = getH3Indexes(world.features, this.dotRes);
+  #createLandCellGlobe() {
+    const h3Indexes = getH3Indexes(world.features, this.landCellRes);
     const material = new THREE.MeshMatcapMaterial({
-      opacity: this.dotOpacity,
+      opacity: this.landCellOpacity,
       transparent: true,
     });
     // TODO: should it be possible to set other matcap textures?
     material.matcap = this.#textureLoader.load(matcap);
-    const dotBins = h3Indexes.map((index) => getLandCell(index));
-    this.dotGlobe = new THREE.InstancedMesh(
+    const landCells = h3Indexes.map((index) => getLandCell(index));
+    this.landCellGlobe = new THREE.InstancedMesh(
       new THREE.CircleGeometry(1, 24),
       material,
-      dotBins.length
+      landCells.length
     );
-    this.#updateDotGlobeInstances(dotBins);
-    this.scene.add(this.dotGlobe);
+    this.#updateLandCellGlobeInstances(landCells);
+    this.scene.add(this.landCellGlobe);
     this.requestRender();
   }
 
-  #getDotOffsetFromGlobe(radius: number, dotRes: number) {
-    return radius * (Math.pow(5, 5) - Math.pow(dotRes, 5)) * 0.000001;
+  #getLandCellOffsetFromGlobe(radius: number, landCellRes: number) {
+    return radius * (Math.pow(5, 5) - Math.pow(landCellRes, 5)) * 0.000001;
   }
 
-  #updateDotGlobeInstances(dotBins: LandCell[]) {
-    const dotGlobe = this.dotGlobe;
-    if (!dotGlobe || !dotBins.length) return;
+  #updateLandCellGlobeInstances(landCells: LandCell[]) {
+    const landCellGlobe = this.landCellGlobe;
+    if (!landCellGlobe || !landCells.length) return;
 
-    const offset = this.#getDotOffsetFromGlobe(this.globeRadius, this.dotRes);
-    dotBins.forEach((dot, index) => {
-      dotGlobe.setMatrixAt(index, this.#setCircleMatrix(dot, offset));
+    const offset = this.#getLandCellOffsetFromGlobe(
+      this.globeRadius,
+      this.landCellRes
+    );
+    landCells.forEach((landCell, index) => {
+      landCellGlobe.setMatrixAt(index, this.#setCircleMatrix(landCell, offset));
     });
-    dotGlobe.instanceMatrix.needsUpdate = true;
-    dotGlobe.computeBoundingSphere();
+    landCellGlobe.instanceMatrix.needsUpdate = true;
+    landCellGlobe.computeBoundingSphere();
   }
 
-  #setCircleMatrix(dot: LandCell, offset: number) {
+  #setCircleMatrix(landCell: LandCell, offset: number) {
     const center = getXYZCoordinates(
-      dot.center[0],
-      dot.center[1],
+      landCell.center[0],
+      landCell.center[1],
       this.globeRadius
     );
     _center.set(center.x, center.y, center.z);
     _localZ.copy(_center).normalize();
 
-    const paddedVertices = getNewGeoJson(dot, this.dotPadding);
+    const paddedVertices = getNewGeoJson(landCell, this.landCellPadding);
     let radius = 0;
     for (let i = 0; i < paddedVertices.length; i += 1) {
       const [lng, lat] = paddedVertices[i];
@@ -205,19 +208,19 @@ export default class Glob3d {
     return _matrix;
   }
 
-  #updateDotOpacity(opacity: number) {
-    if (this.dotGlobe) {
-      (this.dotGlobe.material as THREE.Material).opacity = opacity;
+  #updateLandCellOpacity(opacity: number) {
+    if (this.landCellGlobe) {
+      (this.landCellGlobe.material as THREE.Material).opacity = opacity;
       this.requestRender();
     }
   }
 
-  fadeOutDots() {
-    this.#updateDotOpacity(0.3);
+  fadeOutLandCells() {
+    this.#updateLandCellOpacity(0.3);
   }
 
-  fadeInDots() {
-    this.#updateDotOpacity(1);
+  fadeInLandCells() {
+    this.#updateLandCellOpacity(1);
   }
 
   setGlobeColor(color: string) {

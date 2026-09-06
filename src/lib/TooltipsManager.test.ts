@@ -33,8 +33,7 @@ function createManager(
     camera,
     { width: 800, height: 600 },
     {
-      tooltipActiveBackgroundColor: '#dd176d',
-      tooltipActiveTextColor: '#fff',
+      accentColor: '#dd176d',
       tooltipValueSuffix: 'people',
       tooltipsLimit: options.tooltipsLimit ?? 2,
     }
