@@ -11,6 +11,7 @@ import Tooltip from './TooltipElement';
 
 type TooltipsOptions = {
   accentColor: string;
+  globeColor: string;
   tooltipValueSuffix: string;
   tooltipsLimit: number | null;
 };
@@ -100,6 +101,15 @@ export default class TooltipsManager {
     this.#dirty = true;
   }
 
+  set globeColor(color: string) {
+    if (this.#options.globeColor === color) return;
+    this.#options = {
+      ...this.#options,
+      globeColor: color,
+    };
+    this.#tooltipsContainer?.style.setProperty('--tooltip-globe', color);
+  }
+
   createTooltips(data: BarData[]): HTMLElement | undefined {
     this.removeTooltips();
     if (!data.length) return;
@@ -127,7 +137,12 @@ export default class TooltipsManager {
     });
 
     const tooltipsContainer = document.createElement('div');
+    tooltipsContainer.className = 'glob3d-tooltips';
     tooltipsContainer.style.cssText = tooltipsStyles;
+    tooltipsContainer.style.setProperty(
+      '--tooltip-globe',
+      this.#options.globeColor
+    );
     this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
     this.#dirty = true;

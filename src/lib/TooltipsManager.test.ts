@@ -34,6 +34,7 @@ function createManager(
     { width: 800, height: 600 },
     {
       accentColor: '#dd176d',
+      globeColor: '#1a166e',
       tooltipValueSuffix: 'people',
       tooltipsLimit: options.tooltipsLimit ?? 2,
     }
@@ -167,6 +168,17 @@ describe('TooltipsManager', () => {
     expect(
       tooltipEl(root, 'back')?.classList.contains('glob3d-tooltip-active')
     ).toBe(true);
+  });
+
+  it('applies globe color to the tooltip overlay as --tooltip-globe', () => {
+    const { manager, root } = createManager();
+    manager.createTooltips([makeBar('front', 0, 0, 10)]);
+
+    const overlay = root.querySelector<HTMLElement>('.glob3d-tooltips');
+    expect(overlay?.style.getPropertyValue('--tooltip-globe')).toBe('#1a166e');
+
+    manager.globeColor = '#003366';
+    expect(overlay?.style.getPropertyValue('--tooltip-globe')).toBe('#003366');
   });
 
   it('removes tooltip nodes on destroy and after repeated updates', () => {

@@ -87,6 +87,7 @@ export default class BarGlob3d extends Glob3d {
       this.sizes,
       {
         accentColor: this.#barActiveColor,
+        globeColor,
         tooltipsLimit: this.#tooltipsLimit,
         tooltipValueSuffix,
       }
@@ -321,6 +322,7 @@ export default class BarGlob3d extends Glob3d {
   override setGlobeColor(color: string) {
     super.setGlobeColor(color);
     this.#barFarColor.set(color);
+    this.#tooltipsManager.globeColor = color;
     this.#updateBarDepthColors();
   }
 
