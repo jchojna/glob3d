@@ -4,7 +4,7 @@ import { ensureTooltipStyles } from './styles';
 
 const tooltipNumberFormat = new Intl.NumberFormat();
 
-// Get H3 indexes for all hexagons in Polygon or MultiPolygon
+// Get H3 indexes for all land cells in Polygon or MultiPolygon
 export const getH3Indexes = (
   features: GeojsonFeature[],
   resolution: number
@@ -29,10 +29,10 @@ export const getH3Indexes = (
   return indexes;
 };
 
-export const getHexBin = (h3Index: string) => {
-  // Get center of a given hexagon - point as a [lat, lng] pair.
+export const getLandCell = (h3Index: string) => {
+  // Get center of a given land cell - point as a [lat, lng] pair.
   const center = cellToLatLng(h3Index);
-  // Get the vertices of a given hexagon as an array of [lng, lat] points.
+  // Get the vertices of a given land cell as an array of [lng, lat] points.
   const vertices = cellToBoundary(h3Index, true).reverse();
   // Split geometries at the anti-meridian.
   const centerLng = center[1];
@@ -46,13 +46,13 @@ export const getHexBin = (h3Index: string) => {
 };
 
 // Compute new geojson with relative margin.
-export const getNewGeoJson = (hex: HexBin, margin: number) => {
+export const getNewGeoJson = (landCell: LandCell, margin: number) => {
   const relNum = (st: number, end: number, rat: number) =>
     st - (st - end) * rat;
-  const [clat, clng] = hex.center;
+  const [clat, clng] = landCell.center;
   return margin === 0
-    ? hex.vertices
-    : hex.vertices.map(([elng, elat]) =>
+    ? landCell.vertices
+    : landCell.vertices.map(([elng, elat]) =>
         [
           [elng, clng],
           [elat, clat],

@@ -43,13 +43,13 @@ function createManager(
   return { manager, root, camera };
 }
 
-function makeHex(
+function makeBar(
   id: string,
   lat: number,
   lng: number,
   value: number,
   offsetFromCenter = 150
-): HexData {
+): BarData {
   return {
     id,
     center: [lat, lng],
@@ -77,10 +77,10 @@ describe('TooltipsManager', () => {
   it('creates DOM only for the closest visible limit', () => {
     const { manager, root } = createManager({ tooltipsLimit: 2 });
     manager.createTooltips([
-      makeHex('front-a', 0, 0, 10),
-      makeHex('front-b', 10, 10, 20),
-      makeHex('front-c', -10, -10, 30),
-      makeHex('back', 0, 180, 40),
+      makeBar('front-a', 0, 0, 10),
+      makeBar('front-b', 10, 10, 20),
+      makeBar('front-c', -10, -10, 30),
+      makeBar('back', 0, 180, 40),
     ]);
     manager.update({ cameraChanged: true, layoutChanged: true });
 
@@ -93,9 +93,9 @@ describe('TooltipsManager', () => {
   it('keeps hovered and clicked items visible even when they are outside the limit', () => {
     const { manager, root } = createManager({ tooltipsLimit: 1 });
     const data = [
-      makeHex('near', 0, 0, 10),
-      makeHex('mid', 20, 20, 20),
-      makeHex('far', -30, -40, 30),
+      makeBar('near', 0, 0, 10),
+      makeBar('mid', 20, 20, 20),
+      makeBar('far', -30, -40, 30),
     ];
     manager.createTooltips(data);
     manager.update({ cameraChanged: true, layoutChanged: true });
@@ -103,11 +103,11 @@ describe('TooltipsManager', () => {
     const initiallyVisible = tooltipIds(root);
     expect(initiallyVisible).toHaveLength(1);
     const hiddenId = data
-      .map((hex) => hex.id)
+      .map((bar) => bar.id)
       .find((id) => !initiallyVisible.includes(id));
     expect(hiddenId).toBeTruthy();
 
-    manager.hoveredHexId = hiddenId ?? null;
+    manager.hoveredBarId = hiddenId ?? null;
     manager.update({ cameraChanged: false, layoutChanged: false });
 
     expect(tooltipIds(root)).toEqual(
@@ -124,8 +124,8 @@ describe('TooltipsManager', () => {
       )
     ).toBe(true);
 
-    manager.clickedHexId = initiallyVisible[0];
-    manager.hoveredHexId = hiddenId ?? null;
+    manager.clickedBarId = initiallyVisible[0];
+    manager.hoveredBarId = hiddenId ?? null;
     manager.update({ cameraChanged: false, layoutChanged: false });
 
     const clicked = tooltipEl(root, initiallyVisible[0]);
@@ -138,8 +138,8 @@ describe('TooltipsManager', () => {
   it('hides in-limit tooltips that are behind the globe and keeps front ones visible', () => {
     const { manager, root } = createManager({ tooltipsLimit: 2 });
     manager.createTooltips([
-      makeHex('front', 0, 0, 10),
-      makeHex('back', 0, 180, 20),
+      makeBar('front', 0, 0, 10),
+      makeBar('back', 0, 180, 20),
     ]);
     manager.update({ cameraChanged: true, layoutChanged: true });
 
@@ -154,12 +154,12 @@ describe('TooltipsManager', () => {
   it('shows an occluded tooltip when it is hovered or clicked', () => {
     const { manager, root } = createManager({ tooltipsLimit: 2 });
     manager.createTooltips([
-      makeHex('front', 0, 0, 10),
-      makeHex('back', 0, 180, 20),
+      makeBar('front', 0, 0, 10),
+      makeBar('back', 0, 180, 20),
     ]);
     manager.update({ cameraChanged: true, layoutChanged: true });
 
-    manager.clickedHexId = 'back';
+    manager.clickedBarId = 'back';
     manager.update({ cameraChanged: false, layoutChanged: false });
 
     expect(
@@ -173,9 +173,9 @@ describe('TooltipsManager', () => {
   it('removes tooltip nodes on destroy and after repeated updates', () => {
     const { manager, root } = createManager({ tooltipsLimit: 3 });
     const first = [
-      makeHex('a', 0, 0, 10),
-      makeHex('b', 10, 10, 20),
-      makeHex('c', -10, -10, 30),
+      makeBar('a', 0, 0, 10),
+      makeBar('b', 10, 10, 20),
+      makeBar('c', -10, -10, 30),
     ];
     manager.createTooltips(first);
     manager.update({ cameraChanged: true, layoutChanged: true });

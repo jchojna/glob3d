@@ -1,21 +1,18 @@
 /// <reference types="vite/client" />
 
-type HexBin = {
+type LandCell = {
   h3Index: string;
   center: [number, number];
   vertices: [number, number][];
 };
 
-type HexData = {
-  center: [number, number];
+type BarData = LandCell & {
   city: string;
   coordinates: [number, number];
   country: string;
-  h3Index: string;
   id: string;
   offsetFromCenter: number;
   value: number;
-  vertices: [number, number][];
 };
 
 type GeojsonFeature = {

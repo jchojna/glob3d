@@ -5,7 +5,7 @@ import polygonFeature from '../mocks/polygonFeature.json';
 
 import {
   getH3Indexes,
-  getHexBin,
+  getLandCell,
   getNewGeoJson,
   getTooltip,
   getTooltipScale,
@@ -67,26 +67,26 @@ describe('getXYZCoordinates', () => {
   });
 });
 
-describe('getHexBin', () => {
-  it('returns correct hexBin', () => {
+describe('getLandCell', () => {
+  it('returns correct landCell', () => {
     const h3Index = '83309cfffffffff';
-    const hexBin = getHexBin(h3Index);
-    // expect(hexBin).toBe(null);
+    const landCell = getLandCell(h3Index);
+    // expect(landCell).toBe(null);
 
-    expect(hexBin).toHaveProperty('center');
-    expect(hexBin).toHaveProperty('h3Index');
-    expect(hexBin).toHaveProperty('vertices');
+    expect(landCell).toHaveProperty('center');
+    expect(landCell).toHaveProperty('h3Index');
+    expect(landCell).toHaveProperty('vertices');
 
-    expect(hexBin.h3Index).toBe(h3Index);
+    expect(landCell.h3Index).toBe(h3Index);
 
-    expect(hexBin.center).toHaveLength(2);
-    expect(hexBin.center[0]).toBeGreaterThanOrEqual(-90);
-    expect(hexBin.center[0]).toBeLessThanOrEqual(90);
-    expect(hexBin.center[1]).toBeGreaterThanOrEqual(-180);
-    expect(hexBin.center[1]).toBeLessThanOrEqual(180);
+    expect(landCell.center).toHaveLength(2);
+    expect(landCell.center[0]).toBeGreaterThanOrEqual(-90);
+    expect(landCell.center[0]).toBeLessThanOrEqual(90);
+    expect(landCell.center[1]).toBeGreaterThanOrEqual(-180);
+    expect(landCell.center[1]).toBeLessThanOrEqual(180);
 
-    expect(hexBin.vertices).toHaveLength(7);
-    hexBin.vertices.forEach((vertex) => {
+    expect(landCell.vertices).toHaveLength(7);
+    landCell.vertices.forEach((vertex) => {
       expect(vertex).toHaveLength(2);
       expect(vertex[0]).toBeGreaterThanOrEqual(-180);
       expect(vertex[0]).toBeLessThanOrEqual(180);
@@ -97,7 +97,7 @@ describe('getHexBin', () => {
 });
 
 describe('getNewGeoJson', () => {
-  const mockHex = {
+  const mockLandCell = {
     center: [34.500094979532754, -118.44763026078893],
     city: 'Los Angeles',
     coordinates: [34.05223, -118.24368],
@@ -117,7 +117,7 @@ describe('getNewGeoJson', () => {
   };
 
   it('returns correct geoJson', () => {
-    const result = getNewGeoJson(mockHex, 0.5);
+    const result = getNewGeoJson(mockLandCell, 0.5);
 
     expect(result).toHaveLength(7);
     result.forEach(([lon, lat]) => {

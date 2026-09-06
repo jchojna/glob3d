@@ -7,7 +7,7 @@ import matcap from '../assets/textures/matcap_1.png';
 import defaultOpts from '../utils/defaultOpts';
 import {
   getH3Indexes,
-  getHexBin,
+  getLandCell,
   getNewGeoJson,
   getXYZCoordinates,
 } from '../utils/helpers';
@@ -143,7 +143,7 @@ export default class Glob3d {
     });
     // TODO: should it be possible to set other matcap textures?
     material.matcap = this.#textureLoader.load(matcap);
-    const dotBins = h3Indexes.map((index) => getHexBin(index));
+    const dotBins = h3Indexes.map((index) => getLandCell(index));
     this.dotGlobe = new THREE.InstancedMesh(
       new THREE.CircleGeometry(1, 24),
       material,
@@ -158,7 +158,7 @@ export default class Glob3d {
     return radius * (Math.pow(5, 5) - Math.pow(dotRes, 5)) * 0.000001;
   }
 
-  #updateDotGlobeInstances(dotBins: HexBin[]) {
+  #updateDotGlobeInstances(dotBins: LandCell[]) {
     const dotGlobe = this.dotGlobe;
     if (!dotGlobe || !dotBins.length) return;
 
@@ -170,7 +170,7 @@ export default class Glob3d {
     dotGlobe.computeBoundingSphere();
   }
 
-  #setCircleMatrix(dot: HexBin, offset: number) {
+  #setCircleMatrix(dot: LandCell, offset: number) {
     const center = getXYZCoordinates(
       dot.center[0],
       dot.center[1],

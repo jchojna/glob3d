@@ -45,8 +45,8 @@ export default class TooltipsManager {
   #views: Map<string, Tooltip>;
   #pool: Tooltip[];
   #tooltipsContainer: HTMLElement | null;
-  #clickedHexId: string | null;
-  #hoveredHexId: string | null;
+  #clickedBarId: string | null;
+  #hoveredBarId: string | null;
   #dirty: boolean;
   #overlayWidth: number;
   #overlayHeight: number;
@@ -69,8 +69,8 @@ export default class TooltipsManager {
     this.#views = new Map();
     this.#pool = [];
     this.#tooltipsContainer = null;
-    this.#clickedHexId = null;
-    this.#hoveredHexId = null;
+    this.#clickedBarId = null;
+    this.#hoveredBarId = null;
     this.#dirty = true;
     this.#overlayWidth = 0;
     this.#overlayHeight = 0;
@@ -85,15 +85,15 @@ export default class TooltipsManager {
     return this.#views.size;
   }
 
-  set clickedHexId(id: string | null) {
-    if (this.#clickedHexId === id) return;
-    this.#clickedHexId = id;
+  set clickedBarId(id: string | null) {
+    if (this.#clickedBarId === id) return;
+    this.#clickedBarId = id;
     this.#dirty = true;
   }
 
-  set hoveredHexId(id: string | null) {
-    if (this.#hoveredHexId === id) return;
-    this.#hoveredHexId = id;
+  set hoveredBarId(id: string | null) {
+    if (this.#hoveredBarId === id) return;
+    this.#hoveredBarId = id;
     this.#dirty = true;
   }
 
@@ -106,25 +106,25 @@ export default class TooltipsManager {
     this.#dirty = true;
   }
 
-  createTooltips(data: HexData[]): HTMLElement | undefined {
+  createTooltips(data: BarData[]): HTMLElement | undefined {
     this.removeTooltips();
     if (!data.length) return;
 
-    const ranks = getValueRanks(data.map((hex) => hex.value));
-    this.#models = data.map((hex, index) => {
+    const ranks = getValueRanks(data.map((bar) => bar.value));
+    this.#models = data.map((bar, index) => {
       const { x, y, z } = getXYZCoordinates(
-        hex.center[0],
-        hex.center[1],
-        hex.offsetFromCenter
+        bar.center[0],
+        bar.center[1],
+        bar.offsetFromCenter
       );
       return {
-        id: hex.id,
+        id: bar.id,
         coordinates: new THREE.Vector3(x, y, z),
         distance: 0,
-        value: hex.value,
+        value: bar.value,
         valueRank: ranks[index],
-        city: hex.city,
-        country: hex.country,
+        city: bar.city,
+        country: bar.country,
       };
     });
     this.#distances = new Float64Array(data.length);
@@ -149,8 +149,8 @@ export default class TooltipsManager {
     this.#models = [];
     this.#distances = new Float64Array(0);
     this.#indexById.clear();
-    this.#clickedHexId = null;
-    this.#hoveredHexId = null;
+    this.#clickedBarId = null;
+    this.#hoveredBarId = null;
     this.#dirty = false;
     this.#overlayWidth = 0;
     this.#overlayHeight = 0;
@@ -203,8 +203,8 @@ export default class TooltipsManager {
         ? this.#options.tooltipsLimit
         : this.#models.length;
     const selection = selectVisibleTooltipIndices(this.#distances, limit, [
-      this.#getIndex(this.#hoveredHexId),
-      this.#getIndex(this.#clickedHexId),
+      this.#getIndex(this.#hoveredBarId),
+      this.#getIndex(this.#clickedBarId),
     ]);
     const selectedIds = new Set(
       selection.items.map((item) => this.#models[item.index].id)
@@ -220,8 +220,8 @@ export default class TooltipsManager {
     selection.items.forEach((item) => {
       const model = this.#models[item.index];
       const view = this.#views.get(model.id) ?? this.#acquireView(model);
-      const isHovered = model.id === this.#hoveredHexId;
-      const isClicked = model.id === this.#clickedHexId;
+      const isHovered = model.id === this.#hoveredBarId;
+      const isClicked = model.id === this.#clickedBarId;
       const isActive = isHovered || isClicked;
       const occluded = isPointOccludedBySphere(
         model.coordinates,

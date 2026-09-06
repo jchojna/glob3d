@@ -18,17 +18,17 @@ const _worldUp = new THREE.Vector3(0, 1, 0);
 const _nearColor = new THREE.Color(0xffffff);
 
 export default class BarGlob3d extends Glob3d {
-  #aggregatedData: HexData[];
+  #aggregatedData: BarData[];
   #barBasePositions: Float32Array | null;
   #barFarColor: THREE.Color;
   #barActiveColor: string;
-  #clickedHexIndex: number | null;
+  #clickedBarIndex: number | null;
   #globePosition: GlobePosition;
-  #hexBars: THREE.InstancedMesh | null;
-  #hexBarsGroup: THREE.Group;
+  #bars: THREE.InstancedMesh | null;
+  #barsGroup: THREE.Group;
   #highestBar: number;
-  #hoveredHexId: string | null;
-  #hoveredHexIndex: number | null;
+  #hoveredBarId: string | null;
+  #hoveredBarIndex: number | null;
   #intersections: THREE.Intersection[];
   #loaderManager: LoaderManager;
   #pickableObjects: THREE.Object3D[];
@@ -67,15 +67,15 @@ export default class BarGlob3d extends Glob3d {
     this.#barBasePositions = null;
     this.#barFarColor = new THREE.Color(globeColor);
     this.#barActiveColor = barActiveColor;
-    this.#clickedHexIndex = null;
+    this.#clickedBarIndex = null;
     this.#globePosition = { x: 0, y: 0 };
     this.#projectedGlobePosition = new THREE.Vector3();
     this.#updateGlobePosition();
-    this.#hexBars = null;
-    this.#hexBarsGroup = new THREE.Group();
+    this.#bars = null;
+    this.#barsGroup = new THREE.Group();
     this.#highestBar = highestBar;
-    this.#hoveredHexId = null;
-    this.#hoveredHexIndex = null;
+    this.#hoveredBarId = null;
+    this.#hoveredBarIndex = null;
     this.#intersections = [];
     this.#loaderManager = new LoaderManager(root);
     this.#pickableObjects = [this.globe];
@@ -83,7 +83,7 @@ export default class BarGlob3d extends Glob3d {
     this.#tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
     this.#tooltipsLimit = tooltipsLimit;
 
-    if (data !== null) this.#createHexBars(data);
+    if (data !== null) this.#createBars(data);
     this.#tooltipsManager = new TooltipsManager(
       root,
       this.globeRadius,
@@ -101,7 +101,7 @@ export default class BarGlob3d extends Glob3d {
     this.#loaderManager.updateLoaderPosition(this.#globePosition);
   }
 
-  #createHexBars(data: GlobeData[]) {
+  #createBars(data: GlobeData[]) {
     if (!data.length) return;
     this.#aggregatedData = new DataManager(
       data,
@@ -125,7 +125,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   #updateBarDepthColors() {
-    if (!this.#hexBars || !this.#barBasePositions) return;
+    if (!this.#bars || !this.#barBasePositions) return;
 
     const positions = this.#barBasePositions;
     const cameraPos = this.camera.position;
@@ -134,7 +134,7 @@ export default class BarGlob3d extends Glob3d {
 
     for (let index = 0; index < positions.length / 3; index += 1) {
       const isActive =
-        index === this.#hoveredHexIndex || index === this.#clickedHexIndex;
+        index === this.#hoveredBarIndex || index === this.#clickedBarIndex;
 
       if (isActive) {
         _color.set(this.#barActiveColor);
@@ -147,24 +147,24 @@ export default class BarGlob3d extends Glob3d {
         );
         _color.copy(_nearColor).lerp(this.#barFarColor, depth * (2 - depth));
       }
-      this.#hexBars.setColorAt(index, _color);
+      this.#bars.setColorAt(index, _color);
     }
 
-    if (this.#hexBars.instanceColor) {
-      this.#hexBars.instanceColor.needsUpdate = true;
+    if (this.#bars.instanceColor) {
+      this.#bars.instanceColor.needsUpdate = true;
     }
   }
 
-  #setBarMatrix(hex: HexData) {
+  #setBarMatrix(bar: BarData) {
     const center = getXYZCoordinates(
-      hex.center[0],
-      hex.center[1],
+      bar.center[0],
+      bar.center[1],
       this.globeRadius
     );
     _center.set(center.x, center.y, center.z);
     _localY.copy(_center).normalize();
 
-    const paddedVertices = getNewGeoJson(hex, this.dotPadding);
+    const paddedVertices = getNewGeoJson(bar, this.dotPadding);
     const [firstLng, firstLat] = paddedVertices[0];
     const firstVertex = getXYZCoordinates(firstLat, firstLng, this.globeRadius);
     _localZ.set(firstVertex.x, firstVertex.y, firstVertex.z).sub(_center);
@@ -187,43 +187,43 @@ export default class BarGlob3d extends Glob3d {
     _localZ.normalize();
     _localX.crossVectors(_localY, _localZ).normalize();
 
-    const height = Math.max(hex.offsetFromCenter - this.globeRadius, 1e-4);
+    const height = Math.max(bar.offsetFromCenter - this.globeRadius, 1e-4);
     _matrix.makeBasis(_localX, _localY, _localZ);
     _matrix.scale(_vertex.set(radius, height, radius));
     _matrix.setPosition(_center);
     return _matrix;
   }
 
-  #visualizeResult(aggregatedData: HexData[]) {
+  #visualizeResult(aggregatedData: BarData[]) {
     const count = aggregatedData.length;
-    const hexBars = new THREE.InstancedMesh(
+    const bars = new THREE.InstancedMesh(
       this.#createBarGeometry(),
       this.#createBarMaterial(),
       count
     );
     const barBasePositions = new Float32Array(count * 3);
-    aggregatedData.forEach((hexData, index) => {
-      const matrix = this.#setBarMatrix(hexData);
-      hexBars.setMatrixAt(index, matrix);
+    aggregatedData.forEach((barData, index) => {
+      const matrix = this.#setBarMatrix(barData);
+      bars.setMatrixAt(index, matrix);
       const offset = index * 3;
       barBasePositions[offset] = matrix.elements[12];
       barBasePositions[offset + 1] = matrix.elements[13];
       barBasePositions[offset + 2] = matrix.elements[14];
     });
-    hexBars.instanceMatrix.needsUpdate = true;
-    hexBars.computeBoundingSphere();
+    bars.instanceMatrix.needsUpdate = true;
+    bars.computeBoundingSphere();
 
-    this.#aggregatedData = aggregatedData.map((hexData, index) => ({
-      ...hexData,
+    this.#aggregatedData = aggregatedData.map((barData, index) => ({
+      ...barData,
       id: String(index),
     }));
-    this.#hexBars = hexBars;
+    this.#bars = bars;
     this.#barBasePositions = barBasePositions;
     this.#updateBarDepthColors();
-    this.#hexBarsGroup.add(hexBars);
-    this.#pickableObjects.push(hexBars);
+    this.#barsGroup.add(bars);
+    this.#pickableObjects.push(bars);
     if (typeof this.#tooltipsLimit != 'number') this.#tooltipsLimit = count;
-    this.scene.add(this.#hexBarsGroup);
+    this.scene.add(this.#barsGroup);
   }
 
   #updateGlobePosition() {
@@ -235,7 +235,7 @@ export default class BarGlob3d extends Glob3d {
   }
 
   #refreshBarAppearance() {
-    if (!this.#hexBars) return;
+    if (!this.#bars) return;
     this.#updateBarDepthColors();
     this.requestRender();
   }
@@ -249,7 +249,7 @@ export default class BarGlob3d extends Glob3d {
     layoutChanged: boolean;
     pointerChanged: boolean;
   }) {
-    if ((cameraChanged || pointerChanged) && this.#hexBars) {
+    if ((cameraChanged || pointerChanged) && this.#bars) {
       this.#raycaster.setFromCamera(this.mouse, this.camera);
       this.#intersections.length = 0;
       this.#raycaster.intersectObjects(
@@ -258,26 +258,26 @@ export default class BarGlob3d extends Glob3d {
         this.#intersections
       );
       const hit = this.#intersections[0];
-      const hoveredHexIndex =
+      const hoveredBarIndex =
         hit && hit.object !== this.globe && hit.instanceId !== undefined
           ? hit.instanceId
           : null;
 
-      if (hoveredHexIndex !== null) {
-        const hoveredHexId = String(hoveredHexIndex);
+      if (hoveredBarIndex !== null) {
+        const hoveredBarId = String(hoveredBarIndex);
 
-        if (this.#hoveredHexId !== hoveredHexId) {
-          this.#hoveredHexIndex = hoveredHexIndex;
-          this.#hoveredHexId = hoveredHexId;
-          this.#tooltipsManager.hoveredHexId = hoveredHexId;
+        if (this.#hoveredBarId !== hoveredBarId) {
+          this.#hoveredBarIndex = hoveredBarIndex;
+          this.#hoveredBarId = hoveredBarId;
+          this.#tooltipsManager.hoveredBarId = hoveredBarId;
           this.#refreshBarAppearance();
         }
-      } else if (this.#hoveredHexIndex !== null) {
-        const previousHoveredIndex = this.#hoveredHexIndex;
-        this.#hoveredHexIndex = null;
-        this.#hoveredHexId = null;
-        this.#tooltipsManager.hoveredHexId = null;
-        if (previousHoveredIndex !== this.#clickedHexIndex) {
+      } else if (this.#hoveredBarIndex !== null) {
+        const previousHoveredIndex = this.#hoveredBarIndex;
+        this.#hoveredBarIndex = null;
+        this.#hoveredBarId = null;
+        this.#tooltipsManager.hoveredBarId = null;
+        if (previousHoveredIndex !== this.#clickedBarIndex) {
           this.#refreshBarAppearance();
         }
       }
@@ -296,30 +296,30 @@ export default class BarGlob3d extends Glob3d {
   }
 
   #handleClick = () => {
-    if (this.#hoveredHexId !== null && this.#hoveredHexIndex !== null) {
-      this.#clickedHexIndex = this.#hoveredHexIndex;
-      this.#tooltipsManager.clickedHexId = this.#hoveredHexId;
+    if (this.#hoveredBarId !== null && this.#hoveredBarIndex !== null) {
+      this.#clickedBarIndex = this.#hoveredBarIndex;
+      this.#tooltipsManager.clickedBarId = this.#hoveredBarId;
     } else {
-      this.#clickedHexIndex = null;
-      this.#tooltipsManager.clickedHexId = null;
+      this.#clickedBarIndex = null;
+      this.#tooltipsManager.clickedBarId = null;
     }
     this.#refreshBarAppearance();
   };
 
-  #removeHexBars() {
-    this.#hexBarsGroup.clear();
-    if (this.#hexBars) {
-      this.#hexBars.geometry.dispose();
-      (this.#hexBars.material as THREE.Material).dispose();
-      this.#hexBars.dispose();
-      this.#hexBars = null;
+  #removeBars() {
+    this.#barsGroup.clear();
+    if (this.#bars) {
+      this.#bars.geometry.dispose();
+      (this.#bars.material as THREE.Material).dispose();
+      this.#bars.dispose();
+      this.#bars = null;
     }
     this.#barBasePositions = null;
     this.#pickableObjects.length = 1;
     this.#intersections.length = 0;
-    this.#hoveredHexIndex = null;
-    this.#hoveredHexId = null;
-    this.#clickedHexIndex = null;
+    this.#hoveredBarIndex = null;
+    this.#hoveredBarId = null;
+    this.#clickedBarIndex = null;
     this.requestRender();
   }
 
@@ -341,30 +341,30 @@ export default class BarGlob3d extends Glob3d {
 
   onLoading() {
     this.#loaderManager.showLoader();
-    this.#removeHexBars();
+    this.#removeBars();
     this.#tooltipsManager.removeTooltips();
     this.fadeOutDots();
   }
 
   onUpdate(data: GlobeData[]) {
     this.#loaderManager.hideLoader();
-    this.#removeHexBars();
+    this.#removeBars();
     this.#tooltipsManager.removeTooltips();
-    this.#createHexBars(data);
+    this.#createBars(data);
     this.#tooltipsManager.createTooltips(this.#aggregatedData);
     this.fadeInDots();
   }
 
   onError() {
     this.#loaderManager.showError();
-    this.#removeHexBars();
+    this.#removeBars();
     this.#tooltipsManager.removeTooltips();
     this.fadeOutDots();
   }
 
   protected override onDestroy() {
     window.removeEventListener('click', this.#handleClick);
-    this.#removeHexBars();
+    this.#removeBars();
     this.#tooltipsManager.destroy();
     this.#loaderManager.destroy();
   }

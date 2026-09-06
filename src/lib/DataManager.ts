@@ -1,21 +1,21 @@
 import { latLngToCell } from 'h3-js';
-import { getHexBin } from '../utils/helpers';
+import { getLandCell } from '../utils/helpers';
 
 export default class DataManager {
   #dataWithOffsets: GlobeDataWithOffsets[];
-  #processedData: HexData[];
-  #aggregatedData: HexData[];
-  #hexResolution: number;
+  #processedData: BarData[];
+  #aggregatedData: BarData[];
+  #landCellResolution: number;
   #globeRadius: number;
   #highestBar: number;
 
   constructor(
     inputData: GlobeData[],
-    hexResolution: number,
+    landCellResolution: number,
     globeRadius: number,
     highestBar: number
   ) {
-    this.#hexResolution = hexResolution;
+    this.#landCellResolution = landCellResolution;
     this.#globeRadius = globeRadius;
     this.#highestBar = highestBar;
     this.#dataWithOffsets = this.#addOffsets(inputData);
@@ -24,29 +24,29 @@ export default class DataManager {
   }
 
   #addOffsets(data: GlobeData[]): GlobeDataWithOffsets[] {
-    const hexMaxValue = Math.max(...data.map((obj) => obj.value));
-    return data.map((hex) => ({
-      ...hex,
+    const maxValue = Math.max(...data.map((obj) => obj.value));
+    return data.map((item) => ({
+      ...item,
       offsetFromCenter:
         this.#globeRadius +
-        (hex.value / hexMaxValue) * this.#globeRadius * 2 * this.#highestBar,
+        (item.value / maxValue) * this.#globeRadius * 2 * this.#highestBar,
     }));
   }
 
   #processData(data: GlobeDataWithOffsets[]) {
     return data.map(
-      ({ city, country, coordinates, offsetFromCenter, value }): HexData => {
+      ({ city, country, coordinates, offsetFromCenter, value }): BarData => {
         const h3Index = latLngToCell(
           coordinates.lat,
           coordinates.lon,
-          this.#hexResolution
+          this.#landCellResolution
         );
-        const hexBin = getHexBin(h3Index);
+        const landCell = getLandCell(h3Index);
         return {
           city,
           country,
           coordinates: [coordinates.lat, coordinates.lon],
-          ...hexBin,
+          ...landCell,
           id: '',
           offsetFromCenter,
           value,
@@ -55,8 +55,8 @@ export default class DataManager {
     );
   }
 
-  #aggregateData(data: HexData[]) {
-    return data.reduce((acc: HexData[], curr: HexData) => {
+  #aggregateData(data: BarData[]) {
+    return data.reduce((acc: BarData[], curr: BarData) => {
       const idx = acc.findIndex(
         (elem: { h3Index: string }) => elem.h3Index === curr.h3Index
       );
@@ -70,7 +70,7 @@ export default class DataManager {
     }, []);
   }
 
-  get data(): HexData[] {
+  get data(): BarData[] {
     return this.#aggregatedData;
   }
 }
