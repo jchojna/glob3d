@@ -3,7 +3,7 @@
   "description": "A 3D globe visualization library based on Three.js",
   "author": "Jakub Chojna",
   "license": "MIT",
-  "version": "0.9.1",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/jchojna/glob3d.git"
@@ -11,18 +11,21 @@
   "type": "module",
   "main": "./dist/glob3d.umd.cjs",
   "module": "./dist/glob3d.js",
+  "types": "./dist/glob3d.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/glob3d.d.ts",
       "import": "./dist/glob3d.js",
       "require": "./dist/glob3d.umd.cjs"
     }
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "benchmark:stress": "vite --host 127.0.0.1",
+    "build": "tsc && vite build && cp types/glob3d.d.ts dist/glob3d.d.ts",
     "preview": "vite preview",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "type-check": "tsc --noEmit",
@@ -44,7 +47,6 @@
   "peerDependencies": {
     "h3-js": "^4.1.0",
     "three": "^0.162.0",
-    "three-conic-polygon-geometry": "^1.6.3",
     "world-map-geojson": "^1.0.2"
   }
 }

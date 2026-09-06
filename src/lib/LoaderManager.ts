@@ -41,4 +41,8 @@ export default class LoaderManager {
     this.#loader.style.top = `${globePosition.y}px`;
     this.#loader.style.left = `${globePosition.x}px`;
   }
+
+  destroy() {
+    this.#loader.remove();
+  }
 }

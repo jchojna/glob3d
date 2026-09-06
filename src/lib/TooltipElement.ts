@@ -1,149 +1,92 @@
-import * as THREE from 'three';
+import { bindTooltipContent, createTooltipElement } from '../utils/helpers';
 
-import {
-  getPixelPosition,
-  getTooltip,
-  getTooltipScale,
-} from '../utils/helpers';
+export type TooltipViewState = {
+  posX: number;
+  posY: number;
+  scale: number;
+  zIndex: number;
+  visible: boolean;
+  active: boolean;
+  accentColor: string;
+};
 
-export default class Tooltip implements TooltipProperties {
-  coordinates: THREE.Vector3;
-  distance: number;
-  element: HTMLElement;
+export type TooltipContent = {
   id: string;
-  isVisible = false;
-  mask: THREE.Mesh | undefined;
-  point: THREE.Vector3;
-  raycaster: THREE.Raycaster;
-  sizes: { width: number; height: number };
-  tooltipActiveBackgroundColor: string | undefined;
-  tooltipActiveTextColor: string | undefined;
-  tooltipsLimit: number;
-  #posX = 0;
-  #posY = 0;
-  #scale = 1;
+  value: number;
+  valueRank: number;
+  city?: string;
+  country?: string;
+  tooltipValueSuffix: string;
+  accentColor: string;
+};
 
-  constructor(
-    id: string,
-    coordinates: { x: number; y: number; z: number },
-    sizes: { width: number; height: number },
-    tooltipsLimit: number,
-    value: number,
-    options: {
-      tooltipActiveBackgroundColor: string;
-      tooltipActiveTextColor: string;
-      tooltipValueSuffix: string;
-      valueRank: number;
-      city?: string;
-      country?: string;
-      mask?: THREE.Mesh;
+export default class Tooltip {
+  element: HTMLElement;
+  id: string | null;
+  #posX = Number.NaN;
+  #posY = Number.NaN;
+  #scale = Number.NaN;
+  #zIndex = Number.NaN;
+  #visible = false;
+  #active = false;
+  #accentColor = '';
+
+  constructor() {
+    this.element = createTooltipElement();
+    this.id = null;
+  }
+
+  bind(content: TooltipContent) {
+    this.id = content.id;
+    bindTooltipContent(this.element, content);
+  }
+
+  apply({
+    posX,
+    posY,
+    scale,
+    zIndex,
+    visible,
+    active,
+    accentColor,
+  }: TooltipViewState) {
+    if (this.#posX !== posX || this.#posY !== posY || this.#scale !== scale) {
+      this.#posX = posX;
+      this.#posY = posY;
+      this.#scale = scale;
+      this.element.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
     }
-  ) {
-    const {
-      city,
-      country,
-      mask,
-      tooltipActiveBackgroundColor,
-      tooltipActiveTextColor,
-      tooltipValueSuffix,
-      valueRank,
-    } = options;
-    const { x, y, z } = coordinates;
-    this.coordinates = new THREE.Vector3(x, y, z);
-    this.distance = 0;
-    this.element = getTooltip(
-      id,
-      value,
-      valueRank,
-      tooltipValueSuffix,
-      tooltipActiveBackgroundColor,
-      country,
-      city
-    );
-    this.id = id;
-    this.mask = mask;
-    this.point = new THREE.Vector3();
-    this.raycaster = new THREE.Raycaster();
-    this.sizes = sizes;
-    this.tooltipActiveBackgroundColor = tooltipActiveBackgroundColor;
-    this.tooltipActiveTextColor = tooltipActiveTextColor;
-    this.tooltipsLimit = tooltipsLimit;
-    this.#applyVisibility();
-  }
 
-  #applyTransform() {
-    this.element.style.transform = `translate(${this.#posX}px, ${
-      this.#posY
-    }px) scale(${this.#scale})`;
-  }
-
-  #applyVisibility() {
-    this.element.style.opacity = this.isVisible ? '1' : '0';
-    if (!this.isVisible) {
-      this.#scale = 0;
+    if (this.#zIndex !== zIndex) {
+      this.#zIndex = zIndex;
+      this.element.style.zIndex = String(zIndex);
     }
-  }
 
-  updateOrder(index: number, minDistance: number, maxDistance: number) {
-    this.element.style.zIndex = String(this.tooltipsLimit - index);
-    if (!this.distance) return;
-    this.#scale = getTooltipScale(this.distance, minDistance, maxDistance);
-    this.#applyTransform();
-  }
+    if (this.#visible !== visible) {
+      this.#visible = visible;
+      this.element.classList.toggle('glob3d-tooltip-visible', visible);
+    }
 
-  updateTooltipPosition() {
-    const pxPosition = getPixelPosition(
-      this.point,
-      this.sizes.width,
-      this.sizes.height
-    );
-    this.#posX = pxPosition.x;
-    this.#posY = pxPosition.y;
-    this.#applyTransform();
-  }
+    if (this.#active !== active) {
+      this.#active = active;
+      this.element.classList.toggle('glob3d-tooltip-active', active);
+    }
 
-  show(onTop = false) {
-    this.isVisible = true;
-    this.element.style.backgroundColor = '#fff';
-    this.element.style.color = '#000';
-    this.#applyVisibility();
-
-    if (onTop) {
-      this.element.style.zIndex = String(this.tooltipsLimit + 1);
-      if (this.tooltipActiveBackgroundColor) {
-        this.element.style.backgroundColor = this.tooltipActiveBackgroundColor;
-      }
-      if (this.tooltipActiveTextColor) {
-        this.element.style.color = this.tooltipActiveTextColor;
-      }
+    if (this.#accentColor !== accentColor) {
+      this.#accentColor = accentColor;
+      this.element.style.setProperty('--tooltip-accent', accentColor);
     }
   }
 
   hide() {
-    this.isVisible = false;
-    this.#applyVisibility();
-  }
-
-  handleCameraUpdate(camera: THREE.Camera) {
-    this.distance = this.coordinates.distanceTo(camera.position);
-    this.point = this.coordinates.clone().project(camera);
-    this.updateTooltipPosition();
-    this.handleMasking(camera);
-  }
-
-  handleMasking(camera: THREE.Camera) {
-    if (!this.mask) return;
-    this.raycaster.setFromCamera(
-      new THREE.Vector2(this.point.x, this.point.y),
-      camera
-    );
-    const intersectObjects = this.raycaster.intersectObject(this.mask);
-    const isBehindGlobe =
-      intersectObjects.length > 0 &&
-      intersectObjects[0].distance <
-        this.coordinates.distanceTo(camera.position);
-
-    this.isVisible = !isBehindGlobe;
-    this.#applyVisibility();
+    this.apply({
+      posX: Number.isNaN(this.#posX) ? 0 : this.#posX,
+      posY: Number.isNaN(this.#posY) ? 0 : this.#posY,
+      scale: Number.isNaN(this.#scale) ? 0 : this.#scale,
+      zIndex: Number.isNaN(this.#zIndex) ? 0 : this.#zIndex,
+      visible: false,
+      active: false,
+      accentColor: this.#accentColor,
+    });
   }
 }

@@ -1,7 +1,10 @@
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js';
-import * as THREE from 'three';
 
-// Get H3 indexes for all hexagons in Polygon or MultiPolygon
+import { ensureTooltipStyles } from './styles';
+
+const tooltipNumberFormat = new Intl.NumberFormat();
+
+// Get H3 indexes for all land cells in Polygon or MultiPolygon
 export const getH3Indexes = (
   features: GeojsonFeature[],
   resolution: number
@@ -26,10 +29,10 @@ export const getH3Indexes = (
   return indexes;
 };
 
-export const getHexBin = (h3Index: string) => {
-  // Get center of a given hexagon - point as a [lat, lng] pair.
+export const getLandCell = (h3Index: string) => {
+  // Get center of a given land cell - point as a [lat, lng] pair.
   const center = cellToLatLng(h3Index);
-  // Get the vertices of a given hexagon as an array of [lng, lat] points.
+  // Get the vertices of a given land cell as an array of [lng, lat] points.
   const vertices = cellToBoundary(h3Index, true).reverse();
   // Split geometries at the anti-meridian.
   const centerLng = center[1];
@@ -43,13 +46,13 @@ export const getHexBin = (h3Index: string) => {
 };
 
 // Compute new geojson with relative margin.
-export const getNewGeoJson = (hex: HexBin, margin: number) => {
+export const getNewGeoJson = (landCell: LandCell, margin: number) => {
   const relNum = (st: number, end: number, rat: number) =>
     st - (st - end) * rat;
-  const [clat, clng] = hex.center;
+  const [clat, clng] = landCell.center;
   return margin === 0
-    ? hex.vertices
-    : hex.vertices.map(([elng, elat]) =>
+    ? landCell.vertices
+    : landCell.vertices.map(([elng, elat]) =>
         [
           [elng, clng],
           [elat, clat],
@@ -73,6 +76,107 @@ export const getXYZCoordinates = (
   };
 };
 
+type TooltipContent = {
+  id: string;
+  value: number;
+  valueRank: number;
+  tooltipValueSuffix: string;
+  accentColor: string;
+  country?: string;
+  city?: string;
+};
+
+const upsertTooltipField = (
+  tooltip: HTMLElement,
+  dataId: string,
+  className: string,
+  text: string | undefined,
+  insertBefore: HTMLElement
+) => {
+  let node = tooltip.querySelector<HTMLElement>(`[data-id="${dataId}"]`);
+  if (!text) {
+    node?.remove();
+    return;
+  }
+  if (!node) {
+    node = document.createElement('p');
+    node.className = className;
+    node.setAttribute('data-id', dataId);
+    tooltip.insertBefore(node, insertBefore);
+  }
+  if (node.textContent !== text) node.textContent = text;
+};
+
+export const createTooltipElement = () => {
+  ensureTooltipStyles();
+  const tooltip = document.createElement('div');
+  tooltip.className = 'glob3d-tooltip';
+  tooltip.setAttribute('data-id', 'tooltip');
+
+  const tooltipRank = document.createElement('p');
+  tooltipRank.className = 'glob3d-tooltip-rank';
+  tooltipRank.setAttribute('data-id', 'tooltipRank');
+  tooltip.appendChild(tooltipRank);
+
+  const tooltipValue = document.createElement('p');
+  tooltipValue.className = 'glob3d-tooltip-value';
+  tooltipValue.setAttribute('data-id', 'tooltipValue');
+  tooltip.appendChild(tooltipValue);
+
+  return tooltip;
+};
+
+export const bindTooltipContent = (
+  tooltip: HTMLElement,
+  {
+    id,
+    value,
+    valueRank,
+    tooltipValueSuffix,
+    accentColor,
+    country,
+    city,
+  }: TooltipContent
+) => {
+  tooltip.id = id ? `tooltip-${id}` : '';
+  if (tooltip.style.getPropertyValue('--tooltip-accent') !== accentColor) {
+    tooltip.style.setProperty('--tooltip-accent', accentColor);
+  }
+
+  const tooltipRank = tooltip.querySelector<HTMLElement>(
+    '[data-id="tooltipRank"]'
+  );
+  const tooltipValue = tooltip.querySelector<HTMLElement>(
+    '[data-id="tooltipValue"]'
+  );
+  if (!tooltipRank || !tooltipValue) return;
+
+  const rankText = String(valueRank);
+  if (tooltipRank.textContent !== rankText) tooltipRank.textContent = rankText;
+
+  upsertTooltipField(
+    tooltip,
+    'tooltipCountry',
+    'glob3d-tooltip-country',
+    country,
+    tooltipValue
+  );
+  upsertTooltipField(
+    tooltip,
+    'tooltipCity',
+    'glob3d-tooltip-city',
+    city,
+    tooltipValue
+  );
+
+  const valueText = `${tooltipNumberFormat.format(
+    value
+  )} ${tooltipValueSuffix}`;
+  if (tooltipValue.textContent !== valueText) {
+    tooltipValue.textContent = valueText;
+  }
+};
+
 export const getTooltip = (
   id: string,
   value: number,
@@ -82,76 +186,16 @@ export const getTooltip = (
   country?: string | undefined,
   city?: string | undefined
 ) => {
-  const tooltip = document.createElement('div');
-  tooltip.style.background = '#fff';
-  tooltip.style.borderRadius = '10px';
-  tooltip.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.2)';
-  tooltip.style.color = '#000';
-  tooltip.style.display = 'grid';
-  tooltip.style.fontSize = '0.8rem';
-  tooltip.style.columnGap = '15px';
-  tooltip.style.gridTemplateColumns = 'repeat(3, auto)';
-  tooltip.style.left = '10px';
-  tooltip.style.padding = '10px';
-  tooltip.style.pointerEvents = 'none';
-  tooltip.style.position = 'absolute';
-  tooltip.style.rowGap = '5px';
-  tooltip.style.top = '10px';
-  tooltip.style.transformOrigin = 'top left';
-  tooltip.style.userSelect = 'none';
-  tooltip.setAttribute('data-id', 'tooltip');
-  // delay transition to prevent initial animation
-  setTimeout(() => {
-    tooltip.style.transition =
-      'background-color 0.2s, color 0.2s, opacity 0.2s, transform 0.1s';
-  }, 10);
-
-  if (id) tooltip.id = `tooltip-${id}`;
-
-  const tooltipRank = document.createElement('p');
-  tooltipRank.style.alignItems = 'center';
-  tooltipRank.style.backgroundColor = '#fff';
-  tooltipRank.style.border = `2px solid ${accentColor}`;
-  tooltipRank.style.borderRadius = '50%';
-  tooltipRank.style.color = accentColor;
-  tooltipRank.style.display = 'flex';
-  tooltipRank.style.fontWeight = 'bold';
-  tooltipRank.style.gridRow = '1 / 3';
-  tooltipRank.style.height = '30px';
-  tooltipRank.style.justifyContent = 'center';
-  tooltipRank.style.margin = '0';
-  tooltipRank.style.width = '30px';
-  tooltipRank.textContent = String(valueRank);
-  tooltipRank.setAttribute('data-id', 'tooltipRank');
-  tooltip.appendChild(tooltipRank);
-
-  if (country) {
-    const tooltipCountry = document.createElement('p');
-    tooltipCountry.style.gridColumn = '2 / 3';
-    tooltipCountry.style.margin = '0';
-    tooltipCountry.textContent = country;
-    tooltipCountry.setAttribute('data-id', 'tooltipCountry');
-    tooltip.appendChild(tooltipCountry);
-  }
-
-  if (city) {
-    const tooltipCity = document.createElement('p');
-    tooltipCity.style.gridColumn = '3 / 4';
-    tooltipCity.style.margin = '0';
-    tooltipCity.textContent = city;
-    tooltipCity.setAttribute('data-id', 'tooltipCity');
-    tooltip.appendChild(tooltipCity);
-  }
-
-  const tooltipValue = document.createElement('p');
-  tooltipValue.style.gridColumn = '2 / 4';
-  tooltipValue.style.margin = '0';
-  tooltipValue.textContent = `${new Intl.NumberFormat().format(
-    value
-  )} ${tooltipValueSuffix}`;
-  tooltipValue.setAttribute('data-id', 'tooltipValue');
-  tooltip.appendChild(tooltipValue);
-
+  const tooltip = createTooltipElement();
+  bindTooltipContent(tooltip, {
+    id,
+    value,
+    valueRank,
+    tooltipValueSuffix,
+    accentColor,
+    country,
+    city,
+  });
   return tooltip;
 };
 
@@ -171,16 +215,4 @@ export const getTooltipScale = (
     ? 1
     : ((maxDistance - croppedDistance) / (maxDistance - minDistance)) * 0.5 +
         0.5;
-};
-
-// get pixel position from normalized device coordinates
-export const getPixelPosition = (
-  point: THREE.Vector3,
-  width: number,
-  height: number
-) => {
-  return {
-    x: ((point.x + 1) / 2) * width,
-    y: ((point.y - 1) / 2) * height * -1,
-  };
 };

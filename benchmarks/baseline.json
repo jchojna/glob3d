@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "renderer": "instanced",
+  "capturedAt": "2026-09-05T20:17:46.753Z",
+  "command": "npm run benchmark:stress",
+  "environment": {
+    "runtime": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/3.18.25 Chrome/144.0.7559.236 Electron/40.10.3 Safari/537.36",
+    "viewport": {
+      "width": 361,
+      "height": 1289,
+      "devicePixelRatio": 1
+    },
+    "landCellRes": 3,
+    "updateRuns": 5,
+    "sampleFrames": 180,
+    "tooltipLimit": 15
+  },
+  "preInstancingBaseline": {
+    "capturedAt": "2026-09-04",
+    "barDrawCallRelationship": "approximately 2N + 2",
+    "results": {
+      "small": {
+        "requestedDataPoints": 100,
+        "startupMs": 710.7,
+        "updateMeanMs": 15.2,
+        "fps": 47.23,
+        "drawCalls": 202,
+        "rendererGeometries": 502
+      },
+      "medium": {
+        "requestedDataPoints": 500,
+        "startupMs": 826.9,
+        "updateMeanMs": 64.06,
+        "fps": 15.11,
+        "drawCalls": 1002,
+        "rendererGeometries": 2502
+      },
+      "large": {
+        "requestedDataPoints": 1000,
+        "startupMs": 1161.5,
+        "updateMeanMs": 292.24,
+        "fps": 12.56,
+        "drawCalls": 2002,
+        "rendererGeometries": 5002
+      }
+    }
+  },
+  "results": {
+    "small": {
+      "requestedDataPoints": 100,
+      "aggregatedBars": 100,
+      "startupMs": 313.2,
+      "updateMeanMs": 1.28,
+      "updateMaxMs": 1.6,
+      "fps": 50.02,
+      "frameTimeMeanMs": 19.99,
+      "frameTimeP95Ms": 20.8,
+      "drawCalls": 3,
+      "triangles": 267040,
+      "meshes": 3,
+      "instancedMeshes": 2,
+      "landInstances": 10672,
+      "barInstances": 100,
+      "pickingTotalMs": 128.7,
+      "pickingMeanPerFrameMs": 0.71,
+      "tooltipTotalMs": 27.1,
+      "tooltipMeanPerFrameMs": 0.15,
+      "tooltipDomCount": 15,
+      "heapBeforeBytes": 81964354,
+      "heapAfterBytes": 84826712,
+      "heapGrowthBytes": 2862358,
+      "rendererGeometries": 3,
+      "rendererGeometriesAfterUpdates": 3,
+      "rendererTextures": 1,
+      "cleanup": {
+        "tooltipDomCount": 0,
+        "canvasCount": 0
+      }
+    },
+    "medium": {
+      "requestedDataPoints": 500,
+      "aggregatedBars": 500,
+      "startupMs": 285.4,
+      "updateMeanMs": 4.92,
+      "updateMaxMs": 5.9,
+      "fps": 50.03,
+      "frameTimeMeanMs": 19.99,
+      "frameTimeP95Ms": 20.8,
+      "drawCalls": 3,
+      "triangles": 292640,
+      "meshes": 3,
+      "instancedMeshes": 2,
+      "landInstances": 10672,
+      "barInstances": 500,
+      "pickingTotalMs": 185.9,
+      "pickingMeanPerFrameMs": 1.03,
+      "tooltipTotalMs": 41.8,
+      "tooltipMeanPerFrameMs": 0.23,
+      "tooltipDomCount": 15,
+      "heapBeforeBytes": 84826712,
+      "heapAfterBytes": 51081809,
+      "heapGrowthBytes": -33744903,
+      "rendererGeometries": 3,
+      "rendererGeometriesAfterUpdates": 3,
+      "rendererTextures": 1,
+      "cleanup": {
+        "tooltipDomCount": 0,
+        "canvasCount": 0
+      }
+    },
+    "large": {
+      "requestedDataPoints": 1000,
+      "aggregatedBars": 1000,
+      "startupMs": 264,
+      "updateMeanMs": 12.36,
+      "updateMaxMs": 14.2,
+      "fps": 50.03,
+      "frameTimeMeanMs": 19.99,
+      "frameTimeP95Ms": 20.7,
+      "drawCalls": 3,
+      "triangles": 324640,
+      "meshes": 3,
+      "instancedMeshes": 2,
+      "landInstances": 10672,
+      "barInstances": 1000,
+      "pickingTotalMs": 307,
+      "pickingMeanPerFrameMs": 1.71,
+      "tooltipTotalMs": 82.5,
+      "tooltipMeanPerFrameMs": 0.46,
+      "tooltipDomCount": 15,
+      "heapBeforeBytes": 51081809,
+      "heapAfterBytes": 55838002,
+      "heapGrowthBytes": 4756193,
+      "rendererGeometries": 3,
+      "rendererGeometriesAfterUpdates": 3,
+      "rendererTextures": 1,
+      "cleanup": {
+        "tooltipDomCount": 0,
+        "canvasCount": 0
+      }
+    }
+  },
+  "notes": [
+    "Land cells and bars are InstancedMesh draws, so draw calls stay roughly constant as bar count grows.",
+    "Tooltip overlay DOM is virtualized to tooltipsLimit plus hovered or clicked extras.",
+    "Repeated onUpdate disposes replaced bar GPU resources; geometriesAfterUpdates should match the final geometry count.",
+    "destroy() cancels the animation loop and removes the canvas and tooltip DOM before the next scenario.",
+    "Heap values are raw performance.memory snapshots and can decrease when garbage collection occurs.",
+    "scenario=all runs in one page, so heap figures are sequential across small, medium, and large."
+  ]
+}
