@@ -2,7 +2,7 @@
 
 This browser benchmark supplies deterministic small, medium, and large datasets
 and records the main costs targeted by the rendering performance work. The
-current library draws land dots and bars as `InstancedMesh` objects, so draw
+current library draws land cells and bars as `InstancedMesh` objects, so draw
 calls stay roughly constant as the dataset grows.
 
 ## Run it
@@ -23,8 +23,7 @@ Defaults are 100, 500, and 1,000 input data points respectively, with five
 updates and 180 sampled frames. Query parameters make runs repeatable:
 
 - `scenario=medium`: select the small, medium, or large dataset, or `all`.
-- `dotRes=3`: set land and bar H3 resolution from 1 to 5 (`hexRes` is accepted
-  as an alias).
+- `landCellRes=3`: set land and bar H3 resolution from 1 to 5.
 - `updates=5`: set the number of repeated `onUpdate` samples.
 - `frames=180`: set the animation frames included in the report.
 - `settle=30`: set the warm-up frames discarded before sampling.
@@ -46,7 +45,7 @@ geometry improvements stay visible.
 - Frame time and FPS cover the browser animation cadence.
 - `renderer.info` supplies draw calls, primitive counts, and GPU resource counts.
 - Scene traversal records mesh, `InstancedMesh`, land-instance, and bar-instance
-  counts. After instancing, expect two instanced meshes (dots + bars) plus the
+  counts. After instancing, expect two instanced meshes (land cells + bars) plus the
   solid globe.
 - Geometry counts after all updates and after frame sampling should match if
   replaced bar GPU resources were disposed.
