@@ -14,6 +14,8 @@ type TooltipsOptions = {
   globeColor: string;
   tooltipValueSuffix: string;
   tooltipsLimit: number | null;
+  onTooltipHover?: (id: string | null) => void;
+  onTooltipClick?: (id: string) => void;
 };
 
 type TooltipModel = {
@@ -42,6 +44,7 @@ export default class TooltipsManager {
   #tooltipsContainer: HTMLElement | null;
   #clickedBarId: string | null;
   #hoveredBarId: string | null;
+  #pointerHoveredId: string | null;
   #dirty: boolean;
   #overlayWidth: number;
   #overlayHeight: number;
@@ -66,6 +69,7 @@ export default class TooltipsManager {
     this.#tooltipsContainer = null;
     this.#clickedBarId = null;
     this.#hoveredBarId = null;
+    this.#pointerHoveredId = null;
     this.#dirty = true;
     this.#overlayWidth = 0;
     this.#overlayHeight = 0;
@@ -145,11 +149,14 @@ export default class TooltipsManager {
     );
     this.#root.appendChild(tooltipsContainer);
     this.#tooltipsContainer = tooltipsContainer;
+    this.#bindOverlayEvents(tooltipsContainer);
     this.#dirty = true;
     return tooltipsContainer;
   }
 
   removeTooltips() {
+    this.#unbindOverlayEvents();
+    this.#setPointerHoveredId(null);
     this.#views.forEach((view) => view.element.remove());
     this.#views.clear();
     this.#pool = [];
@@ -164,6 +171,78 @@ export default class TooltipsManager {
     this.#overlayWidth = 0;
     this.#overlayHeight = 0;
   }
+
+  #bindOverlayEvents(container: HTMLElement) {
+    container.addEventListener('pointerover', this.#handleTooltipPointerOver);
+    container.addEventListener('pointerout', this.#handleTooltipPointerOut);
+    container.addEventListener('click', this.#handleTooltipClick);
+  }
+
+  #unbindOverlayEvents() {
+    this.#tooltipsContainer?.removeEventListener(
+      'pointerover',
+      this.#handleTooltipPointerOver
+    );
+    this.#tooltipsContainer?.removeEventListener(
+      'pointerout',
+      this.#handleTooltipPointerOut
+    );
+    this.#tooltipsContainer?.removeEventListener(
+      'click',
+      this.#handleTooltipClick
+    );
+  }
+
+  #tooltipIdFromNode(node: EventTarget | null): string | null {
+    if (!(node instanceof Element)) return null;
+    const tooltip = node.closest<HTMLElement>('[data-id="tooltip"]');
+    if (!tooltip?.id.startsWith('tooltip-')) return null;
+    const id = tooltip.id.slice('tooltip-'.length);
+    return id || null;
+  }
+
+  #tooltipFromNode(node: EventTarget | null): HTMLElement | null {
+    if (!(node instanceof Element)) return null;
+    return node.closest<HTMLElement>('[data-id="tooltip"]');
+  }
+
+  #setPointerHoveredId(id: string | null) {
+    if (this.#pointerHoveredId === id) return;
+    this.#pointerHoveredId = id;
+    this.#options.onTooltipHover?.(id);
+  }
+
+  #handleTooltipPointerOver = (event: PointerEvent) => {
+    const tooltip = this.#tooltipFromNode(event.target);
+    if (!tooltip) return;
+    if (
+      event.relatedTarget instanceof Node &&
+      tooltip.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    this.#setPointerHoveredId(this.#tooltipIdFromNode(tooltip));
+  };
+
+  #handleTooltipPointerOut = (event: PointerEvent) => {
+    const tooltip = this.#tooltipFromNode(event.target);
+    if (!tooltip) return;
+    if (
+      event.relatedTarget instanceof Node &&
+      tooltip.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    this.#setPointerHoveredId(this.#tooltipIdFromNode(event.relatedTarget));
+  };
+
+  #handleTooltipClick = (event: MouseEvent) => {
+    const id = this.#tooltipIdFromNode(event.target);
+    if (id === null) return;
+    event.stopPropagation();
+    this.#setPointerHoveredId(id);
+    this.#options.onTooltipClick?.(id);
+  };
 
   #getIndex(id: string | null): number | null {
     if (id === null) return null;

@@ -4,6 +4,16 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.1] - 2026-09-07
+
+### Added
+
+- Hovering or clicking a tooltip highlights that tooltip and its bar, same as interacting with the bar.
+
+### Fixed
+
+- Pointer picking no longer uses stale canvas bounds after scroll, resize, or visual-viewport changes.
+
 ## [1.0.0] - 2026-09-07
 
 Performance and rendering rewrite versus [0.9.1](https://www.npmjs.com/package/glob3d/v/0.9.1). npm itself only shows the README and a version list; this file (and GitHub Releases, if you publish one) is the changelog.
