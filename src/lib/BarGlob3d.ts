@@ -30,6 +30,8 @@ export default class BarGlob3d extends Glob3d {
   #highestBar: number;
   #hoveredBarId: string | null;
   #hoveredBarIndex: number | null;
+  #hoveredFromRaycastIndex: number | null;
+  #hoveredFromTooltipId: string | null;
   #intersections: THREE.Intersection[];
   #loaderManager: LoaderManager;
   #pickableObjects: THREE.Object3D[];
@@ -78,6 +80,8 @@ export default class BarGlob3d extends Glob3d {
     this.#highestBar = highestBar;
     this.#hoveredBarId = null;
     this.#hoveredBarIndex = null;
+    this.#hoveredFromRaycastIndex = null;
+    this.#hoveredFromTooltipId = null;
     this.#intersections = [];
     this.#loaderManager = new LoaderManager(root);
     this.#pickableObjects = [this.globe];
@@ -95,6 +99,8 @@ export default class BarGlob3d extends Glob3d {
         globeColor,
         tooltipsLimit: this.#tooltipsLimit,
         tooltipValueSuffix,
+        onTooltipHover: this.#handleTooltipHover,
+        onTooltipClick: this.#handleTooltipClick,
       }
     );
     this.#tooltipsManager.createTooltips(this.#aggregatedData);
@@ -261,29 +267,11 @@ export default class BarGlob3d extends Glob3d {
         this.#intersections
       );
       const hit = this.#intersections[0];
-      const hoveredBarIndex =
+      this.#hoveredFromRaycastIndex =
         hit && hit.object !== this.globe && hit.instanceId !== undefined
           ? hit.instanceId
           : null;
-
-      if (hoveredBarIndex !== null) {
-        const hoveredBarId = String(hoveredBarIndex);
-
-        if (this.#hoveredBarId !== hoveredBarId) {
-          this.#hoveredBarIndex = hoveredBarIndex;
-          this.#hoveredBarId = hoveredBarId;
-          this.#tooltipsManager.hoveredBarId = hoveredBarId;
-          this.#refreshBarAppearance();
-        }
-      } else if (this.#hoveredBarIndex !== null) {
-        const previousHoveredIndex = this.#hoveredBarIndex;
-        this.#hoveredBarIndex = null;
-        this.#hoveredBarId = null;
-        this.#tooltipsManager.hoveredBarId = null;
-        if (previousHoveredIndex !== this.#clickedBarIndex) {
-          this.#refreshBarAppearance();
-        }
-      }
+      this.#applyEffectiveHover();
     }
 
     if (cameraChanged) this.#updateBarDepthColors();
@@ -298,15 +286,53 @@ export default class BarGlob3d extends Glob3d {
     window.addEventListener('click', this.#handleClick);
   }
 
-  #handleClick = () => {
-    if (this.#hoveredBarId !== null && this.#hoveredBarIndex !== null) {
-      this.#clickedBarIndex = this.#hoveredBarIndex;
-      this.#tooltipsManager.clickedBarId = this.#hoveredBarId;
-    } else {
-      this.#clickedBarIndex = null;
-      this.#tooltipsManager.clickedBarId = null;
+  #barIndexFromId(id: string | null): number | null {
+    if (id === null) return null;
+    const index = Number(id);
+    return Number.isInteger(index) ? index : null;
+  }
+
+  #applyEffectiveHover() {
+    const id =
+      this.#hoveredFromTooltipId ??
+      (this.#hoveredFromRaycastIndex !== null
+        ? String(this.#hoveredFromRaycastIndex)
+        : null);
+    const nextIndex = this.#barIndexFromId(id);
+    if (this.#hoveredBarId === id && this.#hoveredBarIndex === nextIndex) {
+      return;
+    }
+
+    const previousIndex = this.#hoveredBarIndex;
+    this.#hoveredBarId = id;
+    this.#hoveredBarIndex = nextIndex;
+    this.#tooltipsManager.hoveredBarId = id;
+
+    if (nextIndex === null && previousIndex === this.#clickedBarIndex) {
+      this.requestRender();
+      return;
     }
     this.#refreshBarAppearance();
+  }
+
+  #setClicked(id: string | null) {
+    this.#clickedBarIndex = this.#barIndexFromId(id);
+    this.#tooltipsManager.clickedBarId = id;
+    this.#refreshBarAppearance();
+  }
+
+  #handleTooltipHover = (id: string | null) => {
+    this.#hoveredFromTooltipId = id;
+    this.#applyEffectiveHover();
+  };
+
+  #handleTooltipClick = (id: string) => {
+    this.#handleTooltipHover(id);
+    this.#setClicked(id);
+  };
+
+  #handleClick = () => {
+    this.#setClicked(this.#hoveredBarId);
   };
 
   #removeBars() {
@@ -322,6 +348,8 @@ export default class BarGlob3d extends Glob3d {
     this.#intersections.length = 0;
     this.#hoveredBarIndex = null;
     this.#hoveredBarId = null;
+    this.#hoveredFromRaycastIndex = null;
+    this.#hoveredFromTooltipId = null;
     this.#clickedBarIndex = null;
     this.requestRender();
   }

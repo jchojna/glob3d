@@ -199,6 +199,18 @@ export const getTooltip = (
   return tooltip;
 };
 
+export const clientPointToNdc = (
+  clientX: number,
+  clientY: number,
+  rect: { left: number; top: number; width: number; height: number }
+): { x: number; y: number } | null => {
+  if (rect.width === 0 || rect.height === 0) return null;
+  return {
+    x: ((clientX - rect.left) / rect.width) * 2 - 1,
+    y: -(((clientY - rect.top) / rect.height) * 2 - 1),
+  };
+};
+
 export const getTooltipScale = (
   distance: number,
   minDistance: number,

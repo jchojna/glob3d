@@ -14,6 +14,8 @@ function createManager(
     tooltipsLimit?: number;
     globeRadius?: number;
     cameraPosition?: [number, number, number];
+    onTooltipHover?: (id: string | null) => void;
+    onTooltipClick?: (id: string) => void;
   } = {}
 ) {
   const root = document.createElement('div');
@@ -37,6 +39,8 @@ function createManager(
       globeColor: '#1a166e',
       tooltipValueSuffix: 'people',
       tooltipsLimit: options.tooltipsLimit ?? 2,
+      onTooltipHover: options.onTooltipHover,
+      onTooltipClick: options.onTooltipClick,
     }
   );
 
@@ -207,6 +211,62 @@ describe('TooltipsManager', () => {
     expect(root.querySelectorAll('[data-id="tooltip"]')).toHaveLength(0);
     expect(root.querySelector('[data-id="tooltip"]')).toBeNull();
     expect(manager.tooltipCount).toBe(0);
+  });
+
+  it('notifies hover and click when a tooltip is pointed at', () => {
+    const hovered: Array<string | null> = [];
+    const clicked: string[] = [];
+    const { manager, root } = createManager({
+      tooltipsLimit: 2,
+      onTooltipHover: (id) => hovered.push(id),
+      onTooltipClick: (id) => clicked.push(id),
+    });
+    manager.createTooltips([
+      makeBar('front', 0, 0, 10),
+      makeBar('back', 0, 180, 20),
+    ]);
+    manager.update({ cameraChanged: true, layoutChanged: true });
+
+    const tooltip = tooltipEl(root, 'front');
+    const value = tooltip?.querySelector('[data-id="tooltipValue"]');
+    const rank = tooltip?.querySelector('[data-id="tooltipRank"]');
+    expect(tooltip).toBeTruthy();
+    expect(value).toBeTruthy();
+    expect(rank).toBeTruthy();
+
+    value?.dispatchEvent(
+      new PointerEvent('pointerover', { bubbles: true, relatedTarget: null })
+    );
+    expect(hovered).toEqual(['front']);
+
+    value?.dispatchEvent(
+      new PointerEvent('pointerout', {
+        bubbles: true,
+        relatedTarget: rank,
+      })
+    );
+    rank?.dispatchEvent(
+      new PointerEvent('pointerover', {
+        bubbles: true,
+        relatedTarget: value,
+      })
+    );
+    expect(hovered).toEqual(['front']);
+
+    tooltip?.dispatchEvent(
+      new PointerEvent('pointerout', { bubbles: true, relatedTarget: null })
+    );
+    expect(hovered).toEqual(['front', null]);
+
+    const windowClicks: Event[] = [];
+    const onWindowClick = (event: Event) => windowClicks.push(event);
+    window.addEventListener('click', onWindowClick);
+    tooltip?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    window.removeEventListener('click', onWindowClick);
+
+    expect(clicked).toEqual(['front']);
+    expect(hovered).toEqual(['front', null, 'front']);
+    expect(windowClicks).toHaveLength(0);
   });
 });
 

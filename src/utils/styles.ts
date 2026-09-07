@@ -50,7 +50,9 @@ export const tooltipElementStyles = `
 }
 
 .glob3d-tooltip-visible {
+  cursor: pointer;
   opacity: 1;
+  pointer-events: auto;
 }
 
 .glob3d-tooltip-active {
