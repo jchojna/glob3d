@@ -4,6 +4,7 @@ import multiPolygonFeature from '../mocks/multiPolygonFeature.json';
 import polygonFeature from '../mocks/polygonFeature.json';
 
 import {
+  clientPointToNdc,
   getH3Indexes,
   getLandCell,
   getNewGeoJson,
@@ -11,6 +12,44 @@ import {
   getTooltipScale,
   getXYZCoordinates,
 } from './helpers';
+
+describe('clientPointToNdc', () => {
+  const rect = { left: 40, top: 80, width: 200, height: 100 };
+
+  it('maps the canvas center to the origin', () => {
+    const ndc = clientPointToNdc(140, 130, rect);
+    expect(ndc?.x).toBeCloseTo(0);
+    expect(ndc?.y).toBeCloseTo(0);
+  });
+
+  it('maps the top-left and bottom-right corners to clip space', () => {
+    expect(clientPointToNdc(40, 80, rect)).toEqual({ x: -1, y: 1 });
+    expect(clientPointToNdc(240, 180, rect)).toEqual({ x: 1, y: -1 });
+  });
+
+  it('uses the current rect top so a layout shift changes the NDC y', () => {
+    const clientX = 140;
+    const clientY = 130;
+    const before = clientPointToNdc(clientX, clientY, rect);
+    const afterShift = clientPointToNdc(clientX, clientY, {
+      ...rect,
+      top: 30,
+    });
+    expect(before?.x).toBeCloseTo(0);
+    expect(before?.y).toBeCloseTo(0);
+    expect(afterShift?.x).toBeCloseTo(0);
+    expect(afterShift?.y).toBeCloseTo(-1);
+  });
+
+  it('returns null when the canvas has no size', () => {
+    expect(
+      clientPointToNdc(10, 10, { left: 0, top: 0, width: 0, height: 100 })
+    ).toBeNull();
+    expect(
+      clientPointToNdc(10, 10, { left: 0, top: 0, width: 100, height: 0 })
+    ).toBeNull();
+  });
+});
 
 describe('getTooltipScale', () => {
   it('returns correct value when distance is equal to minDistance', () => {

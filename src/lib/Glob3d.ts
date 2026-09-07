@@ -7,6 +7,7 @@ import matcap from '../assets/textures/matcap_1.png';
 import type { GlobeOptions } from '../types';
 import defaultOpts from '../utils/defaultOpts';
 import {
+  clientPointToNdc,
   getH3Indexes,
   getLandCell,
   getNewGeoJson,
@@ -35,7 +36,6 @@ export default class Glob3d {
   #pointerDirty: boolean;
   #renderer: THREE.WebGLRenderer;
   #resizeObserver!: ResizeObserver;
-  #rootBounds: DOMRect;
   #textureLoader: THREE.TextureLoader;
 
   // public fields
@@ -72,7 +72,6 @@ export default class Glob3d {
     this.#pointerClientX = null;
     this.#pointerClientY = null;
     this.#pointerDirty = true;
-    this.#rootBounds = this.root.getBoundingClientRect();
     this.#textureLoader = new THREE.TextureLoader();
     this.#renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -260,17 +259,21 @@ export default class Glob3d {
   };
 
   #updateMousePosition(clientX: number, clientY: number) {
-    const xPos = clientX - this.#rootBounds.left;
-    const yPos = clientY - this.#rootBounds.top;
-    this.mouse.x = (xPos / this.sizes.width) * 2 - 1;
-    this.mouse.y = -((yPos / this.sizes.height) * 2 - 1);
+    const ndc = clientPointToNdc(
+      clientX,
+      clientY,
+      this.#canvas.getBoundingClientRect()
+    );
+    if (!ndc) return;
+    this.mouse.x = ndc.x;
+    this.mouse.y = ndc.y;
     this.#pointerDirty = true;
   }
 
   #handleResize() {
     const width = this.root.clientWidth;
     const height = this.root.clientHeight;
-    this.#updateRootBounds();
+    this.#handleViewportChange();
     if (width === 0 || height === 0) return;
     if (width === this.sizes.width && height === this.sizes.height) return;
 
@@ -292,12 +295,19 @@ export default class Glob3d {
   #registerResizeEvent() {
     this.#resizeObserver = new ResizeObserver(() => this.#handleResize());
     this.#resizeObserver.observe(this.root);
-    window.addEventListener('resize', this.#updateRootBounds);
-    window.addEventListener('scroll', this.#updateRootBounds, true);
+    window.addEventListener('resize', this.#handleViewportChange);
+    window.addEventListener('scroll', this.#handleViewportChange, true);
+    window.visualViewport?.addEventListener(
+      'resize',
+      this.#handleViewportChange
+    );
+    window.visualViewport?.addEventListener(
+      'scroll',
+      this.#handleViewportChange
+    );
   }
 
-  #updateRootBounds = () => {
-    this.#rootBounds = this.root.getBoundingClientRect();
+  #handleViewportChange = () => {
     if (this.#pointerClientX !== null && this.#pointerClientY !== null) {
       this.#updateMousePosition(this.#pointerClientX, this.#pointerClientY);
     }
@@ -347,8 +357,16 @@ export default class Glob3d {
     }
     this.#resizeObserver.disconnect();
     window.removeEventListener('mousemove', this.#handleMouseMove);
-    window.removeEventListener('resize', this.#updateRootBounds);
-    window.removeEventListener('scroll', this.#updateRootBounds, true);
+    window.removeEventListener('resize', this.#handleViewportChange);
+    window.removeEventListener('scroll', this.#handleViewportChange, true);
+    window.visualViewport?.removeEventListener(
+      'resize',
+      this.#handleViewportChange
+    );
+    window.visualViewport?.removeEventListener(
+      'scroll',
+      this.#handleViewportChange
+    );
     this.#controls.dispose();
     this.onDestroy();
 
