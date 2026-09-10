@@ -38,6 +38,7 @@ export default class TooltipsManager {
   #sizes: { width: number; height: number };
   #models: TooltipModel[];
   #distances: Float64Array;
+  #selectionDistances: Float64Array;
   #indexById: Map<string, number>;
   #views: Map<string, Tooltip>;
   #pool: Tooltip[];
@@ -63,6 +64,7 @@ export default class TooltipsManager {
     this.#options = options;
     this.#models = [];
     this.#distances = new Float64Array(0);
+    this.#selectionDistances = new Float64Array(0);
     this.#indexById = new Map();
     this.#views = new Map();
     this.#pool = [];
@@ -136,6 +138,7 @@ export default class TooltipsManager {
       };
     });
     this.#distances = new Float64Array(data.length);
+    this.#selectionDistances = new Float64Array(data.length);
     this.#models.forEach((model, index) => {
       this.#indexById.set(model.id, index);
     });
@@ -164,6 +167,7 @@ export default class TooltipsManager {
     this.#tooltipsContainer = null;
     this.#models = [];
     this.#distances = new Float64Array(0);
+    this.#selectionDistances = new Float64Array(0);
     this.#indexById.clear();
     this.#clickedBarId = null;
     this.#hoveredBarId = null;
@@ -252,11 +256,45 @@ export default class TooltipsManager {
 
   #updateDistances() {
     const cameraPosition = this.#camera.position;
+    const clickedIndex = this.#getIndex(this.#clickedBarId);
+
     for (let i = 0; i < this.#models.length; i += 1) {
-      const distance = this.#models[i].coordinates.distanceTo(cameraPosition);
+      const coordinates = this.#models[i].coordinates;
+      const distance = coordinates.distanceTo(cameraPosition);
       this.#distances[i] = distance;
       this.#models[i].distance = distance;
+      if (clickedIndex === null) {
+        // If no bar is currently clicked, selection distances follow the camera distance.
+        this.#selectionDistances[i] = distance;
+      } else if (i === clickedIndex) {
+        // For the clicked bar, ensure it sorts/appears first.
+        this.#selectionDistances[i] = Number.NEGATIVE_INFINITY;
+      } else {
+        // For all other bars:
+        //   - If visible on screen, prioritize visible, nearer bars.
+        //   - If not visible, deprioritize/offscreen.
+        this.#selectionDistances[i] = this.#isVisibleOnScreen(coordinates)
+          ? -coordinates.length()
+          : Number.POSITIVE_INFINITY;
+      }
     }
+  }
+
+  #isVisibleOnScreen(coordinates: THREE.Vector3) {
+    _projected.copy(coordinates).project(this.#camera);
+    return (
+      _projected.x >= -1 &&
+      _projected.x <= 1 &&
+      _projected.y >= -1 &&
+      _projected.y <= 1 &&
+      _projected.z >= -1 &&
+      _projected.z <= 1 &&
+      !isPointOccludedBySphere(
+        coordinates,
+        this.#camera.position,
+        this.#globeRadius
+      )
+    );
   }
 
   #acquireView(model: TooltipModel): Tooltip {
@@ -290,10 +328,11 @@ export default class TooltipsManager {
       typeof this.#options.tooltipsLimit === 'number'
         ? this.#options.tooltipsLimit
         : this.#models.length;
-    const selection = selectVisibleTooltipIndices(this.#distances, limit, [
-      this.#getIndex(this.#hoveredBarId),
-      this.#getIndex(this.#clickedBarId),
-    ]);
+    const selection = selectVisibleTooltipIndices(
+      this.#selectionDistances,
+      limit,
+      [this.#getIndex(this.#hoveredBarId), this.#getIndex(this.#clickedBarId)]
+    );
     const selectedIds = new Set(
       selection.items.map((item) => this.#models[item.index].id)
     );
@@ -303,7 +342,16 @@ export default class TooltipsManager {
     });
 
     const cameraPosition = this.#camera.position;
-    const { minDistance, maxDistance } = selection;
+    let minDistance = Infinity;
+    let maxDistance = -Infinity;
+    selection.items.forEach((item) => {
+      if (!item.inLimit) return;
+      const distance = this.#distances[item.index];
+      minDistance = Math.min(minDistance, distance);
+      maxDistance = Math.max(maxDistance, distance);
+    });
+    if (!Number.isFinite(minDistance)) minDistance = 0;
+    if (!Number.isFinite(maxDistance)) maxDistance = 0;
 
     selection.items.forEach((item) => {
       const model = this.#models[item.index];

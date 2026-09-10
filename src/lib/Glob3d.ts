@@ -319,6 +319,10 @@ export default class Glob3d {
     this.#frameDirty = true;
   }
 
+  protected get orbitControls(): OrbitControls {
+    return this.#controls;
+  }
+
   protected onFrame(state: {
     cameraChanged: boolean;
     layoutChanged: boolean;
@@ -333,17 +337,18 @@ export default class Glob3d {
     if (this.#destroyed) return;
 
     const cameraChanged = this.#controls.update();
+    const frameDirty = this.#frameDirty;
     const layoutChanged = this.#layoutDirty;
     const pointerChanged = this.#pointerDirty;
+    this.#frameDirty = false;
     this.#layoutDirty = false;
     this.#pointerDirty = false;
 
-    if (this.#frameDirty || cameraChanged || layoutChanged || pointerChanged) {
+    if (frameDirty || cameraChanged || layoutChanged || pointerChanged) {
       this.onFrame({ cameraChanged, layoutChanged, pointerChanged });
     }
-    if (this.#frameDirty || cameraChanged) {
+    if (frameDirty || this.#frameDirty || cameraChanged) {
       this.#renderer.render(this.scene, this.camera);
-      this.#frameDirty = false;
     }
     this.#animationFrameId = window.requestAnimationFrame(this.#tick);
   };

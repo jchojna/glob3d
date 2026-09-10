@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import type { BarGlobeOptions, GlobeData } from '../types';
 import defaultOpts from '../utils/defaultOpts';
 import { getNewGeoJson, getXYZCoordinates } from '../utils/helpers';
+import CameraTransition from './CameraTransition';
 import DataManager from './DataManager';
 import Glob3d from './Glob3d';
 import LoaderManager from './LoaderManager';
@@ -14,6 +15,9 @@ const _localX = new THREE.Vector3();
 const _localY = new THREE.Vector3();
 const _localZ = new THREE.Vector3();
 const _matrix = new THREE.Matrix4();
+const _normal = new THREE.Vector3();
+const _tangent = new THREE.Vector3();
+const _target = new THREE.Vector3();
 const _vertex = new THREE.Vector3();
 const _worldUp = new THREE.Vector3(0, 1, 0);
 
@@ -23,6 +27,7 @@ export default class BarGlob3d extends Glob3d {
   #barNearColor: THREE.Color;
   #barFarColor: THREE.Color;
   #barActiveColor: string;
+  #cameraTransition: CameraTransition;
   #clickedBarIndex: number | null;
   #globePosition: GlobePosition;
   #bars: THREE.InstancedMesh | null;
@@ -71,6 +76,10 @@ export default class BarGlob3d extends Glob3d {
     this.#barNearColor = new THREE.Color(barColor);
     this.#barFarColor = new THREE.Color(globeColor);
     this.#barActiveColor = barActiveColor;
+    this.#cameraTransition = new CameraTransition(
+      this.camera,
+      this.orbitControls
+    );
     this.#clickedBarIndex = null;
     this.#globePosition = { x: 0, y: 0 };
     this.#projectedGlobePosition = new THREE.Vector3();
@@ -258,7 +267,11 @@ export default class BarGlob3d extends Glob3d {
     layoutChanged: boolean;
     pointerChanged: boolean;
   }) {
-    if ((cameraChanged || pointerChanged) && this.#bars) {
+    const transitionChanged = this.#cameraTransition.update();
+    const effectiveCameraChanged = cameraChanged || transitionChanged;
+    if (transitionChanged) this.requestRender();
+
+    if ((effectiveCameraChanged || pointerChanged) && this.#bars) {
       this.#raycaster.setFromCamera(this.mouse, this.camera);
       this.#intersections.length = 0;
       this.#raycaster.intersectObjects(
@@ -274,12 +287,15 @@ export default class BarGlob3d extends Glob3d {
       this.#applyEffectiveHover();
     }
 
-    if (cameraChanged) this.#updateBarDepthColors();
-    if (cameraChanged || layoutChanged) {
+    if (effectiveCameraChanged) this.#updateBarDepthColors();
+    if (effectiveCameraChanged || layoutChanged) {
       this.#updateGlobePosition();
       this.#loaderManager.updateLoaderPosition(this.#globePosition);
     }
-    this.#tooltipsManager.update({ cameraChanged, layoutChanged });
+    this.#tooltipsManager.update({
+      cameraChanged: effectiveCameraChanged,
+      layoutChanged,
+    });
   }
 
   #registerClickEvent() {
@@ -316,9 +332,54 @@ export default class BarGlob3d extends Glob3d {
   }
 
   #setClicked(id: string | null) {
-    this.#clickedBarIndex = this.#barIndexFromId(id);
+    const clickedBarIndex = this.#barIndexFromId(id);
+    if (clickedBarIndex === this.#clickedBarIndex) return;
+
+    this.#clickedBarIndex = clickedBarIndex;
     this.#tooltipsManager.clickedBarId = id;
+    if (clickedBarIndex === null) {
+      this.#cameraTransition.reset();
+    } else {
+      this.#focusCameraOnBar(clickedBarIndex);
+    }
     this.#refreshBarAppearance();
+  }
+
+  #focusCameraOnBar(index: number) {
+    if (!this.#barBasePositions) return;
+
+    _normal.fromArray(this.#barBasePositions, index * 3).normalize();
+    _target.copy(_normal).multiplyScalar(this.globeRadius);
+
+    // Approach from the camera's current side to avoid taking the long way
+    // around the globe. The viewing axis remains almost tangent at the base.
+    _tangent
+      .copy(this.camera.position)
+      .addScaledVector(_normal, -this.camera.position.dot(_normal));
+    if (_tangent.lengthSq() < 1e-8) {
+      _tangent.crossVectors(_normal, _worldUp);
+      if (_tangent.lengthSq() < 1e-8) _tangent.set(1, 0, 0);
+    }
+    _tangent.normalize();
+
+    const barHeight = Math.max(
+      this.#aggregatedData[index].offsetFromCenter - this.globeRadius,
+      0
+    );
+    const tangentDistance = Math.max(this.globeRadius * 0.9, barHeight * 2.1);
+    const position = _normal
+      .clone()
+      .multiplyScalar(this.globeRadius * 1.12)
+      .addScaledVector(_tangent, tangentDistance);
+
+    this.#cameraTransition.focus(position, _target, _normal);
+  }
+
+  #toggleClicked(id: string | null) {
+    const index = this.#barIndexFromId(id);
+    this.#setClicked(
+      index !== null && index === this.#clickedBarIndex ? null : id
+    );
   }
 
   #handleTooltipHover = (id: string | null) => {
@@ -328,11 +389,11 @@ export default class BarGlob3d extends Glob3d {
 
   #handleTooltipClick = (id: string) => {
     this.#handleTooltipHover(id);
-    this.#setClicked(id);
+    this.#toggleClicked(id);
   };
 
   #handleClick = () => {
-    this.#setClicked(this.#hoveredBarId);
+    this.#toggleClicked(this.#hoveredBarId);
   };
 
   #removeBars() {
@@ -350,6 +411,7 @@ export default class BarGlob3d extends Glob3d {
     this.#hoveredBarId = null;
     this.#hoveredFromRaycastIndex = null;
     this.#hoveredFromTooltipId = null;
+    if (this.#clickedBarIndex !== null) this.#cameraTransition.reset();
     this.#clickedBarIndex = null;
     this.requestRender();
   }
