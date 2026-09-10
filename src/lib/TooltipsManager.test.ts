@@ -139,6 +139,31 @@ describe('TooltipsManager', () => {
     );
   });
 
+  it('selects the highest on-screen bars around a clicked bar', () => {
+    const { manager, root } = createManager({
+      tooltipsLimit: 2,
+      cameraPosition: [0, 0, 400],
+    });
+    manager.createTooltips([
+      makeBar('camera-near', 0, 0, 10, 150),
+      makeBar('selected', 0, 10, 20, 160),
+      makeBar('highest-visible', 30, 30, 30, 200),
+      makeBar('shorter-visible', -20, -25, 40, 170),
+    ]);
+    manager.update({ cameraChanged: true, layoutChanged: true });
+
+    expect(tooltipIds(root)).toContain('camera-near');
+    expect(tooltipIds(root)).not.toContain('highest-visible');
+
+    manager.clickedBarId = 'selected';
+    manager.update({ cameraChanged: false, layoutChanged: false });
+
+    expect(tooltipIds(root)).toEqual(
+      expect.arrayContaining(['selected', 'highest-visible'])
+    );
+    expect(tooltipIds(root)).toHaveLength(2);
+  });
+
   it('hides in-limit tooltips that are behind the globe and keeps front ones visible', () => {
     const { manager, root } = createManager({ tooltipsLimit: 2 });
     manager.createTooltips([

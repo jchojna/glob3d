@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-09-10
+
+### Added
+
+- Clicking a bar or its tooltip smoothly focuses the camera on that bar.
+- Clicking the selected bar again restores the initial camera pose and the previous auto-rotation setting.
+
+### Changed
+
+- While a bar is selected, virtualized tooltips prioritize the selected bar and the tallest visible bars.
+
 ## [1.0.1] - 2026-09-07
 
 ### Added

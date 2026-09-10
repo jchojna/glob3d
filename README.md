@@ -39,7 +39,8 @@ An [npm package](https://www.npmjs.com/package/glob3d) for creating interactive 
 - data-driven bars whose height and location come from the provided dataset
 - customizable globe and bar colors
 - rotate and pan the camera around the globe
-- tooltips that scale with camera distance and stay limited to the nearest items (plus the hovered or clicked bar)
+- click a bar or tooltip to smoothly focus the camera on it; click it again to restore the initial view
+- tooltips that scale with camera distance and stay limited to the nearest items; when a bar is selected, the selected bar and the tallest visible bars are prioritized
 - highlight on hover or click
 - `destroy()` to tear down the renderer, listeners, and tooltip DOM
 
@@ -131,6 +132,10 @@ globe.destroy();
 - **`setBarActiveColor(color)`:** Recolor the hovered/clicked bar and the tooltip value.
 - **`setAutoRotate(autoRotate)`:** Toggle camera auto-rotation. Same as the `autoRotate` constructor option.
 - **`destroy()`:** Cancel the animation loop, remove listeners and tooltip DOM, and dispose GPU resources.
+
+Click a bar or its tooltip to select it. The camera smoothly moves to a close view of
+the selected bar and temporarily disables orbit controls and auto-rotation. Click the
+same bar again to restore the initial camera view and previous auto-rotation setting.
 
 ## What's new in 1.0.0
 
