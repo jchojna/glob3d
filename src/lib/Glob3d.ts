@@ -30,6 +30,7 @@ export default class Glob3d {
   #controls: OrbitControls;
   #destroyed: boolean;
   #frameDirty: boolean;
+  #halo: THREE.Group | null;
   #layoutDirty: boolean;
   #pointerClientX: number | null;
   #pointerClientY: number | null;
@@ -58,6 +59,7 @@ export default class Glob3d {
       landCellPadding = defaultOpts.landCellPadding,
       landCellRes = defaultOpts.landCellRes,
       autoRotate = defaultOpts.autoRotate,
+      halo = defaultOpts.halo,
     } = options;
 
     this.root = root;
@@ -68,6 +70,7 @@ export default class Glob3d {
     this.#canvas = this.#createCanvas(this.root);
     this.#destroyed = false;
     this.#frameDirty = true;
+    this.#halo = null;
     this.#layoutDirty = true;
     this.#pointerClientX = null;
     this.#pointerClientY = null;
@@ -106,6 +109,8 @@ export default class Glob3d {
     this.camera.position.y = 240;
     this.scene.add(this.camera);
 
+    if (halo) this.#createHalo();
+
     this.#controls = new OrbitControls(this.camera, this.#canvas);
     this.#controls.autoRotate = autoRotate;
     this.#controls.autoRotateSpeed = 0.1;
@@ -131,6 +136,37 @@ export default class Glob3d {
     canvas.style.userSelect = 'none';
     root.appendChild(canvas);
     return canvas;
+  }
+
+  #createHalo() {
+    const halo = new THREE.Group();
+    this.#halo = halo;
+    const rings = [
+      { innerRadius: 1.0, outerRadius: 1.08, opacity: 0.15 },
+      { innerRadius: 1.08, outerRadius: 1.16, opacity: 0.1 },
+      { innerRadius: 1.16, outerRadius: 1.24, opacity: 0.05 },
+    ];
+
+    rings.forEach(({ innerRadius, outerRadius, opacity }) => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(
+          this.globeRadius * innerRadius,
+          this.globeRadius * outerRadius,
+          96
+        ),
+        new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          opacity,
+          side: THREE.DoubleSide,
+          transparent: true,
+          depthWrite: false,
+        })
+      );
+      halo.add(ring);
+    });
+
+    halo.quaternion.copy(this.camera.quaternion);
+    this.scene.add(halo);
   }
 
   #createLandCellGlobe() {
@@ -348,6 +384,7 @@ export default class Glob3d {
       this.onFrame({ cameraChanged, layoutChanged, pointerChanged });
     }
     if (frameDirty || this.#frameDirty || cameraChanged) {
+      this.#halo?.quaternion.copy(this.camera.quaternion);
       this.#renderer.render(this.scene, this.camera);
     }
     this.#animationFrameId = window.requestAnimationFrame(this.#tick);
