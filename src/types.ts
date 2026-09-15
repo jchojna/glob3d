@@ -14,6 +14,7 @@ export type GlobeOptions = {
   landCellPadding?: number;
   landCellRes?: number;
   autoRotate?: boolean;
+  halo?: boolean;
 };
 
 export type BarGlobeOptions = {

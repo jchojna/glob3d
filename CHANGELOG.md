@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-09-15
+
+### Added
+
+- Optional `halo` constructor option for displaying an outline halo around the globe. Disabled by default.
+
 ## [1.1.0] - 2026-09-10
 
 ### Added

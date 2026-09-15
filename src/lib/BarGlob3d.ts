@@ -58,6 +58,7 @@ export default class BarGlob3d extends Glob3d {
       landCellPadding,
       landCellRes,
       autoRotate,
+      halo,
       highestBar,
       tooltipsLimit,
       tooltipValueSuffix,
@@ -69,6 +70,7 @@ export default class BarGlob3d extends Glob3d {
       landCellPadding,
       landCellRes,
       autoRotate,
+      halo,
     });
 
     this.#aggregatedData = [];

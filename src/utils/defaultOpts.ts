@@ -6,6 +6,7 @@ export default {
   landCellPadding: 0.3,
   landCellRes: 3,
   autoRotate: true,
+  halo: false,
   highestBar: 0.5,
   tooltipsLimit: 15,
   tooltipValueSuffix: '',

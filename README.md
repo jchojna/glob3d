@@ -82,6 +82,7 @@ new Glob3d(container, options);
   - **`landCellPadding`:** The land-cell padding, value between 0 and 1. Default `0.3`.
   - **`landCellRes`:** The H3 resolution of land cells, integer between 1 and 5. Default `3`.
   - **`autoRotate`:** Whether the camera auto-rotates. Default `true`.
+  - **`halo`:** Whether to display the outline halo around the globe. Default `false`.
 
 `globeOpacity`, `landCellOpacity`, `barOpacity`, and `barActiveOpacity` from earlier versions are gone. See the [changelog](https://github.com/jchojna/glob3d/blob/main/CHANGELOG.md) for the land-cell option names.
 
